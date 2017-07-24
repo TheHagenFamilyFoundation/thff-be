@@ -17,9 +17,15 @@ module.exports = {
    * environment (see config/connections.js and config/models.js )           *
    ***************************************************************************/
 
-  // models: {
-  //   connection: 'someMysqlServer'
-  // },
+  appName: "Hagen Family Foundation Backend",
+
+  models: {
+    connection: 'productionMongo'
+  },
+  session: {
+    adapter: 'connect-mongo',
+    url: process.env.MONGODB_URI
+  }
 
   /***************************************************************************
    * Set the port in the production environment to 80                        *
