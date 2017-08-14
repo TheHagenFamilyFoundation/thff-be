@@ -34,18 +34,31 @@ module.exports.policies = {
   * and its actions                                                          *
   *                                                                          *
   ***************************************************************************/
-	// RabbitController: {
+  // RabbitController: {
 
-		// Apply the `false` policy as the default for all of RabbitController's actions
-		// (`false` prevents all access, which ensures that nothing bad happens to our rabbits)
-		// '*': false,
+  // Apply the `false` policy as the default for all of RabbitController's actions
+  // (`false` prevents all access, which ensures that nothing bad happens to our rabbits)
+  // '*': false,
 
-		// For the action `nurture`, apply the 'isRabbitMother' policy
-		// (this overrides `false` above)
-		// nurture	: 'isRabbitMother',
+  // For the action `nurture`, apply the 'isRabbitMother' policy
+  // (this overrides `false` above)
+  // nurture	: 'isRabbitMother',
 
-		// Apply the `isNiceToAnimals` AND `hasRabbitFood` policies
-		// before letting any users feed our rabbits
-		// feed : ['isNiceToAnimals', 'hasRabbitFood']
-	// }
+  // Apply the `isNiceToAnimals` AND `hasRabbitFood` policies
+  // before letting any users feed our rabbits
+  // feed : ['isNiceToAnimals', 'hasRabbitFood']
+  // }
+
+  '*': ['isAuthorized'], // Everything resctricted here
+  
+  'UserController': {
+    'create': true // We dont need authorization here, allowing public access
+  },
+
+  'AuthController': {
+    '*': true // We dont need authorization here, allowing public access
+  }
+
+
+
 };
