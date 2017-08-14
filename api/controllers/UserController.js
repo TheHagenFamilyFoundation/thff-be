@@ -8,7 +8,7 @@
 module.exports = {
     create: function (req, res) {
 
-        //sails.log("user create")
+        sails.log("user create")
 
         if (req.body.password !== req.body.confirmPassword) {
             return res.json(401, { err: 'Password doesn\'t match, What a shame!' });
