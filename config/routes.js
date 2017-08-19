@@ -45,5 +45,18 @@ module.exports.routes = {
   * for configuration options and examples.                                  *
   *                                                                          *
   ***************************************************************************/
+  ,
+  '/foo': function (req, res) {
+    sails.log("accessing foo"); return res.send(
+      {
+        "employees": [
+          { "firstName": "John", "lastName": "Doe" },
+          { "firstName": "Anna", "lastName": "Smith" },
+          { "firstName": "Peter", "lastName": "Jones" }
+        ]
+      }
+
+    );
+  }
 
 };
