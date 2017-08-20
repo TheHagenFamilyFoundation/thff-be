@@ -10,19 +10,23 @@ module.exports = {
 
     sails.log("index")
 
-    var email = req.param('email');
-    var password = req.param('password');
+    // var username = req.param('username');
+    // var password = req.param('password');
 
-    if (!email || !password) {
-      return res.json(401, { err: 'email and password required' });
+    var username = req.body.username;
+    var password = req.body.password;
+
+
+    if (!username || !password) {
+      return res.json(401, { err: 'username and password required' });
     }
 
-    Users.findOne({ email: email }, function (err, user) {
+    User.findOne({ username: username }, function (err, user) {
       if (!user) {
-        return res.json(401, { err: 'invalid email or password' });
+        return res.json(401, { err: 'invalid username or password' });
       }
 
-      Users.comparePassword(password, user, function (err, valid) {
+      User.comparePassword(password, user, function (err, valid) {
         if (err) {
           return res.json(403, { err: 'forbidden' });
         }
