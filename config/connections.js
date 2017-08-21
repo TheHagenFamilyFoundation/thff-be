@@ -61,11 +61,11 @@ module.exports.connections = {
     url: process.env.MONGODB_URI
   },
 
-  localMongoDb: {
-    adapter: 'sails-mongo',
-    url: 'mongodb://heroku_nnwj4mpg:4pbcdqmg97fgrql7iqeqacnsjc@ds141950.mlab.com:41950/heroku_nnwj4mpg'
-    //url: process.env.MONGODB_URI
-  }
+  // localMongoDb: {
+  //   adapter: 'sails-mongo',
+  //   url: sails.config.mongolabdb.url
+  //   //url: process.env.MONGODB_URI
+  // }
 
   /***************************************************************************
   *                                                                          *
