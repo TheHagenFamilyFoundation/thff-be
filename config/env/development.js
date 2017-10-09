@@ -20,6 +20,8 @@ module.exports = {
 
   models: {
     connection: 'localMongoDb'
+    //connection: 'productionMongo'
+    //connection: 'localDiskDb'
   }
 
   // models: {
