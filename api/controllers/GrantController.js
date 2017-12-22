@@ -6,11 +6,11 @@
  */
 
 module.exports = {
-	getGrants: function(req,res){
-        sails.log("getGrants");
+	// getGrants: function(req,res){
+    //     sails.log("getGrants");
 
 
-        res.send(200);
-    }
+    //     res.send(200);
+    // }
 };
 
