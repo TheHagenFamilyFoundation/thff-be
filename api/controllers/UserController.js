@@ -35,6 +35,8 @@ module.exports = {
     ,
     UserNameExists: function (req, res) {
 
+       //sails.log("UserNameExists Function");
+
         sails.log(req.query.username);
 
         User.find({
@@ -65,6 +67,8 @@ module.exports = {
 
     ,
     EmailExists: function (req, res) {
+
+        //sails.log("EmailExists Function");
 
         sails.log(req.query.email);
 
