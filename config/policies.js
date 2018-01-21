@@ -64,8 +64,12 @@ module.exports.policies = {
   'RequestsController': {
     '*': true // We dont need authorization here, allowing public access
   },
-//debug
+  //debug
   'GrantController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
+
+  'EmailController': {
     '*': true // We dont need authorization here, allowing public access
   },
 
