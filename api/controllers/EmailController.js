@@ -7,6 +7,9 @@
 
 module.exports = {
     create: function (req, res) {
+
+        sails.log('email create')
+
         const email = req.body
         sails.hooks.email.send(
             "sendEmail",
