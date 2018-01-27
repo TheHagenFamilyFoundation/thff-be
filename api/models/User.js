@@ -13,6 +13,7 @@ module.exports = {
   schema: true,
 
   attributes: {
+
     email: {
       type: 'email',
       required: 'true',
@@ -23,7 +24,15 @@ module.exports = {
       required: 'true',
       unique: true
     },
-
+    name: {
+      type: 'string'
+    },
+    resetCode: {
+      type: 'string'
+    },
+    resetPassword: {
+      type: 'boolean'
+    },
     encryptedPassword: {
       type: 'string'
     },
