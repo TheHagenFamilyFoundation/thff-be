@@ -62,7 +62,9 @@ module.exports.routes = {
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
 
-  'GET /CreateResetCode': 'UserController.CreateResetCode'
+  'GET /CreateResetCode': 'UserController.CreateResetCode',
+
+  'POST /sendResetEmail': 'EmailController.sendResetEmail'
 
 
 };
