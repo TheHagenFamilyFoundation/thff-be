@@ -12,18 +12,45 @@ module.exports = {
 
         const email = req.body
         sails.hooks.email.send(
-            "sendEmail",
+            "resetPassword",
             {
                 Name: email.name,
             },
             {
                 to: email.to,
-                subject: "Welcome Email"
+                subject: "THFF: Reset Password Email"
             },
             function (err) {
                 console.log(err || "Mail Sent!");
             }
         )
+    },
+
+    sendResetEmail: function(req,res)
+    {
+
+        sails.log("sendResetEmail")
+        
+
+        const email = req.body;
+
+        sails.hooks.email.send(
+            "resetPassword",
+            {
+                Name: email.name,
+            },
+            {
+                to: email.to,
+                subject: "THFF: Reset Password Email"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
+
+
+        //res.send(200);
     }
 };
 
