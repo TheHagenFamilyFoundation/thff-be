@@ -54,7 +54,7 @@ module.exports = {
             {
                 Name: email.name,
                 resetCode: email.resetCode,
-                resetURL: resetURL + '/type-new-password/'+ email.resetCode
+                resetURL: resetURL + '/type-new-password/' + email.name + '/' + email.resetCode
 
             },
             {
