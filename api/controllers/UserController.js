@@ -136,7 +136,8 @@ module.exports = {
 
                             sails.log(emailfound)
                             //res.send(200);
-                            return res.json({ resetCodeCreated: true });
+                            //return res.json({ resetCodeCreated: true, resetCode: text, resetTime: now });
+                            return res.json({ resetCodeCreated: true, resetCode: text });
 
                         })
 
