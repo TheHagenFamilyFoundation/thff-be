@@ -26,18 +26,33 @@ module.exports = {
         )
     },
 
-    sendResetEmail: function(req,res)
-    {
+    sendResetEmail: function (req, res) {
 
         sails.log("sendResetEmail")
-        
 
         const email = req.body;
+
+        sails.log(req.body);
+
+        var resetURL = '';
+
+
+        if (sails.config.environment === 'production') {
+            resetURL = 'https://hagenfoundationbackend.herokuapp.com'
+        }
+        else {
+            resetURL = 'http://localhost:1337'
+        }
+
+        sails.log(resetURL)
 
         sails.hooks.email.send(
             "resetPassword",
             {
                 Name: email.name,
+                resetCode: 50,
+                resetURL: resetURL + '/50'
+
             },
             {
                 to: email.to,
