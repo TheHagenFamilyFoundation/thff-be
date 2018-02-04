@@ -33,6 +33,9 @@ module.exports = {
     resetPassword: {
       type: 'boolean'
     },
+    resetTime: {
+      type: 'datetime'
+    },
     encryptedPassword: {
       type: 'string'
     },
