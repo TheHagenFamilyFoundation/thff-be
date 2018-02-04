@@ -14,9 +14,7 @@ module.exports = {
             return res.json(401, { err: 'Password doesn\'t match, What a shame!' });
         }
 
-
         sails.log(req.body.username);
-
 
         User.create(req.body).exec(function (err, user) {
 
@@ -96,8 +94,10 @@ module.exports = {
     CreateResetCode: function (req, res) {
         sails.log("Create Reset Code")
 
+        const user = req.body;
+
         User.find({
-            email: req.query.email
+            email: user.email
         }).exec(function (err, emailfound) {
             if (err) {
                 return res.json(err.status, { err: err });
@@ -119,27 +119,32 @@ module.exports = {
 
                     sails.log(text)
 
+                    var now = new Date();
+
+                    sails.log(now);
+
                     User.update(
                         { id: emailfound[0].id },
                         {
                             //debug
                             resetCode: text,
-                            resetPassword: true
+                            resetPassword: true,
+                            resetTime: now
                         }
                     )
                         .exec(function (err, emailfound) {
 
                             sails.log(emailfound)
-                            res.send(200);
+                            //res.send(200);
+                            return res.json({ resetCodeCreated: true });
 
                         })
-
-
 
                 }
                 else {
                     sails.log("email is not found");
-                    res.send(404);
+                    return res.json({ resetCodeCreated: false });
+                    //res.send(404);
                 }
             }//end of emailfound if
 
