@@ -54,7 +54,8 @@ module.exports.policies = {
   'UserController': {
     'create': true, // We dont need authorization here, allowing public access
     'UserNameExists': true, // We dont need authorization here, allowing public access
-    'EmailExists': true // We dont need authorization here, allowing public access
+    'EmailExists': true, // We dont need authorization here, allowing public access
+    'CreateResetCode': true // We dont need authorization here, allowing public access
   },
 
   /* Debug */
