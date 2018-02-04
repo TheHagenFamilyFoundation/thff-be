@@ -33,15 +33,18 @@ module.exports = {
         const email = req.body;
 
         sails.log(req.body);
+        sails.log("email.name = " + email.name);
+        sails.log("email.resetCode = " + email.resetCode);
+        //sails.log("email.resetTime = " + email.resetTime);
 
         var resetURL = '';
 
 
         if (sails.config.environment === 'production') {
-            resetURL = 'https://hagenfoundationbackend.herokuapp.com'
+            resetURL = 'http://hagen.foundation'
         }
         else {
-            resetURL = 'http://localhost:1337'
+            resetURL = 'http://localhost:4200'
         }
 
         sails.log(resetURL)
@@ -50,8 +53,8 @@ module.exports = {
             "resetPassword",
             {
                 Name: email.name,
-                resetCode: 50,
-                resetURL: resetURL + '/50'
+                resetCode: email.resetCode,
+                resetURL: resetURL + '/type-new-password/'+ email.resetCode
 
             },
             {
