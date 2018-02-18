@@ -55,8 +55,6 @@ module.exports = {
                 }
             }//end of userfound if
 
-
-
         });
 
     }//end of UserNameExists
@@ -113,9 +111,9 @@ module.exports = {
 
                     var text = "";
                     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-                  
+
                     for (var i = 0; i < 5; i++)
-                      text += possible.charAt(Math.floor(Math.random() * possible.length));
+                        text += possible.charAt(Math.floor(Math.random() * possible.length));
 
                     sails.log(text)
 
@@ -151,20 +149,63 @@ module.exports = {
 
         });
 
+    }//end of CreateResetCode
+    ,
+    ResetCodeCheck: function (req, res) {
 
-        //sails.log(req.query.userid);
+        sails.log(req.query.resetCode);
 
-        //add the 2 new fields to the document
+        User.find({
+            resetCode: req.query.resetCode
+        }).exec(function (err, validresetCode) {
+            if (err) {
+                return res.json(err.status, { err: err });
+            }
 
-        //create a hashed value for the resetCode
+            if (validresetCode) {
+
+                //debug
+                sails.log("validresetCode");
+                sails.log(validresetCode);
+                sails.log("validresetCode[0].resetTime");
+                sails.log(validresetCode[0].resetTime);
+
+                if (validresetCode.length > 0) {
+                    sails.log("reset code is valid");
+
+                    var now = new Date();
+                    var TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
+
+                    sails.log(now);
+                    sails.log(validresetCode[0].resetTime);
+                    sails.log(TWENTYFOUR_HOURS)
+                    
+
+                    if (now - validresetCode[0].resetTime < TWENTYFOUR_HOURS) {
+
+                        sails.log("reset time is valid");
+
+                        return res.json({ validresetCode: true });
+                    }
+                    else {
+
+                        sails.log("reset time is invalid");
+
+                        return res.json({ validresetCode: false });
+                    }
 
 
+                }
+                else {
+                    sails.log("reset code is not valid");
+                    return res.json({ validresetCode: false });
+                }
+            }//end of resetCode if
+
+        });
+
+    }//end of ResetCodeCheck
 
 
-
-
-
-
-    }//end of CreateResetPassword
 
 };
