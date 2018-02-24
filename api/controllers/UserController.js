@@ -179,7 +179,7 @@ module.exports = {
                     sails.log(now);
                     sails.log(validresetCode[0].resetTime);
                     sails.log(TWENTYFOUR_HOURS)
-                    
+
 
                     if (now - validresetCode[0].resetTime < TWENTYFOUR_HOURS) {
 
@@ -205,6 +205,17 @@ module.exports = {
         });
 
     }//end of ResetCodeCheck
+    ,
+    setNewPassword: function (req, res) {
+
+        sails.log("setNewPassword");
+        
+        sails.log(req.query);
+        
+
+
+    }
+
 
 
 
