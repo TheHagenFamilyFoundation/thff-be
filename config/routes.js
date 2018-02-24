@@ -66,8 +66,11 @@ module.exports.routes = {
   
   
   'POST /CreateResetCode': 'UserController.CreateResetCode',
+  'POST /setNewPassword': 'UserController.setNewPassword',
 
   'POST /sendResetEmail': 'EmailController.sendResetEmail'
+
+
 
 
 };
