@@ -210,11 +210,6 @@ module.exports = {
 
         sails.log("setNewPassword");
 
-        //sails.log(req.body);
-
-        //hash the new password
-        //sails.log(req.body.np)
-
         var currentPassword = req.body.cp;
         var newPassword = req.body.np;
         var username = req.body.un;
@@ -223,21 +218,32 @@ module.exports = {
             username: username
         }).exec(function (err, user) {
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.json({ reset: false });
             }
 
-            //sails.log(user);
+            sails.log("bcrypt comparing");
+            sails.log(user);
+            sails.log("currentPassword = " + currentPassword);
+            sails.log(user[0].encryptedPassword)
 
             bcrypt.compare(currentPassword, user[0].encryptedPassword, function (err, match) {
                 if (err) {
                     sails.log(err);
-                    return res.json(401, { err: 'invalid email or password' });
+                    return res.json({ reset: false });
                 }
 
+                sails.log(match);
+
                 if (!match) {
-                    return res.json(401, { err: 'invalid email or password' });
+                    //current password doesn't match
+                    return res.json({
+                        reset: false,
+                        message: "Current Password doesn't match"
+                    })
                 }
                 else {
+
+                    sails.log("bcrypt gen salting");
 
                     bcrypt.genSalt(10, function (err, salt) {
                         if (err) return next(err);
@@ -248,13 +254,6 @@ module.exports = {
                             sails.log(hash);
 
                             //then set the user password to that hash
-                            // User.find({
-                            //     id: user[0].id
-                            // }).exec(function (err, validUser) {
-                            //     if (err) {
-                            //         return res.json(err.status, { err: err });
-                            //     }
-
                             User.update({
                                 id: user[0].id
                             }, {
@@ -262,49 +261,23 @@ module.exports = {
                                 }
                             ).exec(function (err, user) {
                                 if (err) {
-                                    return res.json(err.status, { err: err });
+                                    return res.json({ reset: false });
                                 }
 
                                 sails.log(user);
                                 sails.log('Reset Successful')
-                                return res.json({ reset: true });
+                                return res.json({ reset: true, message: "Reset Successful" });
                             })
 
-
-                        //})
+                        })
                     })
-                })
 
-        }
+                }
 
             })
 
-})
+        })
 
-
-
-
-
-
-        //  then search that in the database
-        // User.find({
-        //     resetCode: req.query.resetCode
-        // }).exec(function (err, validresetCode) {
-        //     if (err) {
-        //         return res.json(err.status, { err: err });
-        //     }
-        // })
-
-
-        // //set new password
-
-
-
-        // return res.json({ validresetCode: false });
-
-    }
-
-
-
+    }//setNewPassword
 
 };
