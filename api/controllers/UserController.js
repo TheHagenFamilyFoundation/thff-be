@@ -167,38 +167,48 @@ module.exports = {
             if (validresetCode) {
 
                 //debug
-                sails.log("validresetCode");
-                sails.log(validresetCode);
-                sails.log("validresetCode[0].resetTime");
-                sails.log(validresetCode[0].resetTime);
+                // sails.log("validresetCode");
+                // sails.log(validresetCode);
+                // sails.log("validresetCode[0].resetTime");
+                // sails.log(validresetCode[0].resetTime);
+                // sails.log("validresetCode[0].resetPassword");
+                // sails.log(validresetCode[0].resetPassword);
 
                 if (validresetCode.length > 0) {
-                    sails.log("reset code is valid");
+                    sails.log("reset code is valid"); //reset code was found
 
-                    var now = new Date();
-                    var TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
+                    if (validresetCode[0].resetPassword) {
 
-                    sails.log(now);
-                    sails.log(validresetCode[0].resetTime);
-                    sails.log(TWENTYFOUR_HOURS)
+                        var now = new Date();
+                        var TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
 
-                    if (now - validresetCode[0].resetTime < TWENTYFOUR_HOURS) {
+                        sails.log(now);
+                        sails.log(validresetCode[0].resetTime);
+                        sails.log(TWENTYFOUR_HOURS)
 
-                        sails.log("reset time is valid");
+                        if (now - validresetCode[0].resetTime < TWENTYFOUR_HOURS) {
 
-                        return res.json({ validresetCode: true });
+                            sails.log("reset time is valid");
+
+                            return res.json({ validresetCode: true, message: "reset time is valid" });
+                        }
+                        else {
+
+                            sails.log("reset time is invalid");
+
+                            //reset time is invalid
+                            return res.json({ validresetCode: false, message: "Reset password link has expired. Please try again." });
+                        }
                     }
                     else {
-
-                        sails.log("reset time is invalid");
-
-                        return res.json({ validresetCode: false });
+                        //resetPassword is false
+                        return res.json({ validresetCode: false, message: "Reset code has already been used. Please try again." });
                     }
 
                 }
                 else {
-                    sails.log("reset code is not valid");
-                    return res.json({ validresetCode: false });
+                    sails.log("reset code is invalid");
+                    return res.json({ validresetCode: false, message: "Reset code is invalid." });
                 }
             }//end of resetCode if
 
@@ -221,10 +231,10 @@ module.exports = {
                 return res.json({ reset: false });
             }
 
-            sails.log("bcrypt comparing");
-            sails.log(user);
-            sails.log("currentPassword = " + currentPassword);
-            sails.log(user[0].encryptedPassword)
+            //sails.log("bcrypt comparing");
+            //sails.log(user);
+            //sails.log("currentPassword = " + currentPassword);
+            //sails.log(user[0].encryptedPassword)
 
             bcrypt.compare(currentPassword, user[0].encryptedPassword, function (err, match) {
                 if (err) {
@@ -257,6 +267,7 @@ module.exports = {
                             User.update({
                                 id: user[0].id
                             }, {
+                                    resetPassword: false,
                                     encryptedPassword: hash
                                 }
                             ).exec(function (err, user) {
@@ -264,7 +275,7 @@ module.exports = {
                                     return res.json({ reset: false });
                                 }
 
-                                sails.log(user);
+                                //sails.log(user);
                                 sails.log('Reset Successful')
                                 return res.json({ reset: true, message: "Reset Successful" });
                             })
