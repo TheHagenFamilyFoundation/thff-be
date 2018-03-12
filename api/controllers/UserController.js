@@ -179,26 +179,40 @@ module.exports = {
 
                     if (validresetCode[0].resetPassword) {
 
-                        var now = new Date();
-                        var TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
+                        //set in the db the resetPassword to false
+                        User.update({
+                            resetCode: req.query.resetCode
+                        }, {
+                                resetPassword: false
+                            }
+                        ).exec(function (err, user) {
+                            if (err) {
+                                return res.json({ reset: false });
+                            }
 
-                        sails.log(now);
-                        sails.log(validresetCode[0].resetTime);
-                        sails.log(TWENTYFOUR_HOURS)
+                            //now for checking the resetTime
 
-                        if (now - validresetCode[0].resetTime < TWENTYFOUR_HOURS) {
+                            var now = new Date();
+                            var TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
 
-                            sails.log("reset time is valid");
+                            sails.log(now);
+                            sails.log(user[0].resetTime);
+                            sails.log(TWENTYFOUR_HOURS)
 
-                            return res.json({ validresetCode: true, message: "reset time is valid" });
-                        }
-                        else {
+                            if (now - user[0].resetTime < TWENTYFOUR_HOURS) {
 
-                            sails.log("reset time is invalid");
+                                sails.log("reset time is valid");
 
-                            //reset time is invalid
-                            return res.json({ validresetCode: false, message: "Reset password link has expired. Please try again." });
-                        }
+                                return res.json({ validresetCode: true, message: "reset time is valid" });
+                            }
+                            else {
+
+                                sails.log("reset time is invalid");
+
+                                //reset time is invalid
+                                return res.json({ validresetCode: false, message: "Reset password link has expired. Please try again." });
+                            }
+                        })
                     }
                     else {
                         //resetPassword is false
@@ -267,7 +281,7 @@ module.exports = {
                             User.update({
                                 id: user[0].id
                             }, {
-                                    resetPassword: false,
+                                    //resetPassword: false,
                                     encryptedPassword: hash
                                 }
                             ).exec(function (err, user) {
