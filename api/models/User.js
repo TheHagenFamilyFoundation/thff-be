@@ -13,6 +13,7 @@ module.exports = {
   schema: true,
 
   attributes: {
+
     email: {
       type: 'email',
       required: 'true',
@@ -23,7 +24,18 @@ module.exports = {
       required: 'true',
       unique: true
     },
-
+    name: {
+      type: 'string'
+    },
+    resetCode: {
+      type: 'string'
+    },
+    resetPassword: {
+      type: 'boolean'
+    },
+    resetTime: {
+      type: 'datetime'
+    },
     encryptedPassword: {
       type: 'string'
     },
@@ -52,7 +64,6 @@ module.exports = {
 
   comparePassword: function (password, user, cb) {
     bcrypt.compare(password, user.encryptedPassword, function (err, match) {
-
       if (err) cb(err);
       if (match) {
         cb(null, true);

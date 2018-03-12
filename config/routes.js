@@ -60,7 +60,17 @@ module.exports.routes = {
   }//end of foo
   ,
   'GET /UserNameExists': 'UserController.UserNameExists',
-  'GET /EmailExists': 'UserController.EmailExists'
+  'GET /EmailExists': 'UserController.EmailExists',
+  'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
+
+  
+  
+  'PUT /CreateResetCode': 'UserController.CreateResetCode',
+  'PUT /setNewPassword': 'UserController.setNewPassword',
+
+  'PUT /sendResetEmail': 'EmailController.sendResetEmail'
+
+
 
 
 };

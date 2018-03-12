@@ -54,8 +54,17 @@ module.exports.policies = {
   'UserController': {
     'create': true, // We dont need authorization here, allowing public access
     'UserNameExists': true, // We dont need authorization here, allowing public access
-    'EmailExists': true // We dont need authorization here, allowing public access
+    'EmailExists': true, // We dont need authorization here, allowing public access
+    'CreateResetCode': true, // We dont need authorization here, allowing public access
+    'setNewPassword': true, // We dont need authorization here, allowing public access
   },
+
+  /* Debug */
+  'UserController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
+
+
 
   'AuthController': {
     '*': true // We dont need authorization here, allowing public access
@@ -64,8 +73,12 @@ module.exports.policies = {
   'RequestsController': {
     '*': true // We dont need authorization here, allowing public access
   },
-//debug
+  //debug
   'GrantController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
+
+  'EmailController': {
     '*': true // We dont need authorization here, allowing public access
   },
 
