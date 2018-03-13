@@ -23,7 +23,8 @@ module.exports = {
     //connection: 'productionMongo'
     //connection: 'localDiskDb'
   }
-
+  ,
+  environment: 'development'
   // models: {
   //   connection: 'someMongodbServer'
   // }
