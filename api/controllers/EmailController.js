@@ -39,6 +39,7 @@ module.exports = {
 
         var resetURL = '';
 
+        sails.log(sails.config.environment);
 
         if (sails.config.environment === 'production') {
             resetURL = 'http://hagen.foundation'
