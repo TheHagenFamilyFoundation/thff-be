@@ -42,7 +42,7 @@ module.exports = {
         sails.log(sails.config.environment);
 
         if (sails.config.environment === 'production') {
-            resetURL = 'http://hagen.foundation'
+            resetURL = 'http://www.hagen.foundation'
         }
         else {
             resetURL = 'http://localhost:4200'
