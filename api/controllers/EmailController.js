@@ -77,7 +77,7 @@ module.exports = {
 
         sails.log(req.body);
         const email = req.body;
-        
+
         sails.hooks.email.send(
             "resetPasswordConfirm",
             {
@@ -86,6 +86,30 @@ module.exports = {
             {
                 to: email.to,
                 subject: "Your THFF Password has Changed"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
+    }
+    ,
+    sendUserNameEmail: function (req, res) {
+
+        sails.log("sendUserNameEmail")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        sails.hooks.email.send(
+            "username",
+            {
+                Name: email.name,
+                To: email.to
+            },
+            {
+                to: email.to,
+                subject: "Your THFF Username"
             },
             function (err) {
                 console.log(err || "Mail Sent!");
