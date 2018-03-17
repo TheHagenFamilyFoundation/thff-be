@@ -69,7 +69,8 @@ module.exports.routes = {
   'PUT /setNewPassword': 'UserController.setNewPassword',
 
   'PUT /sendResetEmail': 'EmailController.sendResetEmail',
-  'PUT /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation'
+  'PUT /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation',
+  'PUT /sendUserNameEmail': 'EmailController.sendUserNameEmail'
 
 
 
