@@ -63,12 +63,13 @@ module.exports.routes = {
   'GET /EmailExists': 'UserController.EmailExists',
   'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
 
-  
-  
+
+
   'PUT /CreateResetCode': 'UserController.CreateResetCode',
   'PUT /setNewPassword': 'UserController.setNewPassword',
 
-  'PUT /sendResetEmail': 'EmailController.sendResetEmail'
+  'PUT /sendResetEmail': 'EmailController.sendResetEmail',
+  'PUT /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation'
 
 
 

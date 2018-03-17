@@ -68,6 +68,31 @@ module.exports = {
         )
 
         //res.send(200);
+    } //sendResetEmail
+
+    ,
+    sendResetEmailConfirmation: function (req, res) {
+
+        sails.log("sendResetEmailConfirmation")
+
+        sails.log(req.body);
+        const email = req.body;
+        
+        sails.hooks.email.send(
+            "resetPasswordConfirm",
+            {
+                Name: email.name,
+            },
+            {
+                to: email.to,
+                subject: "Your THFF Password has Changed"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
     }
+
 };
 
