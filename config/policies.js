@@ -57,12 +57,14 @@ module.exports.policies = {
     'EmailExists': true, // We dont need authorization here, allowing public access
     'CreateResetCode': true, // We dont need authorization here, allowing public access
     'setNewPassword': true, // We dont need authorization here, allowing public access
+    'ResetCodeCheck': true,
+    'find': true
   },
 
   /* Debug */
-  'UserController': {
-    '*': true // We dont need authorization here, allowing public access
-  },
+  // 'UserController': {
+  //   '*': true // We dont need authorization here, allowing public access
+  // },
 
 
 
