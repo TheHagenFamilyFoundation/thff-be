@@ -8,14 +8,10 @@
 module.exports = {
   index: function (req, res) {
 
-    sails.log("index")
-
-    // var username = req.param('username');
-    // var password = req.param('password');
+    sails.log("index - Login")
 
     var username = req.body.username;
     var password = req.body.password;
-
 
     if (!username || !password) {
       return res.json(401, { err: 'username and password required' });
@@ -28,11 +24,11 @@ module.exports = {
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.json(403, { err: 'forbidden' });
+          return res.json({ err: 'forbidden' });
         }
 
         if (!valid) {
-          return res.json(401, { err: 'invalid email or password' });
+          return res.json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
         } else {
           res.json({
             user: user,
