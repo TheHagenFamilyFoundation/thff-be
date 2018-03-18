@@ -80,6 +80,7 @@ module.exports.policies = {
     '*': true // We dont need authorization here, allowing public access
   },
 
+  //all email routes are ok to access
   'EmailController': {
     '*': true // We dont need authorization here, allowing public access
   },

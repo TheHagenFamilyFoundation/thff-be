@@ -116,6 +116,30 @@ module.exports = {
             }
         )
 
+    },
+
+    sendRegisterEmail: function (req, res) {
+
+        sails.log("sendRegisterEmail")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        sails.hooks.email.send(
+            "registerEmail",
+            {
+                Name: email.name,
+                To: email.to
+            },
+            {
+                to: email.to,
+                subject: "Thank You For Registering A User Account"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
     }
 
 };
