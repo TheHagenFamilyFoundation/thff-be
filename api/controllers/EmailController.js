@@ -116,6 +116,54 @@ module.exports = {
             }
         )
 
+    },
+
+    sendRegisterUserEmail: function (req, res) {
+
+        sails.log("sendRegisterUserEmail")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        sails.hooks.email.send(
+            "registerUserEmail",
+            {
+                Name: email.name,
+                To: email.to
+            },
+            {
+                to: email.to,
+                subject: "Thank You For Registering A User Account"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
+    },
+    sendRegisterOrgEmail: function (req, res) {
+
+        sails.log("sendRegisterOrgEmail")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        sails.hooks.email.send(
+            "registerOrgEmail",
+            {
+                Name: email.name, //username that registered the org
+                OrgName: email.orgName,
+                To: email.to
+            },
+            {
+                to: email.to,
+                subject: "Thank You For Registering A Org Account"
+            },
+            function (err) {
+                console.log(err || "Mail Sent!");
+            }
+        )
+
     }
 
 };
