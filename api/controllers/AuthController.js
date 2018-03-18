@@ -14,17 +14,17 @@ module.exports = {
     var password = req.body.password;
 
     if (!username || !password) {
-      return res.json(401, { err: 'username and password required' });
+      return res.json({ err: 'username and password required',message: 'Username and Password required' });
     }
 
     User.findOne({ username: username }, function (err, user) {
       if (!user) {
-        return res.json(401, { err: 'invalid username or password' });
+        return res.json({ err: 'invalid username or password',message: 'Invalid Username or Password' });
       }
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.json({ err: 'forbidden' });
+          return res.json({ err: 'forbidden',message: 'Forbidden' });
         }
 
         if (!valid) {
