@@ -35,7 +35,7 @@ module.exports = {
     ,
     UserNameExists: function (req, res) {
 
-       //sails.log("UserNameExists Function");
+        //sails.log("UserNameExists Function");
 
         sails.log(req.query.username);
 
@@ -170,14 +170,6 @@ module.exports = {
 
             if (validresetCode) {
 
-                //debug
-                // sails.log("validresetCode");
-                // sails.log(validresetCode);
-                // sails.log("validresetCode[0].resetTime");
-                // sails.log(validresetCode[0].resetTime);
-                // sails.log("validresetCode[0].resetPassword");
-                // sails.log(validresetCode[0].resetPassword);
-
                 if (validresetCode.length > 0) {
                     sails.log("reset code is valid"); //reset code was found
 
@@ -238,7 +230,6 @@ module.exports = {
 
         sails.log("setNewPassword");
 
-        var currentPassword = req.body.cp;
         var newPassword = req.body.np;
         var username = req.body.un;
 
@@ -249,64 +240,38 @@ module.exports = {
                 return res.json({ reset: false });
             }
 
-            //sails.log("bcrypt comparing");
-            //sails.log(user);
-            //sails.log("currentPassword = " + currentPassword);
-            //sails.log(user[0].encryptedPassword)
+            sails.log("bcrypt gen salting");
 
-            bcrypt.compare(currentPassword, user[0].encryptedPassword, function (err, match) {
-                if (err) {
-                    sails.log(err);
-                    return res.json({ reset: false });
-                }
+            bcrypt.genSalt(10, function (err, salt) {
+                if (err) return next(err);
 
-                sails.log(match);
+                bcrypt.hash(req.body.np, salt, null, function (err, hash) {
+                    if (err) return next(err);
+                    sails.log("new hash");
+                    sails.log(hash);
 
-                if (!match) {
-                    //current password doesn't match
-                    return res.json({
-                        reset: false,
-                        message: "Current Password doesn't match"
-                    })
-                }
-                else {
+                    //then set the user password to that hash
+                    User.update({
+                        id: user[0].id
+                    }, {
+                            //resetPassword: false,
+                            encryptedPassword: hash
+                        }
+                    ).exec(function (err, user) {
+                        if (err) {
+                            return res.json({ reset: false });
+                        }
 
-                    sails.log("bcrypt gen salting");
-
-                    bcrypt.genSalt(10, function (err, salt) {
-                        if (err) return next(err);
-
-                        bcrypt.hash(req.body.np, salt, null, function (err, hash) {
-                            if (err) return next(err);
-                            sails.log("new hash");
-                            sails.log(hash);
-
-                            //then set the user password to that hash
-                            User.update({
-                                id: user[0].id
-                            }, {
-                                    //resetPassword: false,
-                                    encryptedPassword: hash
-                                }
-                            ).exec(function (err, user) {
-                                if (err) {
-                                    return res.json({ reset: false });
-                                }
-
-                                //sails.log(user);
-                                sails.log('Reset Successful')
-                                return res.json({ reset: true, message: "Reset Successful" });
-                            })
-
-                        })
+                        //sails.log(user);
+                        sails.log('Reset Successful')
+                        return res.json({ reset: true, message: "Reset Successful" });
                     })
 
-                }
-
+                })
             })
 
         })
 
-    }//setNewPassword
+    }
 
 };
