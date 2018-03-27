@@ -1,8 +1,8 @@
 module.exports.email = {
     service: "Mailgun",
     auth: {
-      user: "postmaster@hagen.foundation",
-      pass: "064843331d131b03c8a6303e3556fedb"
+      user: process.env.MAILGUN_USER,
+      pass: process.env.MAILGUN_PASSWORD
     },
     from: "email@hagen.foundation",
     templateDir: "views/emailTemplates",
