@@ -75,10 +75,20 @@ module.exports.policies = {
   'RequestsController': {
     '*': true // We dont need authorization here, allowing public access
   },
+
+  'OrganizationController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
+
+
   //debug
   'GrantController': {
     '*': true // We dont need authorization here, allowing public access
   },
+
+
+
+
 
   //all email routes are ok to access
   'EmailController': {
