@@ -7,6 +7,8 @@
 
 module.exports = {
 
+  schema: true,
+
   attributes: {
 
     name: {
@@ -14,15 +16,19 @@ module.exports = {
       required: 'true',
       unique: true // Yes unique one
     },
-    users: {
-      type:'array',
-      required: 'true'
-    },
     director: {
       type: 'string',
-      required: 'true'
-    }
+      // required: 'true'
+    },
+    description: {
+      type: 'string'
+    },
+    users: {
+      collection: 'user',
+      via: 'organizations'
+    },
 
-  }
+  },
+
 };
 
