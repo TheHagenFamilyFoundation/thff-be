@@ -27,6 +27,11 @@ module.exports = {
     name: {
       type: 'string'
     },
+    organizations: {
+      collection: 'organization',
+      via: 'users',
+      dominant: true,
+    },
     resetCode: {
       type: 'string'
     },

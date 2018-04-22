@@ -70,8 +70,8 @@ module.exports.routes = {
 
   'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
   'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
-  'PUT /sendResetEmail': 'EmailController.sendResetEmail',
-  'PUT /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation',
-  'PUT /sendUserNameEmail': 'EmailController.sendUserNameEmail'
+  'POST /sendResetEmail': 'EmailController.sendResetEmail',
+  'POST /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation',
+  'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail'
 
 };
