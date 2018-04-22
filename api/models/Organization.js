@@ -9,6 +9,16 @@ module.exports = {
 
   attributes: {
 
+    name: {
+      type: 'string',
+      required: 'true',
+      unique: true // Yes unique one
+    },
+    users: {
+      type:'array',
+      required: 'true'
+    },
+
   }
 };
 
