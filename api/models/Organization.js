@@ -18,6 +18,10 @@ module.exports = {
       type:'array',
       required: 'true'
     },
+    director: {
+      type: 'string',
+      required: 'true'
+    }
 
   }
 };
