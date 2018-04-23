@@ -272,6 +272,99 @@ module.exports = {
 
         })
 
-    }
+    }//end of setNewPassword
+    ,
+
+    changePassword: function (req, res) {
+
+        sails.log("changePassword");
+
+        var currentPassword = req.body.currentPassword;
+        var newPassword = req.body.newPassword;
+        var username = req.body.username;
+
+        User.find({
+            username: username
+        }).exec(function (err, user) {
+            if (err) {
+                return res.json({ change: false });
+            }
+
+            bcrypt.compare(password, user.encryptedPassword, function (err, match) {
+                if (err) return next(err);
+                if (match) {
+
+                    sails.log("bcrypt gen salting");
+
+                    bcrypt.genSalt(10, function (err, salt) {
+                        if (err) return next(err);
+
+                        bcrypt.hash(newPassword, salt, null, function (err, hash) {
+                            if (err) return next(err);
+                            sails.log("new hash");
+                            sails.log(hash);
+
+                            //then set the user password to that hash
+                            User.update({
+                                id: user[0].id
+                            }, {
+                                    //resetPassword: false,
+                                    encryptedPassword: hash
+                                }
+                            ).exec(function (err, user) {
+                                if (err) {
+                                    return res.json({ change: false });
+                                }
+
+                                //sails.log(user);
+                                sails.log('Change Password Successful')
+                                return res.json({ change: true, message: "Change Password Successful" });
+                            })
+
+                        })
+                    })
+                }
+            })
+
+        })
+
+    }//end of changePassword
+    ,
+
+    changeEmail: function (req, res) {
+
+        sails.log("changeEmail");
+
+        var newEmail = req.body.email;
+        var username = req.body.username;
+
+        sails.log('newEmail', newEmail)
+
+        User.find({
+            username: username
+        }).exec(function (err, user) {
+            if (err) {
+                return res.json({ change: false });
+            }
+
+            //then set the user password to that hash
+            User.update({
+                id: user[0].id
+            }, {
+                    email: newEmail
+                }
+            ).exec(function (err, user) {
+                if (err) {
+                    return res.json({ change: false });
+                }
+
+                //sails.log(user);
+                sails.log('Change Email Successful')
+                return res.json({ change: true, message: "Change Email Successful" });
+            })
+
+        })
+
+    }//end of changeEmail
 
 };

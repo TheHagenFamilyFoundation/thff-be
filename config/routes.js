@@ -67,6 +67,9 @@ module.exports.routes = {
 
   'PUT /CreateResetCode': 'UserController.CreateResetCode',
   'PUT /setNewPassword': 'UserController.setNewPassword',
+  'PUT /changePassword': 'UserController.changePassword',
+  'PUT /changeEmail': 'UserController.changeEmail',
+
 
   'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
   'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
