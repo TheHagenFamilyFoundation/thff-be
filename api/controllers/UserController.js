@@ -245,7 +245,7 @@ module.exports = {
             bcrypt.genSalt(10, function (err, salt) {
                 if (err) return next(err);
 
-                bcrypt.hash(req.body.np, salt, null, function (err, hash) {
+                bcrypt.hash(newPassword, salt, null, function (err, hash) {
                     if (err) return next(err);
                     sails.log("new hash");
                     sails.log(hash);
@@ -279,6 +279,8 @@ module.exports = {
 
         sails.log("changePassword");
 
+        sails.log(req.body)
+
         var currentPassword = req.body.currentPassword;
         var newPassword = req.body.newPassword;
         var username = req.body.username;
@@ -290,17 +292,21 @@ module.exports = {
                 return res.json({ change: false });
             }
 
-            bcrypt.compare(password, user.encryptedPassword, function (err, match) {
-                if (err) return next(err);
+            var encrypted = user[0].encryptedPassword;
+
+            //compare current password to the current encrypted password
+            //if match then encrypt the new password and set the encrypted new password as the password
+            bcrypt.compare(currentPassword, encrypted, function (err, match) {
+                if (err || !match) return res.json({ change: false });
                 if (match) {
 
                     sails.log("bcrypt gen salting");
 
                     bcrypt.genSalt(10, function (err, salt) {
-                        if (err) return next(err);
+                        if (err) return res.json({ change: false });
 
                         bcrypt.hash(newPassword, salt, null, function (err, hash) {
-                            if (err) return next(err);
+                            if (err) return res.json({ change: false });
                             sails.log("new hash");
                             sails.log(hash);
 
