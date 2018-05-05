@@ -27,6 +27,9 @@ module.exports = {
       collection: 'user',
       via: 'organizations'
     },
+    organizationID: {
+      type: 'string',
+    }
 
   },
 

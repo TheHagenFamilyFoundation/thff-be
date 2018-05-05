@@ -13,9 +13,24 @@ module.exports = {
 
         sails.log('req.body', req.body)
 
-        let userId = req.body.userid;
+        var org = req.body;
 
-        Organization.create(req.body).exec(function (err, org) {
+        let userId = org.userid;
+
+        //create orgID
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for (var i = 0; i < 5; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+
+        var organizationID = text;
+        //add organizationID to org object
+
+        org.organizationID = organizationID;
+
+        Organization.create(org).exec(function (err, org) {
 
             sails.log("Organization.create")
 
