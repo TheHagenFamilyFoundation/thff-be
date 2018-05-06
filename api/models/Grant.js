@@ -9,6 +9,21 @@ module.exports = {
 
   attributes: {
 
+    name: {
+      type: 'string',
+      required: 'true',
+      unique: true // Yes unique one
+    },
+    description: {
+      type: 'string'
+    },
+    grantID: {
+      type: 'string'
+    },
+    organization: {
+      model: 'organization'
+    }
+
   }
 };
 
