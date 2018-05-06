@@ -27,8 +27,8 @@ module.exports = {
       collection: 'user',
       via: 'organizations'
     },
-    grants:{
-      collection: 'grant',
+    lois:{
+      collection: 'loi',
       via: 'organization'
     },
     organizationID: {

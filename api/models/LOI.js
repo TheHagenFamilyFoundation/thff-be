@@ -24,7 +24,7 @@ module.exports = {
       model: 'organization'
     },
     userID: {
-      
+      type: 'string'
     }
 
   }
