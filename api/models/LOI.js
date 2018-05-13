@@ -1,13 +1,11 @@
 /**
- * Organizations.js
+ * LOI.js
  *
  * @description :: TODO: You might write a short summary of how this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
 module.exports = {
-
-  schema: true,
 
   attributes: {
 
@@ -16,26 +14,19 @@ module.exports = {
       //required: 'true',
       unique: true // Yes unique one
     },
-    director: {
-      type: 'string',
-      // required: 'true'
-    },
     description: {
       type: 'string'
     },
-    users: {
-      collection: 'user',
-      via: 'organizations'
+    loiID: {
+      type: 'string'
     },
-    lois:{
-      collection: 'loi',
-      via: 'organization'
+    organization: {
+      model: 'organization'
     },
-    organizationID: {
-      type: 'string',
+    userID: {
+      type: 'string'
     }
 
-  },
-
+  }
 };
 

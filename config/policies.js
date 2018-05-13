@@ -88,7 +88,10 @@ module.exports.policies = {
     '*': true // We dont need authorization here, allowing public access
   },
 
-
+  //debug
+  'LOIController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
 
 
 
