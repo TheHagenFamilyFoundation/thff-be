@@ -203,7 +203,7 @@ module.exports = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     db: process.env.REDIS_DB,
-    pass: process.env.REDIS_PASSWORD
+    pass: process.env.REDIS_PASSWORD,
 
     /***************************************************************************
     *                                                                          *
@@ -256,10 +256,9 @@ module.exports = {
     * > Be sure to use the right protocol!  ("http://" vs. "https://")         *
     *                                                                          *
     ***************************************************************************/
-    // onlyAllowOrigins: [
-    //   'https://example.com',
-    //   'https://staging.example.com',
-    // ],
+    onlyAllowOrigins: [
+      'http://hagen.foundation',
+    ],
 
 
     /***************************************************************************
