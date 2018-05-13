@@ -187,7 +187,7 @@ module.exports = {
     *                                                                          *
     ***************************************************************************/
     adapter: '@sailshq/connect-redis',
-    url: 'redis://process.env.REDIS_DB:process.env.REDIS_PASSWORD@process.env.REDIS_HOST:process.env.REDIS_PORT/process.env.REDIS_DB',
+    url: 'redis://redistogo:78bf670d4eea2982bbaf8184c86572f6@crestfish.redistogo.com:11300/',
     //--------------------------------------------------------------------------
     // /\   OR, to avoid checking it in to version control, you might opt to
     // ||   set sensitive credentials like this using an environment variable.
