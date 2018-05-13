@@ -149,11 +149,11 @@ module.exports = {
     * > Be sure to use the right protocol!  ("http://" vs. "https://")         *
     *                                                                          *
     ***************************************************************************/
-    // cors: {
-    //   // allowOrigins: [
-    //   //   'https://example.com',
-    //   // ]
-    // },
+    cors: {
+      allowOrigins: [
+        'https://hagen.foundation',
+      ]
+    },
 
   },
 
@@ -199,7 +199,11 @@ module.exports = {
     //
     //--------------------------------------------------------------------------
 
-
+    adapter: 'redis',
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    db: process.env.REDIS_DB,
+    pass: process.env.REDIS_PASSWORD
 
     /***************************************************************************
     *                                                                          *
