@@ -10,6 +10,11 @@
  *
  */
 
+var locals = require('../local.js');
+
+// console.log(locals);
+// console.log(locals.datastores);
+
 module.exports = {
 
   /***************************************************************************
@@ -18,15 +23,8 @@ module.exports = {
    ***************************************************************************/
   appName: "Hagen Family Foundation Backend",
 
-  models: {
-    connection: 'localMongoDb'
-    //connection: 'productionMongo'
-    //connection: 'localDiskDb'
-  }
-  ,
+  datastores: locals.datastores,
+
   environment: 'development'
-  // models: {
-  //   connection: 'someMongodbServer'
-  // }
 
 };

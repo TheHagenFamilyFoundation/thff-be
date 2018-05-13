@@ -15,13 +15,13 @@ module.exports = {
   attributes: {
 
     email: {
-      type: 'email',
-      required: 'true',
+      type: 'string',
+      //required: 'true',
       unique: true // Yes unique one
     },
     username: {
       type: 'string',
-      required: 'true',
+      //required: 'true',
       unique: true
     },
     name: {
@@ -39,17 +39,17 @@ module.exports = {
       type: 'boolean'
     },
     resetTime: {
-      type: 'datetime'
+      type: 'ref', columnType: 'datetime'
     },
     encryptedPassword: {
       type: 'string'
     },
-    // We don't wan't to send back encrypted password either
-    toJSON: function () {
-      var obj = this.toObject();
-      delete obj.encryptedPassword;
-      return obj;
-    }
+  },
+  // We don't wan't to send back encrypted password either
+  customtoJSON: function () {
+    var obj = this.toObject();
+    delete obj.encryptedPassword;
+    return obj;
   },
   // Here we encrypt password before creating a User
   beforeCreate: function (values, next) {

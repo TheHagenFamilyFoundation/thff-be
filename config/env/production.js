@@ -19,8 +19,10 @@ module.exports = {
 
   appName: "Hagen Family Foundation Backend",
 
-  models: {
-    connection: 'productionMongo'
+  datastores: {
+    default: {
+      url: process.env.MONGODB_URI
+    }
   },
   environment: 'production'
   // session: {

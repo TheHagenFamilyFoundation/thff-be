@@ -42,10 +42,10 @@ module.exports = {
             sails.log("Organization data has been created", org, userId);
 
             // Adding users to org (userId has a value here);
-            org.users.add(userId);
+            org.users.addToCollection(userId);
 
             // Save
-            org.save(function (err) { console.log('err', err) });
+            org.replaceCollection(function (err) { console.log('err', err) });
         });
 
     }

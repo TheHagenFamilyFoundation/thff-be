@@ -45,7 +45,7 @@ module.exports = {
             gr.organization = orgID
 
             // Save
-            gr.save(function (err) { console.log('err', err) });
+            gr.replaceCollection(function (err) { console.log('err', err) });
         });
 
     }
