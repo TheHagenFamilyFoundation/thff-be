@@ -46,5 +46,9 @@
     "url": "git://github.com/anonymous node/sails user/thff-be.git"
   },
   "author": "anonymous node/sails user",
-  "license": ""
+  "license": "",
+  "engines": {
+    "node": "8.11.1",
+    "npm": "6.0.0"
+  }
 }
