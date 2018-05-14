@@ -151,7 +151,7 @@ module.exports = {
     ***************************************************************************/
     cors: {
       allowOrigins: [
-        'http://hagen.foundation',
+        'http://www.hagen.foundation', 'https://hagenfoundation.herokuapp.com'
       ]
     },
 
