@@ -35,7 +35,7 @@ module.exports = {
             sails.log("Organization.create")
 
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             // org is filled with user new data..

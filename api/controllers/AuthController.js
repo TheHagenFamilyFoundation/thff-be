@@ -14,23 +14,23 @@ module.exports = {
     var password = req.body.password;
 
     if (!username || !password) {
-      return res.json(401, { err: 'username and password required' });
+      return res.status(401).json({ err: 'username and password required' });
     }
 
     User.findOne({ username: username }, function (err, user) {
       if (!user) {
-        return res.json(401, { err: 'invalid username or password' });
+        return res.status(401).json({ err: 'invalid username or password' });
       }
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.json({ err: 'forbidden' });
+          return res.status(err.status).json({ err: 'forbidden' });
         }
 
         if (!valid) {
-          return res.json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
+          return res.status(401).json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
         } else {
-          res.json({
+          res.status(200).json({
             user: user,
             token: jwToken.issue({ id: user.id })
           });

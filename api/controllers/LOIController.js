@@ -35,7 +35,7 @@ module.exports = {
             sails.log("Grant.create")
 
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             // gr is filled with organization new data..

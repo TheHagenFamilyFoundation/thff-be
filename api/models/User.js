@@ -42,14 +42,14 @@ module.exports = {
       type: 'ref', columnType: 'datetime'
     },
     encryptedPassword: {
-      type: 'string'
-    },
+      type: 'string',
+      protect: true,
+    }
   },
   // We don't wan't to send back encrypted password either
-  customtoJSON: function () {
-    var obj = this.toObject();
-    delete obj.encryptedPassword;
-    return obj;
+  customToJSON: function () {
+    // Return a shallow copy of this record with the password and ssn removed.
+    return _.omit(this, ['encryptedPassword', 'resetPassword'])
   },
   // Here we encrypt password before creating a User
   beforeCreate: function (values, next) {

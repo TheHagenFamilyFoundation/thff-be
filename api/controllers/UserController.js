@@ -13,7 +13,7 @@ module.exports = {
         sails.log("user create")
 
         if (req.body.password !== req.body.confirmPassword) {
-            return res.json(401, { err: 'Password doesn\'t match, What a shame!' });
+            return res.status(401).json({ err: 'Password doesn\'t match, What a shame!' });
         }
 
         sails.log(req.body.username);
@@ -23,12 +23,12 @@ module.exports = {
             sails.log("User.create")
 
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
             // If user created successfuly we return user and token as response
             if (user) {
                 // NOTE: payload is { id: user.id}
-                res.json(200, { user: user, token: jwToken.issue({ id: user.id }) });
+                res.status(200).json({ user: user, token: jwToken.issue({ id: user.id }) });
             }
         });
     }
@@ -43,7 +43,7 @@ module.exports = {
             username: req.query.username
         }).exec(function (err, userfound) {
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             if (userfound) {
@@ -51,11 +51,11 @@ module.exports = {
 
                 if (userfound.length > 0) {
                     sails.log("user is found");
-                    return res.json({ userfound: true });
+                    return res.status(200).json({ userfound: true });
                 }
                 else {
                     sails.log("user is not found");
-                    return res.json({ userfound: false });
+                    return res.status(401).json({ userfound: false });
                 }
             }//end of userfound if
 
@@ -74,7 +74,7 @@ module.exports = {
             email: req.query.email
         }).exec(function (err, emailfound) {
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             if (emailfound) {
@@ -82,11 +82,11 @@ module.exports = {
 
                 if (emailfound.length > 0) {
                     sails.log("email is found");
-                    return res.json({ emailfound: true });
+                    return res.status(200).json({ emailfound: true });
                 }
                 else {
                     sails.log("email is not found");
-                    return res.json({ emailfound: false });
+                    return res.status(401).json({ emailfound: false });
                 }
             }//end of emailfound if
 
@@ -104,14 +104,13 @@ module.exports = {
             email: user.email
         }).exec(function (err, emailfound) {
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             if (emailfound) {
 
                 if (emailfound.length > 0) {
                     sails.log("email is found");
-                    //return res.json({ emailfound: true });
                     //debug
                     sails.log(emailfound[0].id);
 
@@ -139,16 +138,14 @@ module.exports = {
                         .exec(function (err, emailfound) {
 
                             sails.log(emailfound)
-                            //res.send(200);
-                            //return res.json({ resetCodeCreated: true, resetCode: text, resetTime: now });
-                            return res.json({ resetCodeCreated: true, resetCode: text });
+                            return res.status(200).json({ resetCodeCreated: true, resetCode: text });
 
                         })
 
                 }
                 else {
                     sails.log("email is not found");
-                    return res.json({ resetCodeCreated: false });
+                    return res.status(401).json({ resetCodeCreated: false });
                     //res.send(404);
                 }
             }//end of emailfound if
@@ -165,7 +162,7 @@ module.exports = {
             resetCode: req.query.resetCode
         }).exec(function (err, validresetCode) {
             if (err) {
-                return res.json(err.status, { err: err });
+                return res.status(err.status).json({ err: err });
             }
 
             if (validresetCode) {
@@ -183,7 +180,7 @@ module.exports = {
                             }
                         ).exec(function (err, user) {
                             if (err) {
-                                return res.json({ reset: false });
+                                return res.status(err.status).json({ reset: false });
                             }
 
                             //now for checking the resetTime
@@ -199,26 +196,26 @@ module.exports = {
 
                                 sails.log("reset time is valid");
 
-                                return res.json({ validresetCode: true, message: "reset time is valid" });
+                                return res.status(200).json({ validresetCode: true, message: "reset time is valid" });
                             }
                             else {
 
                                 sails.log("reset time is invalid");
 
                                 //reset time is invalid
-                                return res.json({ validresetCode: false, message: "Reset password link has expired. Please try again." });
+                                return res.status(401).json({ validresetCode: false, message: "Reset password link has expired. Please try again." });
                             }
                         })
                     }
                     else {
                         //resetPassword is false
-                        return res.json({ validresetCode: false, message: "Reset code has already been used. Please try again." });
+                        return res.status(401).json({ validresetCode: false, message: "Reset code has already been used. Please try again." });
                     }
 
                 }
                 else {
                     sails.log("reset code is invalid");
-                    return res.json({ validresetCode: false, message: "Reset code is invalid." });
+                    return res.status(401).json({ validresetCode: false, message: "Reset code is invalid." });
                 }
             }//end of resetCode if
 
@@ -237,7 +234,7 @@ module.exports = {
             username: username
         }).exec(function (err, user) {
             if (err) {
-                return res.json({ reset: false });
+                return res.status(err.status).json({ reset: false });
             }
 
             sails.log("bcrypt gen salting");
@@ -259,12 +256,12 @@ module.exports = {
                         }
                     ).exec(function (err, user) {
                         if (err) {
-                            return res.json({ reset: false });
+                            return res.status(err.status).json({ reset: false });
                         }
 
                         //sails.log(user);
                         sails.log('Reset Successful')
-                        return res.json({ reset: true, message: "Reset Successful" });
+                        return res.status(200).json({ reset: true, message: "Reset Successful" });
                     })
 
                 })
@@ -289,7 +286,7 @@ module.exports = {
             username: username
         }).exec(function (err, user) {
             if (err) {
-                return res.json({ change: false });
+                return res.status(err).json({ change: false });
             }
 
             var encrypted = user[0].encryptedPassword;
@@ -297,16 +294,16 @@ module.exports = {
             //compare current password to the current encrypted password
             //if match then encrypt the new password and set the encrypted new password as the password
             bcrypt.compare(currentPassword, encrypted, function (err, match) {
-                if (err || !match) return res.json({ change: false });
+                if (err || !match) return res.status(err.status).json({ change: false });
                 if (match) {
 
                     sails.log("bcrypt gen salting");
 
                     bcrypt.genSalt(10, function (err, salt) {
-                        if (err) return res.json({ change: false });
+                        if (err) return res.status(err.status).json({ change: false });
 
                         bcrypt.hash(newPassword, salt, null, function (err, hash) {
-                            if (err) return res.json({ change: false });
+                            if (err) return res.status(err.status).json({ change: false });
                             sails.log("new hash");
                             sails.log(hash);
 
@@ -319,12 +316,12 @@ module.exports = {
                                 }
                             ).exec(function (err, user) {
                                 if (err) {
-                                    return res.json({ change: false });
+                                    return res.status(err.status).json({ change: false });
                                 }
 
                                 //sails.log(user);
                                 sails.log('Change Password Successful')
-                                return res.json({ change: true, message: "Change Password Successful" });
+                                return res.status(200).json({ change: true, message: "Change Password Successful" });
                             })
 
                         })
@@ -350,7 +347,7 @@ module.exports = {
             username: username
         }).exec(function (err, user) {
             if (err) {
-                return res.json({ change: false });
+                return res.status(err.status).json({ change: false });
             }
 
             //then set the user password to that hash
@@ -361,12 +358,12 @@ module.exports = {
                 }
             ).exec(function (err, user) {
                 if (err) {
-                    return res.json({ change: false });
+                    return res.status(err.status).json({ change: false });
                 }
 
                 //sails.log(user);
                 sails.log('Change Email Successful')
-                return res.json({ change: true, message: "Change Email Successful" });
+                return res.status(200).json({ change: true, message: "Change Email Successful" });
             })
 
         })
