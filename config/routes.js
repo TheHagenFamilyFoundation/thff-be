@@ -59,6 +59,10 @@ module.exports.routes = {
     );
   }//end of foo
   ,
+
+  'GET /authTest': 'AuthController.authTest',
+  'PUT /login': 'AuthController.login',
+
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
   'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',

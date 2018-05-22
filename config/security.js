@@ -30,9 +30,8 @@ module.exports.security = {
 
   cors: {
     allRoutes: true,
-    allowOrigins: '*',
-    //allowOrigins: ['http://example.com','https://api.example.com','http://blog.example.com:1337','https://foo.com:8888']
-    allowCredentials: false,
+    allowOrigins: ['http://hagen.foundation', 'http://localhost:4200'],
+    allowCredentials: false
   },
 
 

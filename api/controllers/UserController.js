@@ -35,8 +35,6 @@ module.exports = {
     ,
     UserNameExists: function (req, res) {
 
-        //sails.log("UserNameExists Function");
-
         sails.log(req.query.username);
 
         User.find({
@@ -55,7 +53,7 @@ module.exports = {
                 }
                 else {
                     sails.log("user is not found");
-                    return res.status(401).json({ userfound: false });
+                    return res.status(200).json({ userfound: false });
                 }
             }//end of userfound if
 
@@ -65,8 +63,6 @@ module.exports = {
 
     ,
     EmailExists: function (req, res) {
-
-        //sails.log("EmailExists Function");
 
         sails.log(req.query.email);
 
@@ -86,7 +82,7 @@ module.exports = {
                 }
                 else {
                     sails.log("email is not found");
-                    return res.status(401).json({ emailfound: false });
+                    return res.status(200).json({ emailfound: false });
                 }
             }//end of emailfound if
 

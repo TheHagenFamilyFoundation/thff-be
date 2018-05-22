@@ -6,9 +6,10 @@
  */
 
 module.exports = {
-  index: function (req, res) {
 
-    sails.log("index - Login")
+  login: function (req, res) {
+
+    sails.log("Login")
 
     var username = req.body.username;
     var password = req.body.password;
@@ -37,5 +38,20 @@ module.exports = {
         }
       });
     })
+  },
+  authTest: function (req, res) {
+
+    sails.log('AuthTest')
+
+    return res.status(200).json(
+      {
+        "employees": [
+          { "firstName": "John", "lastName": "Doe" },
+          { "firstName": "Anna", "lastName": "Smith" },
+          { "firstName": "Peter", "lastName": "Jones" }
+        ]
+      })
+
   }
+
 };
