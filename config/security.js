@@ -31,7 +31,8 @@ module.exports.security = {
   cors: {
     allRoutes: true,
     allowOrigins: ['http://hagen.foundation', 'http://localhost:4200'],
-    allowCredentials: false
+    allowCredentials: false,
+    allowRequestHeaders: ['content-type', 'x-csrf-token']
   },
 
 
@@ -49,6 +50,6 @@ module.exports.security = {
   *                                                                           *
   ****************************************************************************/
 
-  csrf: true
+  csrf: false
 
 };
