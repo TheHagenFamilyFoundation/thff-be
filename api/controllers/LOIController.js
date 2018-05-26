@@ -9,15 +9,15 @@ module.exports = {
 
     create: function (req, res) {
 
-        sails.log("grant create");
+        sails.log("loi create");
 
         sails.log('req.body', req.body)
 
-        var gr = req.body; //-grant request
+        var loi = req.body; //loi
 
-        let orgID = gr.orgID;
+        let orgID = loi.orgID;
 
-        //create grantID
+        //create loiID
         var text = "";
         var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -25,27 +25,27 @@ module.exports = {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
 
-        var grantID = text;
-        //add grantID to gr object - grant request
+        var loiID = text;
+        //add loiID to loi object - loi
 
-        gr.grantID = grantID;
+        loi.loiID = loiID;
 
-        Grant.create(gr).exec(function (err, gr) {
+        LOI.create(loi).exec(function (err, loi) {
 
-            sails.log("Grant.create")
+            sails.log("LOI.create")
 
             if (err) {
                 return res.status(err.status).json({ err: err });
             }
 
-            // gr is filled with organization new data..
-            sails.log("Grand Request data has been created", gr, orgID);
+            // loi is filled with organization new data..
+            sails.log("LOI data has been created", loi, orgID);
 
-            // Adding organization to Grant Request
-            gr.organization = orgID
+            // Adding organization to LOI
+            loi.organization = loiID
 
             // Save
-            gr.replaceCollection(function (err) { console.log('err', err) });
+            loi.replaceCollection(function (err) { console.log('err', err) });
         });
 
     }
