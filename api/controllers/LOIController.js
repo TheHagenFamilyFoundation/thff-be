@@ -52,19 +52,8 @@ module.exports = {
                 // loi is filled with organization new data..
                 sails.log("LOI data has been created", newLOI, orgID);
 
-                // LOI.addToCollection(newLOI.id, 'organization').members(orgID).then(function () {
-
-                //     sails.log(newLOI)
-
-                //     return res.json({ 'status': true, 'result': newLOI });
-                // })
-
                 return res.json({ 'status': true, 'result': newLOI });
 
-                // // Adding organization to LOI
-                // loi.organization = orgID
-
-                // sails.log('loi', loi)
             })
 
 
