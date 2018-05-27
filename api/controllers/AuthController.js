@@ -6,36 +6,52 @@
  */
 
 module.exports = {
-  index: function (req, res) {
 
-    sails.log("index - Login")
+  login: function (req, res) {
+
+    sails.log("Login")
 
     var username = req.body.username;
     var password = req.body.password;
 
     if (!username || !password) {
-      return res.json({ err: 'username and password required',message: 'Username and Password required' });
+      return res.status(401).json({ err: 'username and password required' });
     }
 
     User.findOne({ username: username }, function (err, user) {
       if (!user) {
-        return res.json({ err: 'invalid username or password',message: 'Invalid Username or Password' });
+        return res.status(401).json({ err: 'invalid username or password' });
       }
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.json({ err: 'forbidden',message: 'Forbidden' });
+          return res.status(err.status).json({ err: 'forbidden' });
         }
 
         if (!valid) {
-          return res.json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
+          return res.status(401).json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
         } else {
-          res.json({
+          res.status(200).json({
             user: user,
             token: jwToken.issue({ id: user.id })
           });
         }
       });
     })
+  },
+  authTest: function (req, res) {
+
+    sails.log('AuthTest')
+
+    return res.status(200).json(
+      {
+        "employees": [
+          { "firstName": "John", "lastName": "Doe" },
+          { "firstName": "Anna", "lastName": "Smith" },
+          { "firstName": "Peter", "lastName": "Jones" }
+        ]
+      })
+
   }
+
 };

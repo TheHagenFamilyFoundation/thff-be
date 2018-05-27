@@ -7,7 +7,7 @@
 
 module.exports = {
 
-    create: function (req, res) {
+    create: function (req, res, next) {
 
         sails.log("organization create");
 
@@ -30,23 +30,23 @@ module.exports = {
 
         org.organizationID = organizationID;
 
-        Organization.create(org).exec(function (err, org) {
+        Organization.create(org)
+            .then(function (newOrg, err) {
 
-            sails.log("Organization.create")
+                if (err) {
+                    return res.status(err.status).json({ err: err });
+                }
 
-            if (err) {
-                return res.json(err.status, { err: err });
-            }
+                sails.log(newOrg)
 
-            // org is filled with user new data..
-            sails.log("Organization data has been created", org, userId);
+                Organization.addToCollection(newOrg.id, 'users').members(userId).then(function () {
 
-            // Adding users to org (userId has a value here);
-            org.users.addToCollection(userId);
+                    sails.log(newOrg)
 
-            // Save
-            org.replaceCollection(function (err) { console.log('err', err) });
-        });
+                    return res.json({ 'status': true, 'result': newOrg });
+                })
+
+            })
 
     }
 

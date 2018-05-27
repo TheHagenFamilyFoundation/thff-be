@@ -59,6 +59,14 @@ module.exports.routes = {
     );
   }//end of foo
   ,
+
+
+  "GET /csrfToken": { action: "security/grant-csrf-token" },
+
+
+  'GET /authTest': 'AuthController.authTest',
+  'PUT /login': 'AuthController.login',
+
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
   'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
