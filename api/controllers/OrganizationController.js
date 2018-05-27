@@ -31,7 +31,11 @@ module.exports = {
         org.organizationID = organizationID;
 
         Organization.create(org)
-            .then(function (newOrg) {
+            .then(function (newOrg, err) {
+
+                if (err) {
+                    return res.status(err.status).json({ err: err });
+                }
 
                 sails.log(newOrg)
 
