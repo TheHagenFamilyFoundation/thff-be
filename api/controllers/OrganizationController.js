@@ -7,7 +7,7 @@
 
 module.exports = {
 
-    create: function (req, res) {
+    create: function (req, res, next) {
 
         sails.log("organization create");
 
@@ -30,23 +30,44 @@ module.exports = {
 
         org.organizationID = organizationID;
 
-        Organization.create(org).exec(function (err, org) {
+        //good stuff - make function async
+        // var newOrg = await Organization.create(org).fetch();
+        // newOrg = await Organization.addToCollection(newOrg.id, 'users').members(userId);
 
-            sails.log("Organization.create")
+        // if (newOrg) {
+        //     sails.log('after the await')
+        //     sails.log(newOrg)
+        //     res.json({ 'status': true, 'result': newOrg });
+        // }
 
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
+        Organization.create(org)
+            .then(function (newOrg) {
 
-            // org is filled with user new data..
-            sails.log("Organization data has been created", org, userId);
+                sails.log(newOrg)
 
-            // Adding users to org (userId has a value here);
-            org.users.addToCollection(userId);
+                Organization.addToCollection(newOrg.id, 'users').members(userId).then(function () {
 
-            // Save
-            org.replaceCollection(function (err) { console.log('err', err) });
-        });
+                    sails.log(newOrg)
+
+                    return res.json({ 'status': true, 'result': newOrg });
+                })
+
+            })
+
+
+
+        //sails.log('after the await')
+
+        // var updatedOrg = await Organization.addToCollection(newOrg.id, 'users').members(userId);
+
+        // if (updatedOrg) {
+        //     sails.log(updatedOrg)
+        //     res.json({ 'status': true, 'result': updatedOrg });
+        // }
+
+        // sails.log('after the 2nd await')
+
+        // sails.log('outputting newOrg', newOrg)
 
     }
 
