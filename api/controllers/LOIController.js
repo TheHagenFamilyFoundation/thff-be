@@ -7,7 +7,7 @@
 
 module.exports = {
 
-    create: function (req, res) {
+    create: function (req, res, next) {
 
         sails.log("loi create");
 
@@ -15,7 +15,7 @@ module.exports = {
 
         var loi = req.body; //loi
 
-        let orgID = loi.orgID;
+        let orgID = loi.org;
 
         //create loiID
         var text = "";
@@ -30,24 +30,49 @@ module.exports = {
 
         loi.loiID = loiID;
 
-        LOI.create(loi).exec(function (err, loi) {
+        let query = {};
+        query.organizationID = orgID;
 
-            sails.log("LOI.create")
+        Organization.find(query).then(function (org, err) {
 
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
+            sails.log('found org', org)
+            sails.log('found org', org[0].id)
 
-            // loi is filled with organization new data..
-            sails.log("LOI data has been created", loi, orgID);
+            loi.organization = org[0].id;
 
-            // Adding organization to LOI
-            loi.organization = loiID
+            sails.log(loi)
 
-            // Save
-            loi.replaceCollection(function (err) { console.log('err', err) });
-        });
+            LOI.create(loi).then(function (newLOI, err) {
+                sails.log("LOI.create")
+
+                if (err) {
+                    return res.status(err.status).json({ err: err });
+                }
+
+                // loi is filled with organization new data..
+                sails.log("LOI data has been created", newLOI, orgID);
+
+                // LOI.addToCollection(newLOI.id, 'organization').members(orgID).then(function () {
+
+                //     sails.log(newLOI)
+
+                //     return res.json({ 'status': true, 'result': newLOI });
+                // })
+
+                return res.json({ 'status': true, 'result': newLOI });
+
+                // // Adding organization to LOI
+                // loi.organization = orgID
+
+                // sails.log('loi', loi)
+            })
+
+
+        })
+
+
 
     }
+
 };
 
