@@ -30,16 +30,6 @@ module.exports = {
 
         org.organizationID = organizationID;
 
-        //good stuff - make function async
-        // var newOrg = await Organization.create(org).fetch();
-        // newOrg = await Organization.addToCollection(newOrg.id, 'users').members(userId);
-
-        // if (newOrg) {
-        //     sails.log('after the await')
-        //     sails.log(newOrg)
-        //     res.json({ 'status': true, 'result': newOrg });
-        // }
-
         Organization.create(org)
             .then(function (newOrg) {
 
@@ -53,21 +43,6 @@ module.exports = {
                 })
 
             })
-
-
-
-        //sails.log('after the await')
-
-        // var updatedOrg = await Organization.addToCollection(newOrg.id, 'users').members(userId);
-
-        // if (updatedOrg) {
-        //     sails.log(updatedOrg)
-        //     res.json({ 'status': true, 'result': updatedOrg });
-        // }
-
-        // sails.log('after the 2nd await')
-
-        // sails.log('outputting newOrg', newOrg)
 
     }
 
