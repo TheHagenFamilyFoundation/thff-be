@@ -32,7 +32,7 @@ module.exports.security = {
     allRoutes: true,
     allowOrigins: ['http://hagen.foundation', 'http://localhost:4200'],
     allowCredentials: false,
-    allowRequestHeaders: ['content-type', 'x-csrf-token']
+    allowRequestHeaders: 'content-type,x-csrf-token'
   },
 
 

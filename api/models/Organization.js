@@ -14,7 +14,6 @@ module.exports = {
     name: {
       type: 'string',
       //required: 'true',
-      unique: true // Yes unique one
     },
     director: {
       type: 'string',

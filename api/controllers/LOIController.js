@@ -7,17 +7,17 @@
 
 module.exports = {
 
-    create: function (req, res) {
+    create: function (req, res, next) {
 
-        sails.log("grant create");
+        sails.log("loi create");
 
         sails.log('req.body', req.body)
 
-        var gr = req.body; //-grant request
+        var loi = req.body; //loi
 
-        let orgID = gr.orgID;
+        let orgID = loi.org;
 
-        //create grantID
+        //create loiID
         var text = "";
         var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -25,29 +25,43 @@ module.exports = {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
 
-        var grantID = text;
-        //add grantID to gr object - grant request
+        var loiID = text;
+        //add loiID to loi object - loi
 
-        gr.grantID = grantID;
+        loi.loiID = loiID;
 
-        Grant.create(gr).exec(function (err, gr) {
+        let query = {};
+        query.organizationID = orgID;
 
-            sails.log("Grant.create")
+        Organization.find(query).then(function (org, err) {
 
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
+            sails.log('found org', org)
+            sails.log('found org', org[0].id)
 
-            // gr is filled with organization new data..
-            sails.log("Grand Request data has been created", gr, orgID);
+            loi.organization = org[0].id;
 
-            // Adding organization to Grant Request
-            gr.organization = orgID
+            sails.log(loi)
 
-            // Save
-            gr.replaceCollection(function (err) { console.log('err', err) });
-        });
+            LOI.create(loi).then(function (newLOI, err) {
+                sails.log("LOI.create")
+
+                if (err) {
+                    return res.status(err.status).json({ err: err });
+                }
+
+                // loi is filled with organization new data..
+                sails.log("LOI data has been created", newLOI, orgID);
+
+                return res.json({ 'status': true, 'result': newLOI });
+
+            })
+
+
+        })
+
+
 
     }
+
 };
 

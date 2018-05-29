@@ -23,7 +23,7 @@ module.exports = {
     organization: {
       model: 'organization'
     },
-    userID: {
+    userid: {
       type: 'string'
     }
 
