@@ -60,9 +60,7 @@ module.exports.routes = {
   }//end of foo
   ,
 
-
-  "GET /csrfToken": { action: "security/grant-csrf-token" },
-
+  'GET /csrfToken': { action: 'security/grant-csrf-token' },
 
   'GET /authTest': 'AuthController.authTest',
   'PUT /login': 'AuthController.login',

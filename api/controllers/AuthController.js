@@ -15,12 +15,16 @@ module.exports = {
     var password = req.body.password;
 
     if (!username || !password) {
-      return res.status(401).json({ err: 'username and password required' });
+      return res.status(401).json({ err: 'username and password required', message: 'Username and Password required' });
     }
 
-    User.findOne({ username: username }, function (err, user) {
+    var query = {};
+    query.username = username;
+
+    User.findOne(query, function (err, user) {
+
       if (!user) {
-        return res.status(401).json({ err: 'invalid username or password' });
+        return res.status(401).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
       }
 
       User.comparePassword(password, user, function (err, valid) {

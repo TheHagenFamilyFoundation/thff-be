@@ -25,6 +25,12 @@ module.exports = {
     },
     userid: {
       type: 'string'
+    },
+    submitted: {
+      type: 'boolean'
+    },
+    submittedOn: {
+      type: 'string'
     }
 
   }
