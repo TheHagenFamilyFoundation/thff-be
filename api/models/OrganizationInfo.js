@@ -65,6 +65,11 @@ module.exports = {
       // -fax number
       type: 'number'
     },
+    owner:{
+      model:'organization',
+      unique: true
+    }
+
 
   },
 

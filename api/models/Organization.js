@@ -26,12 +26,16 @@ module.exports = {
       collection: 'user',
       via: 'organizations'
     },
-    lois:{
+    lois: {
       collection: 'loi',
       via: 'organization'
     },
     organizationID: {
       type: 'string',
+    },
+    info: {
+      collection: 'organizationInfo',
+      via: 'owner'
     }
 
   },
