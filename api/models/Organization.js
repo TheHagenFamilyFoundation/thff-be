@@ -35,7 +35,7 @@ module.exports = {
     },
     info: {
       collection: 'organizationInfo',
-      via: 'owner'
+      via: 'organization'
     }
 
   },
