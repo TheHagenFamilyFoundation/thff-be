@@ -93,6 +93,11 @@ module.exports.policies = {
     '*': true // We dont need authorization here, allowing public access
   },
 
+  //debug
+  'OrganizationInfoController': {
+    '*': true // We dont need authorization here, allowing public access
+  },
+
 
 
   //all email routes are ok to access
