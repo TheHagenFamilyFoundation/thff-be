@@ -9,6 +9,9 @@ module.exports = {
 
   attributes: {
 
+    organizationInfoID: {
+      type: 'string'
+    },
     legalName: {
       //  -Legal Name of Organization Applying: 
       type: 'string',
