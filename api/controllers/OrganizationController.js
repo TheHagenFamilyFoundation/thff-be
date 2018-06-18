@@ -15,7 +15,7 @@ module.exports = {
 
         var org = req.body;
 
-        let userId = org.userid;
+        let userID = org.userid;
 
         //create orgID
         var text = "";
@@ -39,7 +39,8 @@ module.exports = {
 
                 sails.log(newOrg)
 
-                Organization.addToCollection(newOrg.id, 'users').members(userId).then(function () {
+                //add the user who created the org into the users list
+                Organization.addToCollection(newOrg.id, 'users').members(userID).then(function () {
 
                     sails.log(newOrg)
 
@@ -47,6 +48,27 @@ module.exports = {
                 })
 
             })
+
+    },
+    addUser: function (req, res, next) {
+
+        sails.log('addUser', req.body);
+
+        let orgID = req.body.org.id;
+        let users = req.body.users;
+
+        users.forEach(element => {
+
+            sails.log('element', element)
+            let userID = element.id;
+
+            Organization.addToCollection(orgID, 'users').members(userID).then(function () {
+
+            })
+
+        });
+
+        return res.json({ 'status': true, 'result': users });
 
     }
 
