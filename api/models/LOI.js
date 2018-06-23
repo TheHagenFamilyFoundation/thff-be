@@ -31,7 +31,12 @@ module.exports = {
     },
     submittedOn: {
       type: 'string'
+    },
+    info: {
+      collection: 'loiInfo',
+      via: 'loi'
     }
+
 
   }
 };
