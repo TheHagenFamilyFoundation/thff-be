@@ -14,7 +14,7 @@ module.exports = {
     projectTitle: {
       type: 'string'
     },
-    Purpose: {
+    purpose: {
       //2000 characters maximum
       type: 'string'
     },
@@ -24,7 +24,7 @@ module.exports = {
     projectEndDate: {
       type: 'string'
     },
-    AmountRequested: {
+    amountRequested: {
       type: 'string'
     },
     totalProjectCost: {
