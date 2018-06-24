@@ -8,9 +8,6 @@
 module.exports = {
 
   attributes: {
-    loiID: {
-      type: 'string'
-    },
     projectTitle: {
       type: 'string'
     },
