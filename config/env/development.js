@@ -25,6 +25,8 @@ module.exports = {
 
   datastores: locals.datastores,
 
-  environment: 'development'
+  environment: 'development',
+
+  verifyEmailAddresses: true,
 
 };

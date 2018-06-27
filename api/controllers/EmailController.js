@@ -6,6 +6,7 @@
  */
 
 module.exports = {
+
     create: function (req, res) {
 
         sails.log('email create')
@@ -118,27 +119,45 @@ module.exports = {
 
     },
 
-    sendRegisterUserEmail: function (req, res) {
+    sendRegisterUserEmail: async function (req, res) {
 
         sails.log("sendRegisterUserEmail")
 
         sails.log(req.body);
         const email = req.body;
 
-        sails.hooks.email.send(
-            "registerUserEmail",
-            {
+        // Send "confirm account" email
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.to,
+            subject: 'Thank You For Registering A User Account', //Please confirm your account
+            template: 'email-register-user',
+            templateData: {
                 Name: email.name,
-                To: email.to
+                //To: email.to
+                // fullName: inputs.fullName,
+                // token: newUserRecord.emailProofToken
             },
-            {
-                to: email.to,
-                subject: "Thank You For Registering A User Account"
-            },
-            function (err) {
-                console.log(err || "Mail Sent!");
-            }
-        )
+            layout: false
+        });
+
+
+        // sails.hooks.email.send(
+        //     "registerUserEmail",
+        //     {
+        //         Name: email.name,
+        //         To: email.to
+        //     },
+        //     {
+        //         to: email.to,
+        //         subject: "Thank You For Registering A User Account"
+        //     },
+        //     function (err) {
+        //         console.log(err || "Mail Sent!");
+        //     }
+        // )
+
+        return res.status(200).json(
+            { message: 'Mail Sent!' })
 
     },
     sendRegisterOrgEmail: function (req, res) {
