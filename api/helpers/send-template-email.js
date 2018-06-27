@@ -83,6 +83,8 @@ module.exports = {
 
     fn: async function (inputs, exits) {
 
+        sails.log('sending template email', inputs)
+
         var path = require('path');
         var url = require('url');
         var util = require('util');
@@ -114,6 +116,7 @@ module.exports = {
         // Determine appropriate email layout and template to use.
         var emailTemplatePath = path.join('emails/', inputs.template);
         var layout;
+
         if (inputs.layout) {
             layout = path.relative(path.dirname(emailTemplatePath), path.resolve('layouts/', inputs.layout));
         } else {
@@ -136,6 +139,8 @@ module.exports = {
                     err.message;
                 return err;
             });
+
+        sails.log('sending template email 2', inputs)
 
         // Sometimes only log info to the console about the email that WOULD have been sent.
         // Specifically, if the "To" email address is anything "@example.com".
@@ -163,6 +168,9 @@ module.exports = {
             // Otherwise, we'll check that all required Mailgun credentials are set up
             // and, if so, continue to actually send the email.
 
+            sails.log('sails.config.custom.mailgunSecret', sails.config.custom.mailgunSecret)
+            sails.log('sails.config.custom.mailgunDomain', sails.config.custom.mailgunDomain)
+
             if (!sails.config.custom.mailgunSecret || !sails.config.custom.mailgunDomain) {
                 throw new Error(`Cannot deliver email to "${inputs.to}" because:
             `+ (() => {
@@ -189,12 +197,18 @@ module.exports = {
                 );
             }
 
+            sails.log('sending template email 3', inputs)
+            sails.log('htmlEmailContents', htmlEmailContents)
+
             await sails.helpers.mailgun.sendHtmlEmail.with({
                 htmlMessage: htmlEmailContents,
                 to: inputs.to,
                 subject: inputs.subject,
                 testMode: false
             });
+
+            sails.log('sending template email 4', inputs)
+
         }//ﬁ
 
         // All done!
