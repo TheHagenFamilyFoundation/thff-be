@@ -53,7 +53,7 @@ module.exports = {
   },
   // Here we encrypt password before creating a User
   beforeCreate: function (values, next) {
-    //sails.log("beforeCreate")
+    sails.log("beforeCreate")
 
     bcrypt.genSalt(10, function (err, salt) {
       if (err) return next(err);
