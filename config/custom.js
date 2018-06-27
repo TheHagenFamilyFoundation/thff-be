@@ -19,7 +19,10 @@ module.exports.custom = {
   ***************************************************************************/
   mailgunDomain: locals.mailgun_user,
   mailgunSecret: locals.mailgun_password,
-  // stripeSecret: 'sk_test_Zzd814nldl91104qor5911gjald',
-  // …
+  internalEmailAddress: 'support@example.com',
+
+  fromEmailAddress: 'noreply@example.com',
+  fromName: 'THFF',
+
 
 };
