@@ -53,23 +53,6 @@ module.exports = {
     // Return a shallow copy of this record with the password and ssn removed.
     return _.omit(this, ['encryptedPassword', 'resetPassword'])
   },
-  // Here we encrypt password before creating a User
-  // beforeCreate: function (values, next) {
-  //   sails.log("beforeCreate")
-
-  //   // bcrypt.genSalt(saltRounds, function (err, salt) {
-  //   //   if (err) return next(err);
-
-  //   bcrypt.hash(values.password, saltRounds, function (err, hash) {
-  //     if (err) return next(err);
-
-  //     sails.log('hash', hash)
-
-  //     values.encryptedPassword = hash;
-  //     next();
-  //   })
-  //   //})
-  // },
 
   comparePassword: function (password, user, cb) {
 
