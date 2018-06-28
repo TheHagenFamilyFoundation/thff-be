@@ -7,6 +7,8 @@
 
 var bcrypt = require('bcrypt-nodejs');
 
+const saltRounds = 10;
+
 module.exports = {
     create: function (req, res) {
 
@@ -16,20 +18,39 @@ module.exports = {
             return res.status(401).json({ err: 'Password doesn\'t match, What a shame!' });
         }
 
-        sails.log(req.body.username);
+        sails.log('req.body', req.body);
 
-        User.create(req.body).exec(function (err, user) {
+        bcrypt.genSalt(saltRounds, function (err, salt) {
+            if (err) return res.status(err.status).json({ err: err });
 
-            sails.log("User.create")
+            bcrypt.hash(req.body.password, salt, null, function (err, hash) {
+                if (err) return res.status(err.status).json({ err: err });
 
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
-            // If user created successfuly we return user and token as response
-            if (user) {
-                // NOTE: payload is { id: user.id}
-                res.status(200).json({ user: user, token: jwToken.issue({ id: user.id }) });
-            }
+                sails.log('hash', hash)
+
+                req.body.encryptedPassword = hash;
+
+                //})
+                sails.log('req.body', req.body);
+
+
+                User.create(req.body).exec(function (err, user) {
+
+                    sails.log("User.create")
+
+                    if (err) {
+                        return res.status(err.status).json({ err: err });
+                    }
+                    // If user created successfuly we return user and token as response
+                    if (user) {
+                        // NOTE: payload is { id: user.id}
+                        res.status(200).json({ user: user, token: jwToken.issue({ id: user.id }) });
+                    }
+
+                })
+
+            })
+
         });
     }
     ,
