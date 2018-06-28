@@ -6,7 +6,9 @@
  */
 
 // We don't want to store password with out encryption
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt = require('bcrypt');
+
+const saltRounds = 10;
 
 module.exports = {
 
@@ -52,22 +54,30 @@ module.exports = {
     return _.omit(this, ['encryptedPassword', 'resetPassword'])
   },
   // Here we encrypt password before creating a User
-  beforeCreate: function (values, next) {
-    sails.log("beforeCreate")
+  // beforeCreate: function (values, next) {
+  //   sails.log("beforeCreate")
 
-    bcrypt.genSalt(10, function (err, salt) {
-      if (err) return next(err);
+  //   // bcrypt.genSalt(saltRounds, function (err, salt) {
+  //   //   if (err) return next(err);
 
-      bcrypt.hash(values.password, salt, null, function (err, hash) {
-        if (err) return next(err);
+  //   bcrypt.hash(values.password, saltRounds, function (err, hash) {
+  //     if (err) return next(err);
 
-        values.encryptedPassword = hash;
-        next();
-      })
-    })
-  },
+  //     sails.log('hash', hash)
+
+  //     values.encryptedPassword = hash;
+  //     next();
+  //   })
+  //   //})
+  // },
 
   comparePassword: function (password, user, cb) {
+
+    sails.log('comparePassword')
+    sails.log('password', password)
+    sails.log('user', user)
+
+
     bcrypt.compare(password, user.encryptedPassword, function (err, match) {
       if (err) cb(err);
       if (match) {
