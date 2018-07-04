@@ -9,6 +9,9 @@ module.exports = {
 
   attributes: {
 
+    fileName: {
+      type: 'string',
+    },
     url: {
       type: 'string',
     },
