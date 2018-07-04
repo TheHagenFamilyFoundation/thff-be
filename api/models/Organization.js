@@ -36,6 +36,10 @@ module.exports = {
     info: {
       collection: 'organizationInfo',
       via: 'organization'
+    },
+    doc501c3: {
+      collection: 'org501c3',
+      via: 'organization'
     }
 
   },
