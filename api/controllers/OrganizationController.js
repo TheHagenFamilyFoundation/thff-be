@@ -73,14 +73,13 @@ module.exports = {
     },
     upload501c3: function (req, res) {
 
-        sails.log('uploading to s3', req.body)
-
         req.file('avatar').upload({
             adapter: require('skipper-s3'),
             key: sails.config.custom.s3_key,
             secret: sails.config.custom.s3_secret,
             bucket: sails.config.custom.s3_bucket_name
         }, function (err, filesUploaded) {
+
             if (err) return res.serverError(err);
             return res.ok({
                 files: filesUploaded,
