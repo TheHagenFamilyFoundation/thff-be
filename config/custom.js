@@ -24,5 +24,8 @@ module.exports.custom = {
   fromEmailAddress: 'noreply@example.com',
   fromName: 'THFF',
 
+  s3_key: locals.s3_key,
+  s3_secret: locals.s3_secret,
+  s3_bucket_name: locals.s3_bucket_name
 
 };

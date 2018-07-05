@@ -394,6 +394,10 @@ module.exports = {
     // ```
     //--------------------------------------------------------------------------
 
+    s3_key: process.env.S3_KEY,
+    s3_secret: process.env.S3_SECRET,
+    s3_bucket_name: process.env.S3_BUCKET_NAME,
+
     verifyEmailAddresses: true,
 
   },

@@ -83,6 +83,8 @@ module.exports.routes = {
   'POST /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation',
   'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
 
-  'POST /addUser': 'OrganizationController.addUser'
+  'POST /addUser': 'OrganizationController.addUser',
+
+  'POST /upload501c3': 'OrganizationController.upload501c3',
 
 };
