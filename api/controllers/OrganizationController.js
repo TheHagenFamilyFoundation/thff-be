@@ -133,9 +133,15 @@ module.exports = {
 
                 sails.log(s3.getSignedUrl('getObject', params));
 
-                return res.status(200).json({
-                    message: 'Yay'
-                })
+                // return res.status(200).json({
+                //     message: 'Yay'
+                // })
+
+                let url = s3.getSignedUrl('getObject', params)
+
+                sails.log('url', url)
+
+                return res.redirect(url);
 
             })
 
