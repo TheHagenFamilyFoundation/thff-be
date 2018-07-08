@@ -8,7 +8,15 @@
  * https://sailsjs.com/config/custom
  */
 
-var locals = require('./local.js');
+
+try {
+  var locals = require('./local.js');
+}
+catch (e) {
+
+  sails.log('on prod')
+
+}
 
 module.exports.custom = {
 
