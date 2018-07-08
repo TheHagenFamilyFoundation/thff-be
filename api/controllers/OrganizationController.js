@@ -139,7 +139,8 @@ module.exports = {
 
                 sails.log('url', url)
 
-                return res.status(200).json({
+                //redirect
+                return res.status(300).json({
                     message: 'Yay',
                     url: url
                 })
