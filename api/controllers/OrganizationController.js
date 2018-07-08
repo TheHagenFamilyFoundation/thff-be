@@ -139,6 +139,7 @@ module.exports = {
 
                 sails.log('url', url)
 
+                //redirect
                 return res.status(200).json({
                     message: 'Yay',
                     url: url
@@ -150,6 +151,81 @@ module.exports = {
 
 
     },
+    //passing in the orgID
+    //delete the 501c3 from the mongodb
+    //also delete the file from s3
+    delete501c3: function (req, res, next) {
+
+        sails.log('deleting 501c3 for org', req.params)
+
+        Organization.findOne({
+            organizationID: req.params.orgID
+        }).exec(function (err, orgFound) {
+
+            sails.log('org:', orgFound)
+
+            let orgID = orgFound.id;
+
+            sails.log('orgID', orgID)
+
+            Org501c3.findOne({
+                organization: orgID
+            }).exec(function (err, org501c3Found) {
+
+                sails.log('501c3:', org501c3Found)
+
+                let fileName = org501c3Found.fileName;
+
+                sails.log('fileName:', fileName)
+
+
+                // //first delete the s3
+                // sails.log('deleting the 501c3 from s3')
+
+                var params = {
+                    Bucket: sails.config.custom.s3_bucket_name,
+                    Key: fileName
+                };
+
+                s3.deleteObject(params, (err, data) => {
+                    if (err) {
+                        this.logger.error(err, err.stack);
+                        return res.status(500)
+                    }
+                    else {
+
+                        //then delete from the mongodb
+
+                        sails.log('deleting from the mongodb')
+
+                        // await Org501c3.destroy({ organization: orgID })
+
+                        // return res.status(200).json({
+                        //     message: '501c3 Deleted'
+                        // })
+
+                        Org501c3.destroy({
+                            organization: orgID
+                        }).exec(function (err, org501c3Found) {
+
+                            sails.log('501c3 deleted')
+
+                            return res.status(200).json({
+                                message: '501c3 Deleted'
+                            })
+
+                        })
+
+                    }
+
+                })
+
+            })
+
+        })
+
+    }//end of Delete501c3
+    ,
 
 }
 

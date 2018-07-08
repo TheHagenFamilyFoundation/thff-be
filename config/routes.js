@@ -89,4 +89,6 @@ module.exports.routes = {
 
   'GET /get501c3/:orgID': 'OrganizationController.get501c3',
 
+  'DELETE /delete501c3/:orgID': 'OrganizationController.delete501c3',
+
 };
