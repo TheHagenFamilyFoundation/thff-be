@@ -142,10 +142,6 @@ module.exports = {
                     url: url
                 })
 
-
-
-                //return res.redirect(url);
-
             })
 
         })
