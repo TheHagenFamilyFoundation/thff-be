@@ -14,7 +14,7 @@ try {
 }
 catch (e) {
 
-  sails.log('on prod')
+  console.log('on prod')
 
 }
 
