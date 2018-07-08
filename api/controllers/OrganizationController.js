@@ -10,7 +10,7 @@ var AWS = require('aws-sdk');
 AWS.config.update({
     accessKeyId: sails.config.custom.s3_key,
     secretAccessKey: sails.config.custom.s3_secret,
-    "region": "sa-east-1"
+    region: "us-east-1"
 })
 
 
@@ -127,32 +127,27 @@ module.exports = {
 
                 var params = {
                     Bucket: sails.config.custom.s3_bucket_name,
-                    Key: fileName
+                    Key: fileName,
+                    Expires: 3600
                 };
 
-                s3.getObject(params, function (err, data) {
-                    if (err) {
-                        sails.log(err, err.stack); // an error occurred
+                sails.log(s3.getSignedUrl('getObject', params));
 
-                    }
-                    else {
-                        sails.log(data);           // successful response
+                let url = s3.getSignedUrl('getObject', params)
 
-                        return res.status(200).json({
-                            message: 'Yay'
-                        })
+                sails.log('url', url)
 
-                    }
-
+                return res.status(200).json({
+                    message: 'Yay',
+                    url: url
                 })
-
-
 
             })
 
         })
 
 
-    }
+    },
+
 }
 
