@@ -107,13 +107,15 @@ module.exports = {
         sails.log('key:', sails.config.custom.s3_key, );
         sails.log('secret:', sails.config.custom.s3_secret)
 
-        Organization.find({
+        Organization.findOne({
             organizationID: req.params.orgID
         }).exec(function (err, orgFound) {
 
             sails.log('org:', orgFound)
 
             let orgID = orgFound.id;
+
+            sails.log('orgID', orgID)
 
             Org501c3.find({
                 organization: orgID
