@@ -26,15 +26,15 @@ module.exports.custom = {
   *                                                                          *
   ***************************************************************************/
 
-  mailgunDomain: (locals.mailgun_user ? locals.mailgun_user : process.env.MAILGUN_USER),
-  mailgunSecret: (locals.mailgun_password ? locals.mailgun_password : process.env.MAILGUN_PASSWORD),
+  mailgunDomain: (process.env.MAILGUN_USER ? process.env.MAILGUN_USER : locals.mailgun_user),
+  mailgunSecret: (process.env.MAILGUN_PASSWORD ? process.env.MAILGUN_PASSWORD : locals.mailgun_password),
   internalEmailAddress: 'support@example.com',
 
   fromEmailAddress: 'noreply@example.com',
   fromName: 'THFF',
 
-  s3_key: (locals.s3_key ? locals.s3_key : process.env.S3_KEY),
-  s3_secret: (locals.s3_secret ? locals.s3_secret : process.env.S3_SECRET),
-  s3_bucket_name: (locals.s3_bucket_name ? locals.s3_bucket_name : process.env.S3_BUCKET_NAME),
+  s3_key: (process.env.S3_KEY ? process.env.S3_KEY : locals.s3_key),
+  s3_secret: (process.env.S3_SECRET ? process.env.S3_SECRET : locals.s3_secret),
+  s3_bucket_name: (process.env.S3_BUCKET_NAME ? process.env.S3_BUCKET_NAME : locals.s3_bucket_name),
 
 };
