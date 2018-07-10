@@ -27,7 +27,8 @@ module.exports = {
       type: 'string'
     },
     submitted: {
-      type: 'boolean'
+      type: 'boolean',
+      defaultsTo: false 
     },
     submittedOn: {
       type: 'string'
@@ -35,6 +36,10 @@ module.exports = {
     info: {
       collection: 'loiInfo',
       via: 'loi'
+    },
+    status: {
+      type: 'string',
+      defaultsTo: 'created'
     }
 
 
