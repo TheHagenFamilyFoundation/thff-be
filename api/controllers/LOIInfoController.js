@@ -40,12 +40,6 @@ module.exports = {
         })
 
     },
-    //flipping the field submitted and update the submittedOn with time stamp
-    submitLOI: function (req, res, next) {
-
-        sails.log('submitLOI')
-
-    }
 
 };
 
