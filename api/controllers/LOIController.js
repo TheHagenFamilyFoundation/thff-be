@@ -56,11 +56,22 @@ module.exports = {
 
             })
 
-
         })
 
+    },
+    //flipping the field submitted and update the submittedOn with time stamp
+    submitLOI: async function (req, res, next) {
+
+        sails.log('submitLOI', req.params)
+
+        let loiID = req.params.loiID;
+
+        var loi = await LOI.findOne({ loiID: loiID })
+
+        sails.log('loi', loi)
 
 
+        return res.status(200).json({ message: 'Loi submitted' })
     }
 
 };
