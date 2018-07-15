@@ -91,4 +91,7 @@ module.exports.routes = {
 
   'DELETE /delete501c3/:orgID': 'OrganizationController.delete501c3',
 
+  'GET /submitLOI/:loiID': 'LOIController.submitLOI',
+
+
 };
