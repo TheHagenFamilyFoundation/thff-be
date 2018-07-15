@@ -66,7 +66,12 @@ module.exports = {
 
         let loiID = req.params.loiID;
 
-        var loi = await LOI.findOne({ loiID: loiID })
+        var loi = await LOI.update({ loiID: loiID })
+            .set({
+                submitted: true,
+                submittedOn: (new Date()).toJSON()
+            })
+            .fetch();
 
         sails.log('loi', loi)
 
