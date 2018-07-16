@@ -69,7 +69,8 @@ module.exports = {
         var loi = await LOI.update({ loiID: loiID })
             .set({
                 submitted: true,
-                submittedOn: (new Date()).toJSON()
+                submittedOn: (new Date()).toJSON(),
+                status: 'Submitted'
             })
             .fetch();
 
