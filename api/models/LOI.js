@@ -28,7 +28,7 @@ module.exports = {
     },
     submitted: {
       type: 'boolean',
-      defaultsTo: false 
+      defaultsTo: false
     },
     submittedOn: {
       type: 'string'
@@ -40,6 +40,16 @@ module.exports = {
     status: {
       type: 'string',
       defaultsTo: 'created'
+
+      //values: 
+      //created
+      // submitted
+      //under review //where people are looking at it
+      // reviewed //done reviewing - we'll release the full proposal
+      // declined //not for second round
+      // need some indicator for second round - show the full proposal link
+
+
     }
 
 
