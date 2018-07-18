@@ -18,6 +18,10 @@ module.exports = {
     organization: {
       model: 'organization',
       unique: true
+    },
+    reviewd: {
+      type: 'boolean',
+      defaultsTo: false
     }
 
     //  ╔═╗╦═╗╦╔╦╗╦╔╦╗╦╦  ╦╔═╗╔═╗
