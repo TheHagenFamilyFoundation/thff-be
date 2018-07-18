@@ -7,7 +7,7 @@
 
 module.exports = {
 
-    create: function (req, res, next) {
+    create: async function (req, res, next) {
 
         sails.log("loi info create");
 
@@ -27,6 +27,64 @@ module.exports = {
         //add loiInfoID to loiInfo object
 
         loiInfo.loiInfoID = loiInfoID;
+
+        let validInfo = true;
+
+        //validate the loiInfo
+        if (req.body.projectTitle == '') {
+            //bad
+            sails.log('bad projectTitle');
+
+            validInfo = false;
+        }
+
+        if (req.body.purpose == '') {
+            //bad
+            sails.log('bad purpose');
+
+            validInfo = false;
+        }
+
+        //leave these for the date check
+        // //start date
+        // if (req.body.projectTitle == '') {
+        //     //bad
+        //     sails.log('bad');
+        // }
+
+        // //end date
+        // if (req.body.projectTitle == '') {
+        //     //bad
+        //     sails.log('bad');
+        // }
+
+        if (req.body.amountRequested == '') {
+            //bad
+            sails.log('bad amountRequested');
+
+            validInfo = false;
+
+        }
+
+        if (req.body.totalProjectCost == '') {
+            //bad
+            sails.log('bad totalProjectCost');
+
+            validInfo = false;
+
+        }
+
+
+        if (validInfo) {
+
+            loiInfo.validLOIInfo = true;
+
+        }
+        else {
+
+            loiInfo.validLOIInfo = false;
+
+        }
 
         LOIInfo.create(loiInfo).then(function (newloiInfo, err) {
             sails.log("LOIInfo.create")

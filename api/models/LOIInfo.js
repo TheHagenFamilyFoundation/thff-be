@@ -30,6 +30,10 @@ module.exports = {
     loi: {
       model: 'loi',
       unique: true
+    },
+    validLOIInfo: {
+      type: 'boolean',
+      defaultsTo: false
     }
 
   },
