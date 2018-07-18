@@ -71,6 +71,10 @@ module.exports = {
     organization: {
       model: 'organization',
       unique: true
+    },
+    validOrgInfo: {
+      type: 'boolean',
+      defaultsTo: false
     }
 
   },
