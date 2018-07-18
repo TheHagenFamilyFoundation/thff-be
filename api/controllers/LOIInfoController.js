@@ -45,6 +45,7 @@ module.exports = {
             validInfo = false;
         }
 
+        //leave these for the date check
         // //start date
         // if (req.body.projectTitle == '') {
         //     //bad
