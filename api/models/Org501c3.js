@@ -19,7 +19,7 @@ module.exports = {
       model: 'organization',
       unique: true
     },
-    reviewd: {
+    reviewed: {
       type: 'boolean',
       defaultsTo: false
     }
