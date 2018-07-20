@@ -70,7 +70,7 @@ module.exports = {
             .set({
                 submitted: true,
                 submittedOn: (new Date()).toJSON(),
-                status: 'Submitted'
+                status: 2 //submitted
             })
             .fetch();
 
