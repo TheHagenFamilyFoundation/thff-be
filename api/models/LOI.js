@@ -38,20 +38,18 @@ module.exports = {
       via: 'loi'
     },
     status: {
-      type: 'string',
-      defaultsTo: 'created'
+      type: 'number',
+      defaultsTo: 1
 
       //values: 
-      //created
-      // submitted
-      //under review //where people are looking at it
-      // reviewed //done reviewing - we'll release the full proposal
-      // declined //not for second round
-      // need some indicator for second round - show the full proposal link
-
+      //1-created
+      //2- submitted
+      //3-under review //where people are looking at it
+      // 4-reviewed //done reviewing - we'll release the full proposal
+      // 5-declined //not for second round
+      // 6-need some indicator for second round - show the full proposal link
 
     }
-
 
   }
 };

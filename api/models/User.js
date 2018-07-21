@@ -46,6 +46,14 @@ module.exports = {
     encryptedPassword: {
       type: 'string',
       protect: true,
+    },
+    accessLevel: {
+      type:'number',
+      defaultsTo: 1
+      //1-user
+      //2-director
+      //3-president
+      //4-admin(Logan)
     }
   },
   // We don't wan't to send back encrypted password either
