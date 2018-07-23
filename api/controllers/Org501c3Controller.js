@@ -39,7 +39,7 @@ module.exports = {
 
         }
 
-        return res.status(200).json({ change: "501c3 Validated" });
+        return res.status(200).json({ change: "501c3 Validated", message: message });
 
     }
 
