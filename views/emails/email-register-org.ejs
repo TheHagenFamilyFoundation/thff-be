@@ -1,8 +1,9 @@
 <p>Dear
     <%=Name%>,</p>
+<br>
 <p>Thank You for Creating an Organization Account at THFF</p>
 <br>
-<P>You can view your user dashboard here. <a href="<%= url.resolve(process.env.FE_API,'/organization')%>">Organization
+<P>You can view your organization dashboard here. <a href="<%= url.resolve(sails.config.custom.FE_API,'/organization/')%><%=OrgName%> ">Organization
         Dashboard</a></p>
 <br>
 <p>If you haven't uploaded an 501(c)3, you can do so on the organization page.</p>

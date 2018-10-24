@@ -1,11 +1,13 @@
 <p>Dear
     <%=Name%>,</p>
+<br>
 <p>Thank You for Registering A User Account at THFF</p>
 <br>
 <p>You can login here:
-    <a href="<%= url.resolve(process.env.FE_API,'/login')%>">Login</a>
+    <a href="<%= url.resolve(sails.config.custom.FE_API,'/login')%>">Login</a>
 </p> <br>
-<P>You can view your user dashboard here. <a href="<%= url.resolve(process.env.FE_API,'/user')%>">User Dashboard</a></p>
+<P>You can view your user dashboard here. <a href="<%= url.resolve(sails.config.custom.FE_API,'/user')%>">User
+        Dashboard</a></p>
 <br>
 <p>If you haven't created an organization, you can create one on the user page.</p>
 <br>
