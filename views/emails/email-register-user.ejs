@@ -2,10 +2,11 @@
     <%=Name%>,</p>
 <p>Thank You for Registering A User Account at THFF</p>
 <br>
-<p>You can login here: <%= process.env.FE_API %></p>
+<p>You can login here:
+    <a href="<%= process.env.FE_API %>/login "></a>
+</p> <br>
+<P>You can view your user dashboard here. <a href="<%= process.env.FE_API %>/user "></a></P>
 <br>
-<P>You can view your user dashboard here. LINK</P>
-<br>
-<p>If you haven't created an organization, please do so here: LINK</p>
+<p>If you haven't created an organization, you can create one on the user page.</p>
 <br>
 <p>From the THFF team</p>
