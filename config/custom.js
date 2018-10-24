@@ -37,4 +37,6 @@ module.exports.custom = {
   s3_secret: (process.env.S3_SECRET ? process.env.S3_SECRET : locals.s3_secret),
   s3_bucket_name: (process.env.S3_BUCKET_NAME ? process.env.S3_BUCKET_NAME : locals.s3_bucket_name),
 
+  FE_API: (process.env.FE_API) ? process.env.FE_API : 'http://localhost:4200'
+
 };
