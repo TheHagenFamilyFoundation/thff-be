@@ -3,9 +3,9 @@
 <p>Thank You for Registering A User Account at THFF</p>
 <br>
 <p>You can login here:
-    <a href="<%= process.env.FE_API %>/login "></a>
+    <a href="<%= url.resolve(process.env.FE_API,'/login')%>">Login</a>
 </p> <br>
-<P>You can view your user dashboard here. <a href="<%= process.env.FE_API %>/user "></a></P>
+<P>You can view your user dashboard here. <a href="<%= url.resolve(process.env.FE_API,'/user')%>">User Dashboard</a></p>
 <br>
 <p>If you haven't created an organization, you can create one on the user page.</p>
 <br>
