@@ -15,7 +15,7 @@ module.exports = {
     var password = req.body.password;
 
     if (!username || !password) {
-      return res.status(401).json({ err: 'username and password required', message: 'Username and Password required' });
+      return res.status(400).json({ err: 'username and password required', message: 'Username and Password required' });
     }
 
     var query = {};
@@ -24,7 +24,7 @@ module.exports = {
     User.findOne(query, function (err, user) {
 
       if (!user) {
-        return res.status(401).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
+        return res.status(400).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
       }
 
       User.comparePassword(password, user, function (err, valid) {
@@ -33,7 +33,7 @@ module.exports = {
         }
 
         if (!valid) {
-          return res.status(401).json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
+          return res.status(400).json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
         } else {
           res.status(200).json({
             user: user,
@@ -43,6 +43,7 @@ module.exports = {
       });
     })
   },
+
   authTest: function (req, res) {
 
     sails.log('AuthTest')
