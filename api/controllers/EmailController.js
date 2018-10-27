@@ -27,9 +27,9 @@ module.exports = {
     //     )
     // },
 
-    sendResetEmail: async function (req, res) {
+    sendResetPasswordEmail: async function (req, res) {
 
-        sails.log("sendResetEmail")
+        sails.log("sendResetPasswordEmail")
 
         const email = req.body;
 
@@ -68,9 +68,9 @@ module.exports = {
     } //sendResetEmail
 
     ,
-    sendResetEmailConfirmation: async function (req, res) {
+    sendResetPasswordConfirmationEmail: async function (req, res) {
 
-        sails.log("sendResetEmailConfirmation")
+        sails.log("sendResetPasswordConfirmationEmail")
 
         sails.log(req.body);
         const email = req.body;
@@ -78,7 +78,7 @@ module.exports = {
         await sails.helpers.sendTemplateEmail.with({
             to: email.to,
             subject: "Your THFF Password has Changed",
-            template: 'email-reset-password-confirmm',
+            template: 'email-reset-password-confirm',
             templateData: {
                 Name: email.name,
                 //To: email.to
@@ -158,6 +158,29 @@ module.exports = {
             templateData: {
                 Name: email.name, //username that registered the org
                 OrgName: email.orgName
+            },
+            layout: false
+        });
+
+        return res.status(200).json(
+            { message: 'Mail Sent!' })
+
+    },
+    sendUserEmailChangeEmail: async function (req, res) {
+
+        sails.log("sendUserEmailChangeEmail")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.to,
+            subject: "Your THFF Email has Changed",
+            template: 'email-user-email-change',
+            templateData: {
+                Name: email.name, //username
+                OldEmail: email.oldEmail, //old email
+                NewEmail: email.newEmail
             },
             layout: false
         });

@@ -80,9 +80,10 @@ module.exports.routes = {
 
   'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
   'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
-  'POST /sendResetEmail': 'EmailController.sendResetEmail',
-  'POST /sendResetEmailConfirmation': 'EmailController.sendResetEmailConfirmation',
+  'POST /sendResetPasswordEmail': 'EmailController.sendResetPasswordEmail',
+  'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
   'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
+  'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
 
   'POST /addUser': 'OrganizationController.addUser',
 
