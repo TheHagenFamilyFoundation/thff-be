@@ -42,7 +42,7 @@ module.exports = {
         sails.log(sails.config.environment);
 
         if (sails.config.environment === 'production') {
-            resetURL = 'http://www.hagen.foundation'
+            resetURL = process.env.FE_API
         }
         else {
             resetURL = 'http://localhost:4200'
@@ -106,7 +106,7 @@ module.exports = {
             template: 'email-username',
             templateData: {
                 Name: email.name,
-                //To: email.to
+                To: email.to
                 // fullName: inputs.fullName,
                 // token: newUserRecord.emailProofToken
             },
