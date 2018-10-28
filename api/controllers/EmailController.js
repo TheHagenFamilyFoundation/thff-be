@@ -106,7 +106,7 @@ module.exports = {
             template: 'email-username',
             templateData: {
                 Name: email.name,
-                //To: email.to
+                To: email.to
                 // fullName: inputs.fullName,
                 // token: newUserRecord.emailProofToken
             },
