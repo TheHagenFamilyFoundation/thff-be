@@ -311,7 +311,18 @@ module.exports = {
             //compare current password to the current encrypted password
             //if match then encrypt the new password and set the encrypted new password as the password
             bcrypt.compare(currentPassword, encrypted, function (err, match) {
-                if (err || !match) return res.status(err.status).json({ change: false });
+                if (err) {
+                    return res.status(err.status).json({ change: false });
+                }
+
+                if (!match) {
+
+                    sails.log('match', match)
+
+                    let message = "Current Password does not match.";
+                    return res.status(200).json({ change: false, message: message });
+                }
+
                 if (match) {
 
                     sails.log("bcrypt gen salting");
