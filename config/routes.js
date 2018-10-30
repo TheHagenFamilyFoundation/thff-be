@@ -65,7 +65,7 @@ module.exports.routes = {
   'GET /authTest': 'AuthController.authTest',
   'PUT /login': 'AuthController.login',
 
-  'GET /Directors': 'UserController.getDirectors',
+  'GET /directors': 'UserController.getDirectors',
 
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
