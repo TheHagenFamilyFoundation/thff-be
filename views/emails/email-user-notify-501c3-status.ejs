@@ -1,0 +1,40 @@
+<p>Dear
+    <%=Name%>,</p>
+<p>
+
+    <p>
+        Organization:
+        <%=Organization%>
+    </p>
+
+
+    <%if (Status == 1) { %>
+    Your organization's 501c3 is not valid.
+    <% } %>
+
+    <%if (Status == 2)  { %>
+    Your organization's 501c3 has been validated.
+    <% } %>
+
+</p>
+
+<p>
+    <%if (Status == 1) { %>
+    You can submit a Letter of Intent here: (LINK)
+    <% } %>
+
+    <%if (Status == 2)  { %>
+    Please submit a new 501c3.
+    (LINK)
+    <% } %>
+</p>
+
+
+<p>
+    If you have any questions or comments, please <a href="mailto:support@hagen.foundation" target="_top">contact us.</a>
+</p>
+
+
+Thanks,
+
+<p>THFF TEAM</p>

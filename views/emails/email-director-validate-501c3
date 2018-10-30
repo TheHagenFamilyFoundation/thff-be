@@ -1,8 +1,0 @@
-<p>Dear
-    <%=name%>,</p>
-<p>
-    User <%=Name%> has submitted a 501(c)3 for organization: <%=Organization%>.
-</p>
-<p>You can view and validate the 501(c)3 here.
-(LINK)
-</p>
