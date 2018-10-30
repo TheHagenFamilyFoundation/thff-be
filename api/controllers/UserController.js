@@ -396,6 +396,16 @@ module.exports = {
 
         })
 
-    }//end of changeEmail
+    },//end of changeEmail
+    getDirectors: async function (req, res) {
+
+        sails.log("getDirectors")
+
+        var directors = await User.find({ accessLevel: { '>=': 2 } })
+
+        sails.log('directors', directors)
+
+        return res.status(200).json(directors);
+    }
 
 };
