@@ -188,6 +188,52 @@ module.exports = {
         return res.status(200).json(
             { message: 'Mail Sent!' })
 
+    },
+    send501c3Status: async function (req, res) {
+
+        sails.log("send501c3Status")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.to,
+            subject: "Your Organization 501c3 Validation Status",
+            template: 'email-user-notify-501c3-status',
+            templateData: {
+                Name: email.name, //name
+                Organization: email.orgName, //organization name
+                OrgID: email.orgID,
+                Status: email.status
+            },
+            layout: false
+        });
+        return res.status(200).json(
+            { message: 'Mail Sent!' })
+
+    },
+    sendValidate501c3: async function (req, res) {
+
+        sails.log("sendValidate501c3")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.to, //directors email
+            subject: "Validate 501c3",
+            template: 'email-director-validate-501c3',
+            templateData: {
+                Name: email.name, //username
+                Director: email.director,
+                Organization: email.orgName //organization Name
+            },
+            layout: false
+        });
+
+        return res.status(200).json(
+            { message: 'Mail Sent!' })
+
     }
 
 };

@@ -69,21 +69,12 @@ module.exports.routes = {
   'GET /EmailExists': 'UserController.EmailExists',
   'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
 
-
-
   'PUT /CreateResetCode': 'UserController.CreateResetCode',
   'PUT /setNewPassword': 'UserController.setNewPassword',
   'PUT /changePassword': 'UserController.changePassword',
   'PUT /changeEmail': 'UserController.changeEmail',
 
   'PUT /validate501c3': 'Org501c3Controller.validate501c3',
-
-  'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
-  'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
-  'POST /sendResetPasswordEmail': 'EmailController.sendResetPasswordEmail',
-  'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
-  'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
-  'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
 
   'POST /addUser': 'OrganizationController.addUser',
 
@@ -94,6 +85,23 @@ module.exports.routes = {
   'DELETE /delete501c3/:orgID': 'OrganizationController.delete501c3',
 
   'GET /submitLOI/:loiID': 'LOIController.submitLOI',
+
+
+  /*** EMAILS ***/
+
+  //USER
+  'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
+  'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
+  'POST /sendResetPasswordEmail': 'EmailController.sendResetPasswordEmail',
+  'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
+  'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
+  'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
+
+  'POST /send501c3Status': 'EmailController.send501c3Status',
+
+  //DIRECTOR
+  'POST /sendValidate501c3': 'EmailController.sendValidate501c3',
+
 
 
 };
