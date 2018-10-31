@@ -1,29 +1,29 @@
 <p>Dear
     <%=Name%>,</p>
+
 <p>
+    Organization:
+    <%=Organization%>
+</p>
 
-    <p>
-        Organization:
-        <%=Organization%>
-    </p>
-
-
-    <%if (Status == 1) { %>
-    Your organization's 501c3 is not valid.
-    <% } %>
+<p>
 
     <%if (Status == 2)  { %>
     Your organization's 501c3 has been validated.
     <% } %>
 
+    <%if (Status == 3) { %>
+    Your organization's 501c3 is not valid.
+    <% } %>
+
 </p>
 
 <p>
-    <%if (Status == 1) { %>
+    <%if (Status == 2) { %>
     You can submit a Letter of Intent here: (LINK)
     <% } %>
 
-    <%if (Status == 2)  { %>
+    <%if (Status == 3)  { %>
     Please submit a new 501c3.
     (LINK)
     <% } %>
