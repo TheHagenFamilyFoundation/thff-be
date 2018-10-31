@@ -406,6 +406,23 @@ module.exports = {
         sails.log('directors', directors)
 
         return res.status(200).json(directors);
+    },
+    getOrgUsers: async function (req, res) {
+
+        sails.log("getOrgUsers", req.params)
+
+        let query = {};
+        query.organizationID = req.params.orgID;
+
+        var org = await Organization.findOne(query).populate('users')
+
+        sails.log('org', org)
+
+        var users = org.users;
+
+        sails.log('users', users)
+
+        return res.status(200).json(users);
     }
 
 };
