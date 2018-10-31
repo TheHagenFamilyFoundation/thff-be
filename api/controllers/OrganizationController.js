@@ -149,7 +149,6 @@ module.exports = {
 
         })
 
-
     },
     //passing in the orgID
     //delete the 501c3 from the mongodb
