@@ -226,7 +226,8 @@ module.exports = {
             templateData: {
                 Name: email.name, //username
                 Director: email.director,
-                Organization: email.orgName //organization Name
+                Organization: email.orgName, //organization Name
+                OrgID: email.orgID,
             },
             layout: false
         });

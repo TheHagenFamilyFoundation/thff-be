@@ -20,12 +20,13 @@
 
 <p>
     <%if (Status == 2) { %>
-    You can submit a Letter of Intent here: (LINK)
+    You can submit a Letter of Intent here: <a href="<%= url.resolve(sails.config.custom.FE_API,'/organization/')%><%=OrgID%> ">Organization
+        Dashboard</a>
     <% } %>
 
     <%if (Status == 3)  { %>
     Please submit a new 501c3.
-    (LINK)
+    <a href="<%= url.resolve(sails.config.custom.FE_API,'/organization/')%><%=OrgID%> ">Organization Dashboard</a>
     <% } %>
 </p>
 
