@@ -106,6 +106,8 @@ module.exports.routes = {
   //DIRECTOR
   'POST /sendValidate501c3': 'EmailController.sendValidate501c3',
 
+  'POST /sendViewLOI': 'EmailController.sendViewLOI',
+
 
 
 };
