@@ -1,0 +1,10 @@
+<p>Dear
+    <%=Director%>,</p>
+<p>
+    User
+    <%=Name%> has submitted a Letter of Intent for organization:
+    <%=Organization%>.
+</p>
+<p>You can view the letter of intent here. <a href="<%= url.resolve(sails.config.custom.FE_API,'/director-organization/')%><%=OrgID%> ">View Organization
+        Dashboard</a>
+</p>

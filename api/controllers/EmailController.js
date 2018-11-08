@@ -235,6 +235,30 @@ module.exports = {
         return res.status(200).json(
             { message: 'Mail Sent!' })
 
+    },
+    sendViewLOI: async function (req, res) {
+
+        sails.log("sendViewLOI")
+
+        sails.log(req.body);
+        const email = req.body;
+
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.to, //directors email
+            subject: "New Letter of Intent Submitted",
+            template: 'email-director-view-loi',
+            templateData: {
+                Name: email.name, //username
+                Director: email.director,
+                Organization: email.orgName, //organization Name
+                OrgID: email.orgID,
+            },
+            layout: false
+        });
+
+        return res.status(200).json(
+            { message: 'Mail Sent!' })
+
     }
 
 };
