@@ -33,7 +33,7 @@ module.exports = {
         }
 
         if (!valid) {
-          return res.status(400).json({ err: 'invalid email or password', message: 'Invalid Username or Password' });
+          return res.status(400).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
         } else {
           res.status(200).json({
             user: user,
