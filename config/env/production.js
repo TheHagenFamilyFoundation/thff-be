@@ -400,7 +400,7 @@ module.exports = {
 
     verifyEmailAddresses: true,
 
-    FE_API: process.env.FE_API | 'localhost:4200'
+    FE_API: (process.env.FE_API) ? process.env.FE_API : 'localhost:4200'
 
   },
 
