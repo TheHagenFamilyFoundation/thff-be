@@ -90,6 +90,8 @@ module.exports = {
         var util = require('util');
 
 
+        sails.log('FE_API', sails.config.custom.FE_API)
+
         if (!_.startsWith(path.basename(inputs.template), 'email-')) {
             sails.log.warn(
                 'The "template" that was passed in to `sendTemplateEmail()` does not begin with ' +
