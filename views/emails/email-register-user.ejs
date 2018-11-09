@@ -4,6 +4,7 @@
 <p>Thank You for Registering A User Account at THFF</p>
 <br>
 <p>You can login here:
+    <%= sails.config.custom.FE_API %>
     <a href="<%= url.resolve(sails.config.custom.FE_API,'/login')%>">Login</a>
 </p> <br>
 <P>You can view your user dashboard here. <a href="<%= url.resolve(sails.config.custom.FE_API,'/user')%>">User
