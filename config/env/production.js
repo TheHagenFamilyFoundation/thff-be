@@ -257,7 +257,7 @@ module.exports = {
     *                                                                          *
     ***************************************************************************/
     onlyAllowOrigins: [
-      'http://hagen.foundation', 'https://thff-fe-production.herokuapp.com',
+      'https://hagen.foundation','http://hagen.foundation', 'https://thff-fe-production.herokuapp.com',
     ],
 
 
