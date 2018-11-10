@@ -151,7 +151,7 @@ module.exports = {
     ***************************************************************************/
     cors: {
       allowOrigins: [
-        'http://www.hagen.foundation', 'https://hagenfoundation.herokuapp.com', 'https://thff-501c3.s3.amazonaws.com', 'https://thff-fe-production.herokuapp.com'
+        'http://www.hagen.foundation', 'https://www.hagen.foundation', 'https://hagen.foundation', 'https://hagenfoundation.herokuapp.com', 'https://thff-501c3.s3.amazonaws.com', 'https://thff-fe-production.herokuapp.com'
       ]
     },
 
@@ -257,7 +257,7 @@ module.exports = {
     *                                                                          *
     ***************************************************************************/
     onlyAllowOrigins: [
-      'https://hagen.foundation','http://hagen.foundation', 'https://thff-fe-production.herokuapp.com',
+      'https://hagen.foundation', 'https://www.hagen.foundation', 'http://hagen.foundation', 'https://thff-fe-production.herokuapp.com',
     ],
 
 
