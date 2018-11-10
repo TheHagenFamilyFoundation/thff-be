@@ -31,8 +31,8 @@ module.exports.security = {
   cors: {
     allRoutes: true,
     allowOrigins: ['http://hagen.foundation', 'http://localhost:4200', 'https://thff-501c3.s3.amazonaws.com', 'https://thff-fe-production.herokuapp.com'],
-    allowCredentials: false,
-    allowRequestHeaders: 'content-type,x-csrf-token, origin'
+    // allowCredentials: false,
+    // allowRequestHeaders: 'content-type,x-csrf-token, origin'
   },
 
 
