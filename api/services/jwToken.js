@@ -15,7 +15,7 @@ return jwt.sign(
   payload,
   tokenSecret, // Token Secret that we sign it with
   {
-    expiresIn  : 180 // Token Expire time
+    expiresIn  : 1800 // Token Expire time - 30 minutes
   }
 );
 };
