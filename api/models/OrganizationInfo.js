@@ -31,7 +31,7 @@ module.exports = {
     },
     phone: {
       // -Phone Number 
-      type: 'number',
+      type: 'string',
     },
     contactPerson: {
       //-Contact person/title/phone number 
@@ -42,7 +42,7 @@ module.exports = {
       type: 'string',
     },
     contactPersonPhoneNumber: {
-      type: 'number'
+      type: 'string'
     },
     email: {
       //  email 
@@ -66,7 +66,7 @@ module.exports = {
     },
     fax: {
       // -fax number
-      type: 'number'
+      type: 'string'
     },
     organization: {
       model: 'organization',
