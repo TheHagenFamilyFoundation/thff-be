@@ -76,6 +76,8 @@ module.exports = {
             return res.status(err.status).json({ err: err });
         })
 
+        sails.log('after - fpItems', fpItems)
+
         return res.status(200).json(fpItems);
     },
 
