@@ -102,6 +102,7 @@ module.exports.routes = {
   'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
 
   'POST /send501c3Status': 'EmailController.send501c3Status',
+  'POST /fpItems': 'FullProposalItemController.createFPItems',
 
   //DIRECTOR
   'POST /sendValidate501c3': 'EmailController.sendValidate501c3',

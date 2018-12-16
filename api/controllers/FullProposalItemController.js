@@ -41,5 +41,15 @@ module.exports = {
 
     },
 
+    createFPItems: async function (req, res, next) {
+
+        sails.log('createFPItems')
+
+        sails.log('req.body', req.body)
+
+
+        return res.status(200).json({ result: true });
+    }
+
 };
 
