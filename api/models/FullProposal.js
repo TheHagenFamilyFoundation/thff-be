@@ -16,6 +16,9 @@ module.exports = {
     organization: {
       model: 'organization'
     },
+    loi: {
+      model: 'loi'
+    },
     fpID: {
       type: 'string'
     },
@@ -70,6 +73,13 @@ module.exports = {
       type: 'string'
     },
     website: {
+      type: 'string'
+    },
+    submitted: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+    submittedOn: {
       type: 'string'
     },
     status: {
