@@ -46,10 +46,59 @@ module.exports = {
         sails.log('createFPItems')
 
         sails.log('req.body', req.body)
+        let fpItems = req.body.fpItems;
 
+        let promises = [];
 
-        return res.status(200).json({ result: true });
-    }
+        fpItems.forEach((fpItem) => {
 
-};
+            //create fpItemID
+            var text = "";
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+            for (var i = 0; i < 5; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+
+            var fpItemID = text;
+            //add fpItemID to fpItem object
+
+            fpItem.fpItemID = fpItemID;
+            fpItem.fp = req.body.fp;
+
+            promises.push(createFPItem(fpItem));
+
+        })
+
+        sails.log('fpItems', fpItems)
+
+        await Promise.all(promises).catch(err => {
+            return res.status(err.status).json({ err: err });
+        })
+
+        return res.status(200).json(fpItems);
+    },
+
+}
+
+function createFPItem(fpi) {
+
+    sails.log('createFPItem', fpi)
+
+    return new Promise((resolve, reject) => {
+        FullProposalItem.create(fpi).then(function (newfpItem, err) {
+            sails.log("FullProposalItem.create")
+
+            if (err) {
+                return res.status(err.status).json({ err: err });
+            }
+
+            // return res.json({ 'status': true, 'result': newfpItem });
+
+            resolve();
+
+        })
+
+    })
+
+}
