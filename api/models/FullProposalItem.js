@@ -15,20 +15,20 @@ module.exports = {
     fpItemID: {
       type: 'string'
     },
-    category: {
+    categoryDescription: {
       type: 'string'
     },
-    amount1: {
-      type: 'number'
+    amountRequestedTHFF: {
+      type: 'string'
     },
-    amount2: {
-      type: 'number'
+    amountRequested: {
+      type: 'string'
     },
-    amount3: {
-      type: 'number'
+    amountPending: {
+      type: 'string'
     },
     total: {
-      type: 'number'
+      type: 'string'
     },
     fp: {
       model: 'FullProposal',
