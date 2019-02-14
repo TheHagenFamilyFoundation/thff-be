@@ -30,7 +30,7 @@ module.exports.custom = {
   mailgunSecret: (process.env.MAILGUN_PASSWORD ? process.env.MAILGUN_PASSWORD : locals.mailgun_password),
   internalEmailAddress: 'support@example.com',
 
-  fromEmailAddress: 'noreply@example.com',
+  fromEmailAddress: 'support@hagen.foundation',
   fromName: 'THFF',
 
   s3_key: (process.env.S3_KEY ? process.env.S3_KEY : locals.s3_key),
