@@ -397,6 +397,47 @@ module.exports = {
         })
 
     },//end of changeEmail
+
+    updateName: function (req, res) {
+
+        sails.log("updateName", req.body);
+
+        var firstName = req.body.firstName;
+        var lastName = req.body.lastName;
+        var id = req.body.id;
+
+        User.find({
+            id: id
+        }).exec(function (err, user) {
+            if (err) {
+                return res.status(err.status).json({ change: false });
+            }
+
+            //then set the user password to that hash
+            User.update({
+                id: user[0].id
+            }, {
+                    firstName: firstName,
+                    lastName: lastName
+                }
+            ).exec(function (err, user) {
+                if (err) {
+                    return res.status(err.status).json({ change: false });
+                }
+
+                //sails.log(user);
+                sails.log('Update Name Successful')
+                return res.status(200).json({ change: true, message: "Update Name Successful" });
+            })
+
+        })
+
+    },//end of updateName
+
+
+
+    //Gets
+
     getDirectors: async function (req, res) {
 
         sails.log("getDirectors")
@@ -423,6 +464,6 @@ module.exports = {
         sails.log('users', users)
 
         return res.status(200).json(users);
-    }
+    },
 
 };

@@ -26,7 +26,10 @@ module.exports = {
       //required: 'true',
       unique: true
     },
-    name: {
+    firstName: {
+      type: 'string'
+    },
+    lastName: {
       type: 'string'
     },
     organizations: {
@@ -48,7 +51,7 @@ module.exports = {
       protect: true,
     },
     accessLevel: {
-      type:'number',
+      type: 'number',
       defaultsTo: 1
       //1-user
       //2-director
@@ -67,7 +70,6 @@ module.exports = {
     sails.log('comparePassword')
     sails.log('password', password)
     sails.log('user', user)
-
 
     bcrypt.compare(password, user.encryptedPassword, function (err, match) {
       if (err) cb(err);
