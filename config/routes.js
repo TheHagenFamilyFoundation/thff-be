@@ -77,6 +77,7 @@ module.exports.routes = {
   'PUT /setNewPassword': 'UserController.setNewPassword',
   'PUT /changePassword': 'UserController.changePassword',
   'PUT /changeEmail': 'UserController.changeEmail',
+  'PUT /updateName': 'UserController.updateName',
 
   'PUT /validate501c3': 'Org501c3Controller.validate501c3',
 
@@ -102,6 +103,7 @@ module.exports.routes = {
   'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
   'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
   'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
+  // 'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail', //if we need to have users notified when name changes
 
   'POST /send501c3Status': 'EmailController.send501c3Status',
 
