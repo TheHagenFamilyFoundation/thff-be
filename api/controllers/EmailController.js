@@ -259,6 +259,29 @@ module.exports = {
         return res.status(200).json(
             { message: 'Mail Sent!' })
 
+    },
+    //called from LOI controller
+    sendSubmitLOI: async function (body) {
+
+        sails.log("sendSubmitLOI")
+
+        sails.log(body);
+        const email = body;
+
+        await sails.helpers.sendTemplateEmail.with({
+            to: email.user.email, //user who created the loi
+            subject: "Thank You For Submitting A Letter of Intent",
+            template: 'email-user-loi-submit',
+            templateData: {
+                Name: email.user.username, //username
+                LOIName: email.loi.name
+            },
+            layout: false
+        });
+
+        // return res.status(200).json(
+        //     { message: 'Mail Sent!' })
+        return
     }
 
 };
