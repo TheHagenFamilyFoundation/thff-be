@@ -30,9 +30,7 @@ module.exports = {
 
                 req.body.encryptedPassword = hash;
 
-                //})
                 sails.log('req.body', req.body);
-
 
                 User.create(req.body).exec(function (err, user) {
 
@@ -54,60 +52,47 @@ module.exports = {
         });
     }
     ,
-    UserNameExists: function (req, res) {
+
+    UserNameExists: async function (req, res) {
 
         sails.log(req.query.username);
 
-        User.find({
-            username: req.query.username
-        }).exec(function (err, userfound) {
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
+        var userfound = await sails.helpers.userNameExists(req.query.username);
 
-            if (userfound) {
-                sails.log(userfound);
+        // if (userfound) {
+        sails.log(userfound);
 
-                if (userfound.length > 0) {
-                    sails.log("user is found");
-                    return res.status(200).json({ userfound: true });
-                }
-                else {
-                    sails.log("user is not found");
-                    return res.status(200).json({ userfound: false });
-                }
-            }//end of userfound if
-
-        });
+        if (userfound) {
+            sails.log("user is found");
+            return res.status(200).json({ userfound: true });
+        }
+        else {
+            sails.log("user is not found");
+            return res.status(200).json({ userfound: false });
+        }
+        // }//end of userfound if
 
     }//end of UserNameExists
 
     ,
-    EmailExists: function (req, res) {
+    EmailExists: async function (req, res) {
 
         sails.log(req.query.email);
 
-        User.find({
-            email: req.query.email
-        }).exec(function (err, emailfound) {
-            if (err) {
-                return res.status(err.status).json({ err: err });
-            }
+        //helpers
+        //user folder
+        var emailfound = await sails.helpers.user.userEmailExists(req.query.email);
 
-            if (emailfound) {
-                sails.log(emailfound);
+        sails.log(emailfound);
 
-                if (emailfound.length > 0) {
-                    sails.log("email is found");
-                    return res.status(200).json({ emailfound: true });
-                }
-                else {
-                    sails.log("email is not found");
-                    return res.status(200).json({ emailfound: false });
-                }
-            }//end of emailfound if
-
-        });
+        if (emailfound) {
+            sails.log("email is found");
+            return res.status(200).json({ emailfound: true });
+        }
+        else {
+            sails.log("email is not found");
+            return res.status(200).json({ emailfound: false });
+        }
 
     }//end of EmailExists
     ,
