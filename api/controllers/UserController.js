@@ -57,9 +57,9 @@ module.exports = {
 
         sails.log(req.query.username);
 
-        var userfound = await sails.helpers.userNameExists(req.query.username);
+        //in the user folder for helpers
+        var userfound = await sails.helpers.user.userNameExists(req.query.username);
 
-        // if (userfound) {
         sails.log(userfound);
 
         if (userfound) {
@@ -70,7 +70,6 @@ module.exports = {
             sails.log("user is not found");
             return res.status(200).json({ userfound: false });
         }
-        // }//end of userfound if
 
     }//end of UserNameExists
 
