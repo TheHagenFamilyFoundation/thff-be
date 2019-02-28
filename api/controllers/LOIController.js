@@ -5,6 +5,8 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+var emailController = require('./EmailController')
+
 module.exports = {
 
     create: function (req, res, next) {
@@ -76,6 +78,15 @@ module.exports = {
 
         sails.log('loi', loi)
 
+        var query = { username: loi[0].username }
+        var user = await User.find(query);
+
+        var body = {
+            user: user[0],
+            loi: loi[0]
+        }
+
+        var sendEmail = await emailController.sendSubmitLOI(body);
 
         return res.status(200).json({ message: 'Loi submitted' })
     }
