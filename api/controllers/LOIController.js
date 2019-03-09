@@ -89,7 +89,53 @@ module.exports = {
         var sendEmail = await emailController.sendSubmitLOI(body);
 
         return res.status(200).json({ message: 'Loi submitted' })
+    },
+
+    nextLOI: async function (req, res, next) {
+
+        sails.log('nextLOI', req.query.ts)
+
+        let timeStamp = req.query.ts;
+        let query = {
+            where: { createdAt: { '>': timeStamp } },
+            sort: 'createdAt ASC',
+            limit: 1
+        }
+
+        sails.log('query', query)
+
+        //query 
+        let loi = await LOI.find(query)
+
+        sails.log(loi)
+
+        //return the next Letter of Intent
+        return res.status(200).json(loi)
+
+    },
+
+    prevLOI: async function (req, res, next) {
+
+        sails.log('prevLOI', req.query.ts)
+
+        let timeStamp = req.query.ts;
+        let query = {
+            where: { createdAt: { '<': timeStamp } },
+            sort: 'createdAt DESC',
+            limit: 1
+        }
+
+        sails.log('query', query)
+
+        //query 
+        let loi = await LOI.find(query)
+
+        sails.log(loi)
+
+        //return the next Letter of Intent
+        return res.status(200).json(loi)
     }
+
 
 };
 

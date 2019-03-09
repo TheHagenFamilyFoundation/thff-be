@@ -93,6 +93,8 @@ module.exports.routes = {
 
   'POST /fpItems': 'FullProposalItemController.createFPItems',
 
+  'GET /nextLOI' : 'LOIController.nextLOI',
+  'GET /prevLOI' : 'LOIController.prevLOI',
 
   /*** EMAILS ***/
 
