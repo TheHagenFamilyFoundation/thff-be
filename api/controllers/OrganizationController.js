@@ -24,41 +24,56 @@ module.exports = {
 
         sails.log('req.body', req.body)
 
-        var org = req.body;
-
-        let userID = org.userid;
-
-        //create orgID
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-        for (var i = 0; i < 5; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        let query = {
+            legalName: req.body.legalName
         }
+        OrganizationInfo.find(query).then((docs) => {
 
-        var organizationID = text;
-        //add organizationID to org object
+            if (docs.length > 0) {
+                sails.log('duplicate')
+                res.status(400).send({ code: 'ORG001', message: 'Duplicate Organization' })
+            }
+            else {
 
-        org.organizationID = organizationID;
+                var org = req.body;
 
-        Organization.create(org)
-            .then(function (newOrg, err) {
+                let userID = org.userid;
 
-                if (err) {
-                    return res.status(err.status).json({ err: err });
+                //create orgID
+                var text = "";
+                var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+                for (var i = 0; i < 5; i++) {
+                    text += possible.charAt(Math.floor(Math.random() * possible.length));
                 }
 
-                sails.log(newOrg)
+                var organizationID = text;
+                //add organizationID to org object
 
-                //add the user who created the org into the users list
-                Organization.addToCollection(newOrg.id, 'users').members(userID).then(function () {
+                org.organizationID = organizationID;
 
-                    sails.log(newOrg)
+                Organization.create(org)
+                    .then(function (newOrg, err) {
 
-                    return res.json({ 'status': true, 'result': newOrg });
-                })
+                        if (err) {
+                            return res.status(err.status).json({ err: err });
+                        }
 
-            })
+                        sails.log(newOrg)
+
+                        //add the user who created the org into the users list
+                        Organization.addToCollection(newOrg.id, 'users').members(userID).then(function () {
+
+                            sails.log(newOrg)
+
+                            return res.json({ 'status': true, 'result': newOrg });
+                        })
+
+                    })
+
+            }
+
+        })
 
     },
     addUser: function (req, res, next) {
@@ -104,7 +119,7 @@ module.exports = {
 
         sails.log('getting 501c3 for org', req.params)
 
-        sails.log('key:', sails.config.custom.s3_key, );
+        sails.log('key:', sails.config.custom.s3_key);
         sails.log('secret:', sails.config.custom.s3_secret)
 
         Organization.findOne({
