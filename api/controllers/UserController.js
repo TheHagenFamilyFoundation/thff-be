@@ -10,46 +10,55 @@ var bcrypt = require('bcrypt-nodejs');
 const saltRounds = 10;
 
 module.exports = {
-    create: function (req, res) {
+    create: async function (req, res) {
 
         sails.log("user create")
 
-        if (req.body.password !== req.body.confirmPassword) {
-            return res.status(401).json({ err: 'Password doesn\'t match, What a shame!' });
-        }
+        var userfound = await sails.helpers.user.userNameExists(req.body.username);
 
-        sails.log('req.body', req.body);
+        if (!userfound) {
 
-        bcrypt.genSalt(saltRounds, function (err, salt) {
-            if (err) return res.status(err.status).json({ err: err });
+            if (req.body.password !== req.body.confirmPassword) {
+                return res.status(401).json({ err: 'Password doesn\'t match, What a shame!' });
+            }
 
-            bcrypt.hash(req.body.password, salt, null, function (err, hash) {
+            sails.log('req.body', req.body);
+
+            bcrypt.genSalt(saltRounds, function (err, salt) {
                 if (err) return res.status(err.status).json({ err: err });
 
-                sails.log('hash', hash)
+                bcrypt.hash(req.body.password, salt, null, function (err, hash) {
+                    if (err) return res.status(err.status).json({ err: err });
 
-                req.body.encryptedPassword = hash;
+                    sails.log('hash', hash)
 
-                sails.log('req.body', req.body);
+                    req.body.encryptedPassword = hash;
 
-                User.create(req.body).exec(function (err, user) {
+                    sails.log('req.body', req.body);
 
-                    sails.log("User.create")
+                    User.create(req.body).exec(function (err, user) {
 
-                    if (err) {
-                        return res.status(err.status).json({ err: err });
-                    }
-                    // If user created successfuly we return user and token as response
-                    if (user) {
-                        // NOTE: payload is { id: user.id}
-                        res.status(200).json({ user: user, token: jwToken.issue({ id: user.id }) });
-                    }
+                        sails.log("User.create")
+
+                        if (err) {
+                            return res.status(err.status).json({ err: err });
+                        }
+                        // If user created successfuly we return user and token as response
+                        if (user) {
+                            // NOTE: payload is { id: user.id}
+                            res.status(200).json({ user: user, token: jwToken.issue({ id: user.id }) });
+                        }
+
+                    })
 
                 })
 
-            })
+            });
+        }
+        else {
+            return res.status(400).json({ code: 'USER001', message: 'Duplicate User' });
+        }
 
-        });
     }
     ,
 
