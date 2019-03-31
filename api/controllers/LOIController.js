@@ -134,7 +134,41 @@ module.exports = {
 
         //return the next Letter of Intent
         return res.status(200).json(loi)
+    },
+
+    //returns a list of unsubmitted LOI - modified with email
+    getUnSubmittedLOI: async function (req, res, next) {
+
+        let query = {
+            submitted: false
+        }
+
+        let lois = await LOI.find(query)
+
+        sails.log('lois', lois)
+
+        let users = [];
+        lois.forEach(loi => {
+
+            users.push(loi.userid)
+
+        });
+        sails.log('users', users)
+
+        let userQuery = {
+            id: users
+        }
+
+        let userDocs = await User.find(userQuery)
+        let emails = [];
+        userDocs.forEach(userDoc => {
+            emails.push(userDoc.email)
+        })
+
+        return res.status(200).json(emails)
     }
+
+
 
 
 };
