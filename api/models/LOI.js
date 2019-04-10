@@ -49,6 +49,10 @@ module.exports = {
       // 5-declined //not for second round
       // 6-need some indicator for second round - show the full proposal link
 
+    },
+    votes: {
+      collection: 'vote',
+      via: 'letterOfIntent'
     }
 
   }
