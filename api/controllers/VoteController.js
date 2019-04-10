@@ -16,14 +16,18 @@ module.exports = {
             letterOfIntent: req.body.letterOfIntent
         }
 
-        let find = await Vote.destroy(query)
+        let destroy = await Vote.destroy(query)
         // sails.log('find', find)
 
         let vote = await Vote.create(req.body);
 
-        sails.log('vote', vote)
 
-        return res.status(200).json(vote);
+        let find = await Vote.findOne(query).populate('letterOfIntent')
+
+
+        sails.log('find', find)
+
+        return res.status(200).json(find);
 
     }
 
