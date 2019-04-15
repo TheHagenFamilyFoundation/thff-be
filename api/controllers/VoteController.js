@@ -13,7 +13,8 @@ module.exports = {
 
         let query = {
             voteType: req.body.voteType,
-            letterOfIntent: req.body.letterOfIntent
+            letterOfIntent: req.body.letterOfIntent,
+            userID: req.body.userID
         }
 
         let destroy = await Vote.destroy(query)
@@ -25,7 +26,7 @@ module.exports = {
         let find = await Vote.findOne(query).populate('letterOfIntent')
 
 
-        sails.log('find', find)
+        sails.log('after - find', find)
 
         return res.status(200).json(find);
 
