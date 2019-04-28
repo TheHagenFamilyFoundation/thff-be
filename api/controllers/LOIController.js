@@ -166,6 +166,41 @@ module.exports = {
         })
 
         return res.status(200).json(emails)
+    },
+    //return LOIs that president has voted on
+    presVotes: async function (req, res) {
+
+        sails.log("pres votes")
+
+        let query = {};
+
+        let lois = await LOI.find(query).populate('votes')
+
+        sails.log('lois', lois)
+
+        let presLOIs = [];
+
+        lois.forEach((loi) => {
+
+            loi.votes.forEach((vote) => {
+
+                if (req.query.vote) {
+                    if (vote.voteType == 'President' && vote.vote == req.query.vote) {
+                        presLOIs.push(loi);
+                    }
+                }
+                else {
+                    if (vote.voteType == 'President') {
+                        presLOIs.push(loi);
+                    }
+
+                }
+
+            })
+
+        })
+
+        return res.status(200).json(presLOIs);
     }
 
 
