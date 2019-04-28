@@ -40,9 +40,17 @@ module.exports = {
       type: 'number',
       defaultsTo: 1
 
+      //president
       //possible values
       //1-yes
       //2-no
+
+      //director
+      //-1 - no vote
+      //0-no
+      //1-maybe
+      //2-yes
+
 
     }
 

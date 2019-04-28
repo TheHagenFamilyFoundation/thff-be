@@ -166,10 +166,70 @@ module.exports = {
         })
 
         return res.status(200).json(emails)
+    },
+    //return LOIs that president has voted on
+    presVotes: async function (req, res) {
+
+        sails.log("pres votes", req.query.vote)
+
+        let query = {};
+
+        let lois = await LOI.find(query).populate('votes')
+
+        let presLOIs = [];
+
+        lois.forEach((loi) => {
+
+            loi.votes.forEach((vote) => {
+
+                if (req.query.vote) {
+                    if (vote.voteType == 'President' && vote.vote == req.query.vote) {
+                        presLOIs.push(loi);
+                    }
+                }
+                else {
+                    if (vote.voteType == 'President') {
+                        presLOIs.push(loi);
+                    }
+
+                }
+
+            })
+
+        })
+
+        return res.status(200).json(presLOIs);
+    },
+
+    //return LOIs that president has voted on
+    pendingVotes: async function (req, res) {
+
+        sails.log("pending votes", req.query)
+
+        let query = {};
+
+        let lois = await LOI.find(query).populate('votes')
+
+        let pendingVotes = [];
+
+        lois.forEach((loi) => {
+            let hasVoted = false;
+            loi.votes.forEach((vote) => {
+
+                if (vote.userID == req.query.user) {
+                    hasVoted = true;
+                }
+
+            })
+
+            if (!hasVoted) {
+                pendingVotes.push(loi);
+            }
+
+        })
+
+        return res.status(200).json(pendingVotes);
     }
-
-
-
 
 };
 
