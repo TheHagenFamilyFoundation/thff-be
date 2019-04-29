@@ -93,47 +93,154 @@ module.exports = {
 
     nextLOI: async function (req, res, next) {
 
-        sails.log('nextLOI', req.query.ts)
+        sails.log('nextLOI ts', req.query.ts)
+        sails.log('nextLOI filter', req.query.filter)
+        sails.log('nextLOI user', req.query.user)
 
         let timeStamp = req.query.ts;
         let query = {
             where: { createdAt: { '>': timeStamp } },
-            sort: 'createdAt ASC',
-            limit: 1
+            sort: 'createdAt ASC'
         }
 
-        sails.log('query', query)
+        sails.log('nextLOI - query', query)
 
         //query 
-        let loi = await LOI.find(query)
+        let lois = await LOI.find(query).populate('votes')
 
-        sails.log(loi)
+        sails.log('next - lois', lois)
+        let nextLOIs = [];
+        if (req.query.filter == 1) {
+            lois.forEach((loi) => {
 
+                loi.votes.forEach((vote) => {
+
+                    if (vote.voteType == 'President' && vote.vote == 1) {
+                        nextLOIs.push(loi);
+                    }
+
+                })
+
+            })
+
+        }
+        else if (req.query.filter == 2) {
+            lois.forEach((loi) => {
+
+                loi.votes.forEach((vote) => {
+
+                    if (vote.voteType == 'President' && vote.vote == 2) {
+                        nextLOIs.push(loi);
+                    }
+
+                })
+
+            })
+        }
+        else if (req.query.filter == 3) {
+            lois.forEach((loi) => {
+                let hasVoted = false;
+                loi.votes.forEach((vote) => {
+
+                    if (vote.userID == req.query.user) {
+                        hasVoted = true;
+                    }
+
+                })
+
+                if (!hasVoted) {
+                    nextLOIs.push(loi);
+                }
+
+            })
+        }
+        else {
+            //default
+            sails.log('default next letter')
+            nextLOIs = lois;
+        }
+
+        let nextLetter = nextLOIs[0];
+        sails.log('nextLetter', nextLetter)
         //return the next Letter of Intent
-        return res.status(200).json(loi)
+        return res.status(200).json(nextLetter)
 
     },
 
     prevLOI: async function (req, res, next) {
 
-        sails.log('prevLOI', req.query.ts)
+        sails.log('prevLOI ts', req.query.ts)
+        sails.log('prevLOI filter', req.query.filter)
+        sails.log('prevLOI user', req.query.user)
 
         let timeStamp = req.query.ts;
         let query = {
             where: { createdAt: { '<': timeStamp } },
-            sort: 'createdAt DESC',
-            limit: 1
+            sort: 'createdAt DESC'
         }
 
-        sails.log('query', query)
+        sails.log('prevLOI - query', query)
 
         //query 
-        let loi = await LOI.find(query)
+        let lois = await LOI.find(query).populate('votes')
 
-        sails.log(loi)
+        sails.log('prev - lois', lois)
+        let prevLOIs = [];
+        if (req.query.filter == 1) {
+            lois.forEach((loi) => {
+
+                loi.votes.forEach((vote) => {
+
+                    if (vote.voteType == 'President' && vote.vote == 1) {
+                        prevLOIs.push(loi);
+                    }
+
+                })
+
+            })
+
+        }
+        else if (req.query.filter == 2) {
+            lois.forEach((loi) => {
+
+                loi.votes.forEach((vote) => {
+
+                    if (vote.voteType == 'President' && vote.vote == 2) {
+                        prevLOIs.push(loi);
+                    }
+
+                })
+
+            })
+        }
+        else if (req.query.filter == 3) {
+            lois.forEach((loi) => {
+                let hasVoted = false;
+                loi.votes.forEach((vote) => {
+
+                    if (vote.userID == req.query.user) {
+                        hasVoted = true;
+                    }
+
+                })
+
+                if (!hasVoted) {
+                    prevLOIs.push(loi);
+                }
+
+            })
+        }
+        else {
+            //default
+            prevLOIs = lois;
+        }
+
+        let prevLetter = prevLOIs[0];
+
+        sails.log('prevLetter', prevLetter)
 
         //return the next Letter of Intent
-        return res.status(200).json(loi)
+        return res.status(200).json(prevLetter)
     },
 
     //returns a list of unsubmitted LOI - modified with email
