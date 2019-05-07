@@ -93,13 +93,15 @@ module.exports.routes = {
 
   'POST /fpItems': 'FullProposalItemController.createFPItems',
 
+  'GET /getLOIs': 'LOIController.getLOIs',
+
   'GET /nextLOI': 'LOIController.nextLOI',
   'GET /prevLOI': 'LOIController.prevLOI',
 
   'GET /presVotes': 'LOIController.presVotes',
   'GET /pendingVotes': 'LOIController.pendingVotes',
 
-  'GET /getRankLOI': 'LOIController.getRankLOI',
+  'GET /getRankLOIs': 'LOIController.getRankLOIs',
 
 
   /*** EMAILS ***/

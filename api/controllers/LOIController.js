@@ -61,6 +61,40 @@ module.exports = {
         })
 
     },
+    getLOIs: async function (req, res, next) {
+
+        let query = {};
+
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
+
+        let votedLOI = [];
+
+        lois.forEach((loi) => {
+            sails.log
+            if (loi.info)
+
+                loi.score = 0;
+
+            if (loi.votes.length > 0) {
+
+                loi.votes.forEach((vote) => {
+                    //-1 means they have not voted
+                    if (vote.voteType === 'Director' && vote.vote !== -1) {
+                        loi.score += vote.vote
+                    }
+
+                })
+
+            }
+            else {
+                //move on
+            }
+
+        })
+
+        return res.status(200).json(lois);
+
+    },
     //flipping the field submitted and update the submittedOn with time stamp
     submitLOI: async function (req, res, next) {
 
@@ -250,7 +284,7 @@ module.exports = {
             submitted: false
         }
 
-        let lois = await LOI.find(query)
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
         sails.log('lois', lois)
 
@@ -281,7 +315,7 @@ module.exports = {
 
         let query = {};
 
-        let lois = await LOI.find(query).populate('votes')
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
         let presLOIs = [];
 
@@ -315,7 +349,7 @@ module.exports = {
 
         let query = {};
 
-        let lois = await LOI.find(query).populate('votes')
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
         let pendingVotes = [];
 
@@ -338,7 +372,7 @@ module.exports = {
         return res.status(200).json(pendingVotes);
     },
 
-    getRankLOI: async function (req, res) {
+    getRankLOIs: async function (req, res) {
 
         //asc <-- most likely
         //desc
@@ -346,7 +380,7 @@ module.exports = {
         let query = {};
         let presLois = [];
 
-        let lois = await LOI.find(query).populate('votes')
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
         sails.log('lois', lois)
 
