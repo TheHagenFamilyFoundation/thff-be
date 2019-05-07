@@ -308,7 +308,7 @@ module.exports = {
         return res.status(200).json(presLOIs);
     },
 
-    //return LOIs that president has voted on
+    //return LOIs that director has not voted on
     pendingVotes: async function (req, res) {
 
         sails.log("pending votes", req.query)
@@ -336,6 +336,58 @@ module.exports = {
         })
 
         return res.status(200).json(pendingVotes);
+    },
+
+    getRankLOI: async function (req, res) {
+
+        //asc <-- most likely
+        //desc
+
+        let query = {};
+        let presLois = [];
+
+        let lois = await LOI.find(query).populate('votes')
+
+        sails.log('lois', lois)
+
+        lois.forEach((loi) => {
+            // sails.log('before - loi', loi)
+
+            loi.score = 0;
+            let presVoted = false;
+            // sails.log('after - loi', loi)
+
+            if (loi.votes.length > 0) {
+
+                loi.votes.forEach((vote) => {
+                    //-1 means they have not voted
+                    if (vote.voteType === 'Director' && vote.vote !== -1) {
+                        loi.score += vote.vote
+                    }
+
+                    if (vote.voteType === 'President') {
+                        presVoted = true;
+                    }
+
+                })
+
+            }
+            else {
+                //move on
+            }
+
+            if (presVoted) {
+                presLois.push(loi)
+            }
+
+            sails.log('after - score - loi', loi)
+
+        })
+
+        //sort
+        presLois.sort((a, b) => { return b.score - a.score })
+
+        return res.status(200).json(presLois);
     }
 
 };
