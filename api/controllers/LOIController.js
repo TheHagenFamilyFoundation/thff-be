@@ -372,7 +372,7 @@ module.exports = {
         return res.status(200).json(pendingVotes);
     },
 
-    getRankLOIs: async function (req, res) {
+    getRankedLOIs: async function (req, res) {
 
         //asc <-- most likely
         //desc
