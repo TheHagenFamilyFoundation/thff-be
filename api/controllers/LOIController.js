@@ -88,9 +88,6 @@ module.exports = {
 
         })
 
-        //sort
-        lois.sort((a, b) => { return b.score - a.score })
-
         return res.status(200).json(lois);
 
     },
