@@ -65,7 +65,7 @@ module.exports = {
 
         let query = {};
 
-        let lois = await LOI.find(query).populate('votes').populate('organization')
+        let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
         lois.forEach((loi) => {
 
