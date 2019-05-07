@@ -61,6 +61,39 @@ module.exports = {
         })
 
     },
+    getLOIs: async function (req, res, next) {
+
+        let query = {};
+
+        let lois = await LOI.find(query).populate('votes').populate('organization')
+
+        lois.forEach((loi) => {
+
+            loi.score = 0;
+
+            if (loi.votes.length > 0) {
+
+                loi.votes.forEach((vote) => {
+                    //-1 means they have not voted
+                    if (vote.voteType === 'Director' && vote.vote !== -1) {
+                        loi.score += vote.vote
+                    }
+
+                })
+
+            }
+            else {
+                //move on
+            }
+
+        })
+
+        //sort
+        lois.sort((a, b) => { return b.score - a.score })
+
+        return res.status(200).json(lois);
+
+    },
     //flipping the field submitted and update the submittedOn with time stamp
     submitLOI: async function (req, res, next) {
 
