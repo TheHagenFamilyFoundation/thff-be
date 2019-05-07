@@ -99,6 +99,8 @@ module.exports.routes = {
   'GET /presVotes': 'LOIController.presVotes',
   'GET /pendingVotes': 'LOIController.pendingVotes',
 
+  'GET /getRankLOI': 'LOIController.getRankLOI',
+
 
   /*** EMAILS ***/
 
