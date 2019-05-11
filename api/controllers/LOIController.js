@@ -399,7 +399,7 @@ module.exports = {
                         loi.score += vote.vote
                     }
 
-                    if (vote.voteType === 'President') {
+                    if (vote.voteType === 'President' && vote.vote == 1) {
                         presVoted = true;
                     }
 
