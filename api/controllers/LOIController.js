@@ -70,10 +70,8 @@ module.exports = {
         let votedLOI = [];
 
         lois.forEach((loi) => {
-            sails.log
-            if (loi.info)
 
-                loi.score = 0;
+            loi.score = 0;
 
             if (loi.votes.length > 0) {
 
