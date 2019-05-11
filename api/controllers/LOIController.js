@@ -70,10 +70,8 @@ module.exports = {
         let votedLOI = [];
 
         lois.forEach((loi) => {
-            sails.log
-            if (loi.info)
 
-                loi.score = 0;
+            loi.score = 0;
 
             if (loi.votes.length > 0) {
 
@@ -321,21 +319,32 @@ module.exports = {
 
         lois.forEach((loi) => {
 
-            loi.votes.forEach((vote) => {
+            loi.score = 0;
 
-                if (req.query.vote) {
-                    if (vote.voteType == 'President' && vote.vote == req.query.vote) {
-                        presLOIs.push(loi);
-                    }
-                }
-                else {
-                    if (vote.voteType == 'President') {
-                        presLOIs.push(loi);
+            if (loi.votes.length > 0) {
+
+                loi.votes.forEach((vote) => {
+
+                    if (vote.voteType === 'Director' && vote.vote !== -1) {
+                        loi.score += vote.vote
                     }
 
-                }
+                    if (req.query.vote) {
+                        if (vote.voteType == 'President' && vote.vote == req.query.vote) {
+                            presLOIs.push(loi);
+                        }
+                    }
+                    else {
+                        if (vote.voteType == 'President') {
+                            presLOIs.push(loi);
+                        }
 
-            })
+                    }
+
+
+                })
+
+            }
 
         })
 
@@ -354,17 +363,29 @@ module.exports = {
         let pendingVotes = [];
 
         lois.forEach((loi) => {
-            let hasVoted = false;
-            loi.votes.forEach((vote) => {
 
-                if (vote.userID == req.query.user) {
-                    hasVoted = true;
+            let hasVoted = false;
+
+            loi.score = 0;
+
+            if (loi.votes.length > 0) {
+
+                loi.votes.forEach((vote) => {
+
+                    if (vote.userID == req.query.user) {
+                        hasVoted = true;
+                    }
+
+                    if (vote.voteType === 'Director' && vote.vote !== -1) {
+                        loi.score += vote.vote
+                    }
+
+                })
+
+                if (!hasVoted) {
+                    pendingVotes.push(loi);
                 }
 
-            })
-
-            if (!hasVoted) {
-                pendingVotes.push(loi);
             }
 
         })
