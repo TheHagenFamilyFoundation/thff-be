@@ -108,6 +108,7 @@ module.exports = {
             })
             .fetch();
 
+      //can be removed
         sails.log('loi', loi)
 
         var query = { username: loi[0].username }
@@ -140,7 +141,7 @@ module.exports = {
         //query 
         let lois = await LOI.find(query).populate('votes')
 
-        sails.log('next - lois', lois)
+        sails.log('next - lois count ', lois.length)
         let nextLOIs = [];
         if (req.query.filter == 1) {
             lois.forEach((loi) => {
@@ -216,7 +217,7 @@ module.exports = {
         //query 
         let lois = await LOI.find(query).populate('votes')
 
-        sails.log('prev - lois', lois)
+        sails.log('prev - lois count', lois.length)
         let prevLOIs = [];
         if (req.query.filter == 1) {
             lois.forEach((loi) => {
@@ -284,7 +285,7 @@ module.exports = {
 
         let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
-        sails.log('lois', lois)
+        sails.log('lois count', lois.length)
 
         let users = [];
         lois.forEach(loi => {
@@ -292,7 +293,6 @@ module.exports = {
             users.push(loi.userid)
 
         });
-        sails.log('users', users)
 
         let userQuery = {
             id: users
@@ -403,14 +403,12 @@ module.exports = {
 
         let lois = await LOI.find(query).populate('votes').populate('organization').populate('info')
 
-        sails.log('lois', lois)
+        sails.log('lois count', lois.length)
 
         lois.forEach((loi) => {
-            // sails.log('before - loi', loi)
 
             loi.score = 0;
             let presVoted = false;
-            // sails.log('after - loi', loi)
 
             if (loi.votes.length > 0) {
 
@@ -435,7 +433,7 @@ module.exports = {
                 presLois.push(loi)
             }
 
-            sails.log('after - score - loi', loi)
+//             sails.log('after - score - loi', loi)
 
         })
 
