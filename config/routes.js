@@ -103,7 +103,6 @@ module.exports.routes = {
 
   'GET /getRankedLOIs': 'LOIController.getRankedLOIs',
 
-
   /*** EMAILS ***/
 
   //USER
@@ -122,6 +121,10 @@ module.exports.routes = {
 
   'POST /sendViewLOI': 'EmailController.sendViewLOI',
 
+  //PRESIDENT
+  'POST /loiFP': 'LOIController.loiFP',
+  'POST /openFPs': 'LOIController.openFPs',
+  'POST /notifyReject': 'LOIController.notifyReject',
 
   //ADMIN
   'GET /getUnSubmittedLOI': 'LOIController.getUnSubmittedLOI'
