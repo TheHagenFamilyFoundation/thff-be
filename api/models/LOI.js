@@ -53,6 +53,14 @@ module.exports = {
     votes: {
       collection: 'vote',
       via: 'letterOfIntent'
+    },
+    openFp: {
+      type: 'boolean',
+      defaultsTo: false
+
+      //set to true for full proposal
+      //set status to 6 - 2 routes
+
     }
 
   }
