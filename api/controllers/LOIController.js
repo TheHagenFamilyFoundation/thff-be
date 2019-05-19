@@ -108,7 +108,7 @@ module.exports = {
             })
             .fetch();
 
-      //can be removed
+        //can be removed
         sails.log('loi', loi)
 
         var query = { username: loi[0].username }
@@ -433,7 +433,7 @@ module.exports = {
                 presLois.push(loi)
             }
 
-//             sails.log('after - score - loi', loi)
+            //             sails.log('after - score - loi', loi)
 
         })
 
@@ -441,6 +441,56 @@ module.exports = {
         presLois.sort((a, b) => { return b.score - a.score })
 
         return res.status(200).json(presLois);
+    },
+
+    //individual turn on full proposal
+    loiFP: async function (req, res) {
+
+        //open or close
+        sails.log('loiFP', req.body)
+        //true or false
+
+        let loiID = req.params.loiID;
+
+        var loi = await LOI.update({ loiID: loiID })
+            .set({
+                openFp: req.body.openFP
+            })
+            .fetch();
+
+        return res.status(200).json(loi);
+    },
+
+    //open the links to the full proposals
+    //need date
+    openFPs: async function (req, res) {
+
+        sails.log('openFPs', req.body)
+        //true or false
+
+        var loi = await LOI.update({ openFP: true })
+            .set({
+                status: 6
+            })
+            .fetch();
+
+        return res.status(200).json(loi);
+    },
+
+    //set the rejected 
+    //need data
+    //future - send email as well
+    notifyReject: async function (req, res) {
+
+        sails.log('notifyReject', req.body)
+
+        var loi = await LOI.update({ openFP: false })
+            .set({
+                status: 5
+            })
+            .fetch();
+
+        return res.status(200).json(loi);
     }
 
 };
