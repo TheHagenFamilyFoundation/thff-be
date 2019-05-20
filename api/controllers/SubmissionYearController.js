@@ -49,24 +49,22 @@ module.exports = {
     //connected with LOI Controller
     openFullProposalPortal: async function (data) {
 
-        sails.log('openFullProposalPortal')
-
-        // let currentYear = today.getFullYear();
-
-        // let query = {
-        //     year: currentYear
-        // }
+        sails.log('openFullProposalPortal', data)
 
         let query = {
             id: data.id
         }
 
+        //debugging
+        // var sy = await SubmissionYear.findOne(query);
 
         var sy = await SubmissionYear.update(query)
             .set({
-                fpPoral: true
+                fpPortal: true
             })
             .fetch();
+
+        sails.log('sy', sy) //debuggin
 
         let result = true;
 
@@ -75,26 +73,29 @@ module.exports = {
     },
 
     // //connected with LOI Controller
-    // closeFullProposalPortal: async function () {
-    //     sails.log('closeFullProposalPortal')
+    closeFullProposalPortal: async function (data) {
+        sails.log('closeFullProposalPortal')
 
-    //     let currentYear = today.getFullYear();
+        let query = {
+            id: data.id
+        }
 
-    //     let query = {
-    //         year: currentYear
-    //     }
+        //debugging
+        // var sy = await SubmissionYear.findOne(query);
 
-    //     var sy = await SubmissionYear.update(query)
-    //         .set({
-    //             fpPoral: false
-    //         })
-    //         .fetch();
+        var sy = await SubmissionYear.update(query)
+            .set({
+                fpPortal: false
+            })
+            .fetch();
 
-    //     let result = true;
+        sails.log('sy', sy) //debuggin
 
-    //     return result;
+        let result = true;
 
-    // }
+        return result;
+
+    }
 
 
 };
