@@ -6,6 +6,7 @@
  */
 
 var emailController = require('./EmailController')
+var submissionYearController = require('./SubmissionYearController')
 
 module.exports = {
 
@@ -100,11 +101,25 @@ module.exports = {
 
         let loiID = req.params.loiID;
 
+        //get currentYear and find the submission year
+        let today = new Date();
+        let currentYear = today.getFullYear();
+
+        let syQuery = {
+            year: currentYear
+        }
+
+        var sy = await SubmissionYear.find(syQuery)
+
+        sails.log('sy', sy)
+
+
         var loi = await LOI.update({ loiID: loiID })
             .set({
                 submitted: true,
                 submittedOn: (new Date()).toJSON(),
-                status: 2 //submitted
+                status: 2, //submitted
+                submissionYear: sy[0].id
             })
             .fetch();
 
@@ -450,47 +465,89 @@ module.exports = {
         sails.log('loiFP', req.body)
         //true or false
 
-        let loiID = req.params.loiID;
-
-        var loi = await LOI.update({ loiID: loiID })
+        var loi = await LOI.update({ id: req.body.id })
             .set({
-                openFp: req.body.openFP
+                openFp: req.body.open
             })
             .fetch();
 
-        return res.status(200).json(loi);
+        return res.status(200).json(loi[0]);
     },
 
     //open the links to the full proposals
     //need date
     openFPs: async function (req, res) {
 
-        sails.log('openFPs', req.body)
+        sails.log('openFPs - body', req.body)
+        sails.log('openFPs - body.open', req.body.open)
+
+        sails.log('openFPs - Submission Year OBJ', req.body.sy)
         //true or false
 
-        var loi = await LOI.update({ openFP: true })
+        //lois that are tied to that submission year
+        let query = {
+            where: { openFp: req.body.open, submissionYear: req.body.sy.id },
+        }
+
+        sails.log('openFPs - query', query)
+
+        //debugging
+        // var lois = await LOI.find(query)
+
+        var lois = await LOI.update(query)
             .set({
                 status: 6
             })
             .fetch();
 
-        return res.status(200).json(loi);
+        sails.log('lois.length', lois.length)
+
+        //updates the submission Year field
+
+        if (req.body.open == true) {
+            let sy = await submissionYearController.openFullProposalPortal(req.body.sy)
+        }
+        else {
+            let sy = await submissionYearController.closeFullProposalPortal(req.body.sy)
+        }
+
+        return res.status(200).json(lois);
     },
 
     //set the rejected 
-    //need data
+    //need date
     //future - send email as well
     notifyReject: async function (req, res) {
 
-        sails.log('notifyReject', req.body)
+        sails.log('notifyReject', req.body) //does not need req.body
 
-        var loi = await LOI.update({ openFP: false })
-            .set({
-                status: 5
-            })
-            .fetch();
+        let today = new Date();
+        let currentYear = today.getFullYear();
 
-        return res.status(200).json(loi);
+        let november1st = new Date(currentYear - 1, 10, 1);
+        let nextNovember1st = new Date(currentYear + 1, 10, 1);
+
+        sails.log('november', november1st)
+
+        //ignore submitted false
+        //only reject the submitted for this year
+        let query = {
+            where: { submitted: true, openFp: false, submittedOn: { '>': november1st }, submittedOn: { '<': nextNovember1st } },
+        }
+
+        //debugging
+        var lois = await LOI.find(query);
+
+        //uncomment when ready
+        // var lois = await LOI.update({ openFP: false })
+        //     .set({
+        //         status: 5
+        //     })
+        //     .fetch();
+
+        sails.log('lois.length', lois.length)
+
+        return res.status(200).json(lois);
     }
 
 };
