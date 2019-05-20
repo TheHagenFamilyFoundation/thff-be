@@ -61,6 +61,9 @@ module.exports = {
       //set to true for full proposal
       //set status to 6 - 2 routes
 
+    },
+    submissionYear: {
+      model: 'submissionYear'
     }
 
   }
