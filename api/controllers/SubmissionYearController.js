@@ -106,13 +106,13 @@ module.exports = {
         }
 
         //debugging
-        var sy = await SubmissionYear.findOne(query);
+        // var sy = await SubmissionYear.findOne(query);
 
-        // var sy = await SubmissionYear.update(query)
-        //     .set({
-        //         active: false
-        //     })
-        //     .fetch();
+        var sy = await SubmissionYear.update(query)
+            .set({
+                active: false //deactivate the submission year
+            })
+            .fetch();
 
         sails.log('sy', sy) //debugging
 
