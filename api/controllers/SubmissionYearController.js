@@ -116,9 +116,8 @@ module.exports = {
 
         sails.log('sy', sy) //debugging
 
-        let result = true;
-
-        return result;
+        //send code 200
+        return res.status(200).json({ 'status': true, 'result': sy });
 
     }
 
