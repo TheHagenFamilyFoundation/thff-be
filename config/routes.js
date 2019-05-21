@@ -127,7 +127,11 @@ module.exports.routes = {
   'POST /notifyReject': 'LOIController.notifyReject',
 
   //ADMIN
-  'GET /getUnSubmittedLOI': 'LOIController.getUnSubmittedLOI'
+  'GET /getUnSubmittedLOI': 'LOIController.getUnSubmittedLOI',
+
+  //submission years
+  'POST /closeSubmissionYear': 'SubmissionYearController.closeSubmissionYear'
+
 
 
 };
