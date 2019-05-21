@@ -89,7 +89,32 @@ module.exports = {
             })
             .fetch();
 
-        sails.log('sy', sy) //debuggin
+        sails.log('sy', sy) //debugging
+
+        let result = true;
+
+        return result;
+
+    },
+
+    closeSubmissionYear: async function (req, res, next) {
+
+        sails.log('closeFullProposalPortal', req.body)
+
+        let query = {
+            id: req.body.id
+        }
+
+        //debugging
+        var sy = await SubmissionYear.findOne(query);
+
+        // var sy = await SubmissionYear.update(query)
+        //     .set({
+        //         active: false
+        //     })
+        //     .fetch();
+
+        sails.log('sy', sy) //debugging
 
         let result = true;
 
