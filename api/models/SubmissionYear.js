@@ -19,9 +19,9 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false
     },
-    closed: {
+    active: {
       type: 'boolean',
-      defaultsTo: false
+      defaultsTo: true
     },
     lois: {
       collection: 'loi',
