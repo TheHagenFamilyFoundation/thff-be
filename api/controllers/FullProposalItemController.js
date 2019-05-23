@@ -81,6 +81,40 @@ module.exports = {
         return res.status(200).json(fpItems);
     },
 
+    createFPItem(fpi) {
+
+        return new Promise((resolve, reject) => {
+
+            sails.log('createFPItem', fpi)
+
+            //create fpItemID
+            var text = "";
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    
+            for (var i = 0; i < 5; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+    
+            var fpItemID = text;
+            //add fpItemID to fpItem object
+    
+            fpi.fpItemID = fpItemID;
+
+            FullProposalItem.create(fpi).then(function (newfpItem, err) {
+                sails.log("FullProposalItem.create")
+
+                if (err) {
+                    reject(err);
+                }
+
+                resolve();
+
+            })
+
+        })
+
+    }
+
 }
 
 function createFPItem(fpi) {
