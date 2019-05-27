@@ -64,7 +64,7 @@ module.exports = {
                 let promises = [];
                 fpItems.forEach(fpItem => {
                     let createFPItem = fpItem;
-                    fpItem.fp = newFP.id;
+                    createFPItem.fp = newFP.id;
 
                     promises.push(FullProposalItemController.createFPItem(createFPItem))
 
@@ -84,6 +84,41 @@ module.exports = {
 
     },
 
+    update: async function (req, res, next) {
 
+        sails.log("fp update", req.body);
+
+        let fp = req.body;
+
+        let newfpItems = req.body.newfpItems;
+        delete req.body.newfpItems;
+
+        let updatedFP = await FullProposal.update({ id: fp.id }, fp)
+
+        sails.log('updatedFP', updatedFP)
+
+        sails.log('now create FPItems', newfpItems)
+
+        let promises = [];
+        newfpItems.forEach(fpItem => {
+
+            if (!fpItem.fpItemID) {
+
+                let createFPItem = fpItem;
+                sails.log('updatedFP.id', updatedFP[0].id)
+                createFPItem.fp = updatedFP[0].id;
+
+                promises.push(FullProposalItemController.createFPItem(createFPItem))
+
+            }
+
+        });
+
+        Promise.all(promises).then(
+            () => {
+                return res.json({ 'status': true, 'result': updatedFP });
+            })
+
+    }
 
 };
