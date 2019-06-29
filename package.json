@@ -53,7 +53,7 @@
   "author": "anonymous node/sails user",
   "license": "",
   "engines": {
-    "node": "8.11.1",
+    "node": "10.15.0",
     "npm": "6.0.0"
   }
 }
