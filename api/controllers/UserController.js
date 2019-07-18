@@ -431,7 +431,7 @@ module.exports = {
 
         var total = await User.count({});
 
-        sails.log('total user count = ', total)
+        // sails.log('total user count = ', total)
 
         return res.status(200).json(total);
 
