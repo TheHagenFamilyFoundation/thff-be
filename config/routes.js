@@ -69,6 +69,8 @@ module.exports.routes = {
 
   'GET /orgUsers/:orgID': 'UserController.getOrgUsers',
 
+  'GET /users/count': 'UserController.getUserCounts',
+
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
   'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
