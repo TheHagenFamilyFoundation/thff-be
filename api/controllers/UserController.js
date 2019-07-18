@@ -427,7 +427,15 @@ module.exports = {
 
     },//end of updateName
 
+    getUserCounts: async function (req, res) {
 
+        var total = await User.count({});
+
+        // sails.log('total user count = ', total)
+
+        return res.status(200).json(total);
+
+    },
 
     //Gets
 
