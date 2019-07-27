@@ -487,18 +487,26 @@ module.exports = {
                 orgUsersIds.push(element.id)
             });
             //then find all users, find the difference - complicated
-
-            var allUsers = await User.find({ id: { '!=': orgUsersIds } })
-            sails.log('allUsers', allUsers)
+            // Model.find({ where: { name: 'foo' }, limit: 10, skip: 10 });
+            var allUsers = await User.find({ where: { id: { '!=': orgUsersIds } }, limit: req.query.limit, skip: req.query.skip })
+            // sails.log('allUsers', allUsers)
 
             return res.status(200).json(allUsers);
         }
         else {
+
+            let query = {};
+
+            //add username to the query
+            if (req.query.username) {
+                query.username = req.query.username;
+            }
+
             //generic all - all users
-            var all = await User.find({});
+            var all = await User.find(query).populate('organizations');
 
             //debug - keep
-            sails.log('total user count = ', all)
+            // sails.log('total user count = ', all)
 
             return res.status(200).json(all);
 
