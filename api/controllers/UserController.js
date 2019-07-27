@@ -429,15 +429,90 @@ module.exports = {
 
     getUserCounts: async function (req, res) {
 
-        var total = await User.count({});
+        sails.log('getUserCounts: ', req.query)
 
-        // sails.log('total user count = ', total)
+        //filter by organization
+        if (req.query.org) {
 
-        return res.status(200).json(total);
+            var org = await Organization.findOne({ id: req.query.org }).populate('users')
+            sails.log('org', org)
+
+            let orgUsers = org.users;
+            orgUsersIds = []
+            org.users.forEach(element => {
+                orgUsersIds.push(element.id)
+            });
+            //then find all users, find the difference - complicated
+
+            var allUsers = await User.find({ id: { '!=': orgUsersIds } })
+            sails.log('allUsers', allUsers)
+
+            var total = allUsers.length
+
+            //debug - keep
+            sails.log('total user count = ', total)
+
+            return res.status(200).json(total);
+        }
+        else {
+            //generic total - all users
+            var total = await User.count({});
+
+            //debug - keep
+            sails.log('total user count = ', total)
+
+            return res.status(200).json(total);
+
+        }
 
     },
 
     //Gets
+    //Blueprint Find - GET
+    find: async function (req, res) {
+
+        sails.log('get users req.query', req.query)
+
+        //notorg is the filter
+
+        //filter by organization
+        if (req.query.notorg) {
+
+            var org = await Organization.findOne({ id: req.query.notorg }).populate('users')
+            sails.log('org', org)
+
+            let orgUsers = org.users;
+            orgUsersIds = []
+            org.users.forEach(element => {
+                orgUsersIds.push(element.id)
+            });
+            //then find all users, find the difference - complicated
+            // Model.find({ where: { name: 'foo' }, limit: 10, skip: 10 });
+            var allUsers = await User.find({ where: { id: { '!=': orgUsersIds } }, limit: req.query.limit, skip: req.query.skip })
+            // sails.log('allUsers', allUsers)
+
+            return res.status(200).json(allUsers);
+        }
+        else {
+
+            let query = {};
+
+            //add username to the query
+            if (req.query.username) {
+                query.username = req.query.username;
+            }
+
+            //generic all - all users
+            var all = await User.find(query).populate('organizations');
+
+            //debug - keep
+            // sails.log('total user count = ', all)
+
+            return res.status(200).json(all);
+
+        }
+
+    },
 
     getDirectors: async function (req, res) {
 
