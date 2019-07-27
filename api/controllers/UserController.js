@@ -468,6 +468,43 @@ module.exports = {
     },
 
     //Gets
+    //Blueprint Find - GET
+    find: async function (req, res) {
+
+        sails.log('get users req.query', req.query)
+
+        //notorg is the filter
+
+        //filter by organization
+        if (req.query.notorg) {
+
+            var org = await Organization.findOne({ id: req.query.notorg }).populate('users')
+            sails.log('org', org)
+
+            let orgUsers = org.users;
+            orgUsersIds = []
+            org.users.forEach(element => {
+                orgUsersIds.push(element.id)
+            });
+            //then find all users, find the difference - complicated
+
+            var allUsers = await User.find({ id: { '!=': orgUsersIds } })
+            sails.log('allUsers', allUsers)
+
+            return res.status(200).json(allUsers);
+        }
+        else {
+            //generic all - all users
+            var all = await User.find({});
+
+            //debug - keep
+            sails.log('total user count = ', all)
+
+            return res.status(200).json(all);
+
+        }
+
+    },
 
     getDirectors: async function (req, res) {
 
