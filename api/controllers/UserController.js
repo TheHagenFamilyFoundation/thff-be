@@ -429,11 +429,41 @@ module.exports = {
 
     getUserCounts: async function (req, res) {
 
-        var total = await User.count({});
+        sails.log('getUserCounts: ', req.query)
 
-        // sails.log('total user count = ', total)
+        //filter by organization
+        if (req.query.org) {
 
-        return res.status(200).json(total);
+            var org = await Organization.findOne({ id: req.query.org }).populate('users')
+            sails.log('org', org)
+
+            let orgUsers = org.users;
+            orgUsersIds = []
+            org.users.forEach(element => {
+                orgUsersIds.push(element.id)
+            });
+            //then find all users, find the difference - complicated
+
+            var allUsers = await User.find({ id: { '!=': orgUsersIds } })
+            sails.log('allUsers', allUsers)
+
+            var total = allUsers.length
+
+            //debug - keep
+            sails.log('total user count = ', total)
+
+            return res.status(200).json(total);
+        }
+        else {
+            //generic total - all users
+            var total = await User.count({});
+
+            //debug - keep
+            sails.log('total user count = ', total)
+
+            return res.status(200).json(total);
+
+        }
 
     },
 
