@@ -7,6 +7,7 @@
 
 module.exports = {
 
+    /*EXAMPLE*/
     // create: async function (req, res) {
 
     //     sails.log('email create')
