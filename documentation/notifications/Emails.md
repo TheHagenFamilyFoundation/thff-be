@@ -1,6 +1,4 @@
-# Notifications
-
-## Emails
+# Emails
 
 ### Reset Password
   - To
