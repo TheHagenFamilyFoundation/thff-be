@@ -6,34 +6,40 @@
  */
 
 module.exports = {
+  login: function(req, res) {
+    sails.log("User trying to login... email: ", req.body.email);
 
-  login: function (req, res) {
-
-    sails.log("Login")
-
-    var username = req.body.username;
+    var email = req.body.email;
     var password = req.body.password;
 
-    if (!username || !password) {
-      return res.status(400).json({ err: 'username and password required', message: 'Username and Password required' });
+    if (!email || !password) {
+      return res.status(400).json({
+        err: "email and password required",
+        message: "Email and Password required"
+      });
     }
 
     var query = {};
-    query.username = username;
+    query.email = email;
 
-    User.findOne(query, function (err, user) {
-
+    User.findOne(query, function(err, user) {
       if (!user) {
-        return res.status(400).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
+        return res.status(400).json({
+          err: "invalid email or password",
+          message: "Invalid Email or Password"
+        });
       }
 
-      User.comparePassword(password, user, function (err, valid) {
+      User.comparePassword(password, user, function(err, valid) {
         if (err) {
-          return res.status(err.status).json({ err: 'forbidden' });
+          return res.status(err.status).json({ err: "forbidden" });
         }
 
         if (!valid) {
-          return res.status(400).json({ err: 'invalid username or password', message: 'Invalid Username or Password' });
+          return res.status(400).json({
+            err: "invalid email or password",
+            message: "Invalid Email or Password"
+          });
         } else {
           res.status(200).json({
             user: user,
@@ -41,22 +47,18 @@ module.exports = {
           });
         }
       });
-    })
+    });
   },
 
-  authTest: function (req, res) {
+  authTest: function(req, res) {
+    sails.log("AuthTest");
 
-    sails.log('AuthTest')
-
-    return res.status(200).json(
-      {
-        "employees": [
-          { "firstName": "John", "lastName": "Doe" },
-          { "firstName": "Anna", "lastName": "Smith" },
-          { "firstName": "Peter", "lastName": "Jones" }
-        ]
-      })
-
+    return res.status(200).json({
+      employees: [
+        { firstName: "John", lastName: "Doe" },
+        { firstName: "Anna", lastName: "Smith" },
+        { firstName: "Peter", lastName: "Jones" }
+      ]
+    });
   }
-
 };
