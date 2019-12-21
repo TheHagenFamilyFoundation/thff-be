@@ -6,59 +6,58 @@
  */
 
 module.exports = {
-  login: function(req, res) {
-    sails.log("User trying to login... email: ", req.body.email);
+  login(req, res) {
+    sails.log('User trying to login... email: ', req.body.email);
 
-    var email = req.body.email;
-    var password = req.body.password;
+    const { email } = req.body;
+    const { password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
-        err: "email and password required",
-        message: "Email and Password required"
+        err: 'email and password required',
+        message: 'Email and Password required',
       });
     }
 
-    var query = {};
+    const query = {};
     query.email = email;
 
-    User.findOne(query, function(err, user) {
+    User.findOne(query, (err, user) => {
       if (!user) {
         return res.status(400).json({
-          err: "invalid email or password",
-          message: "Invalid Email or Password"
+          err: 'invalid email or password',
+          message: 'Invalid Email or Password',
         });
       }
 
-      User.comparePassword(password, user, function(err, valid) {
+      User.comparePassword(password, user, (err, valid) => {
         if (err) {
-          return res.status(err.status).json({ err: "forbidden" });
+          return res.status(err.status).json({ err: 'forbidden' });
         }
 
         if (!valid) {
           return res.status(400).json({
-            err: "invalid email or password",
-            message: "Invalid Email or Password"
-          });
-        } else {
-          res.status(200).json({
-            user: user,
-            token: jwToken.issue({ id: user.id })
+            err: 'invalid email or password',
+            message: 'Invalid Email or Password',
           });
         }
+        res.status(200).json({
+          user,
+          token: jwToken.issue({ id: user.id }),
+        });
       });
     });
   },
 
-  authTest: function(req, res) {
-    sails.log("AuthTest");
+  authTest(req, res) {
+    sails.log('AuthTest');
 
     return res.status(200).json({
       employees: [
-        { firstName: "John", lastName: "Doe" },
-        { firstName: "Anna", lastName: "Smith" },
-        { firstName: "Peter", lastName: "Jones" }
-      ]
+        { firstName: 'John', lastName: 'Doe' },
+        { firstName: 'Anna', lastName: 'Smith' },
+        { firstName: 'Peter', lastName: 'Jones' },
+      ],
     });
-  }
+  },
 };
