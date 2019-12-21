@@ -30,9 +30,9 @@ module.exports = {
         });
       }
 
-      User.comparePassword(password, user, (err, valid) => {
-        if (err) {
-          return res.status(err.status).json({ err: 'forbidden' });
+      User.comparePassword(password, user, (err2, valid) => {
+        if (err2) {
+          return res.status(err2.status).json({ err: 'forbidden' });
         }
 
         if (!valid) {
@@ -41,7 +41,7 @@ module.exports = {
             message: 'Invalid Email or Password',
           });
         }
-        res.status(200).json({
+        return res.status(200).json({
           user,
           token: jwToken.issue({ id: user.id }),
         });
