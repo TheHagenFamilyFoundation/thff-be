@@ -13,7 +13,7 @@ module.exports = {
 
     const grants = await Grant.find();
 
-    sails.log.info('grants', grants);
+    sails.log.verbose('grants', grants);
 
     let grantTotal = 0;
 
@@ -28,7 +28,6 @@ module.exports = {
 
     // debug
     const message = {
-      message: 'Help',
       grantTotal,
     };
 
@@ -43,7 +42,11 @@ module.exports = {
     sails.log.debug('grant count = ', total);
     sails.log.info('grant count = ', total);
 
-    return res.status(200).json(total);
+    const message = {
+      grantTotal,
+    };
+
+    return res.status(200).json(message);
   },
 
 };
