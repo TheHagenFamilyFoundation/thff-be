@@ -70,6 +70,7 @@ module.exports.routes = {
   'GET /users/count': 'UserController.getUserCounts',
 
   'GET /grants/totals': 'GrantController.getGrantTotals',
+  'GET /grants/count': 'GrantController.getGrantCount',
 
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
