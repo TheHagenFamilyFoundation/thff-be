@@ -7,7 +7,7 @@
 
 module.exports = {
 
-  async getGrantTotals(req, res) {
+  async getGrantsTotal(req, res) {
     // find all grants
     // total the amount awarded
 
@@ -34,16 +34,16 @@ module.exports = {
     return res.status(200).send(message);
   },
 
-  async getGrantCount(req, res) {
+  async getGrantsCount(req, res) {
     // generic total - all grants
-    const total = await Grant.count({});
+    const grantCount = await Grant.count({});
 
     // debug - keep
-    sails.log.debug('grant count = ', total);
-    sails.log.info('grant count = ', total);
+    sails.log.debug('grant count = ', grantCount);
+    sails.log.info('grant count = ', grantCount);
 
     const message = {
-      grantTotal,
+      grantCount,
     };
 
     return res.status(200).json(message);
