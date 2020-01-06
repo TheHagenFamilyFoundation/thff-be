@@ -35,4 +35,15 @@ module.exports = {
     return res.status(200).send(message);
   },
 
+  async getGrantCount(req, res) {
+    // generic total - all grants
+    const total = await Grant.count({});
+
+    // debug - keep
+    sails.log.debug('grant count = ', total);
+    sails.log.info('grant count = ', total);
+
+    return res.status(200).json(total);
+  },
+
 };
