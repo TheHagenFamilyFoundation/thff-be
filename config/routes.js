@@ -22,7 +22,7 @@
 
 module.exports.routes = {
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
   * etc. depending on your default view engine) your home page.              *
@@ -30,13 +30,12 @@ module.exports.routes = {
   * (Alternatively, remove this and add an `index.html` file in your         *
   * `assets` directory)                                                      *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
 
   '/': {
-    view: 'homepage'
-  }
-
-  /***************************************************************************
+    view: 'homepage',
+  },
+  /** *************************************************************************
   *                                                                          *
   * Custom routes here...                                                    *
   *                                                                          *
@@ -44,21 +43,20 @@ module.exports.routes = {
   * is matched against Sails route blueprints. See `config/blueprints.js`    *
   * for configuration options and examples.                                  *
   *                                                                          *
-  ***************************************************************************/
-  ,
+  ************************************************************************** */
+
   '/foo': function (req, res) {
-    sails.log("accessing foo"); return res.send(
+    sails.log('accessing foo'); return res.send(
       {
-        "employees": [
-          { "firstName": "John", "lastName": "Doe" },
-          { "firstName": "Anna", "lastName": "Smith" },
-          { "firstName": "Peter", "lastName": "Jones" }
-        ]
-      }
+        employees: [
+          { firstName: 'John', lastName: 'Doe' },
+          { firstName: 'Anna', lastName: 'Smith' },
+          { firstName: 'Peter', lastName: 'Jones' },
+        ],
+      },
 
     );
-  }//end of foo
-  ,
+  }, // end of foo
 
   'GET /csrfToken': { action: 'security/grant-csrf-token' },
 
@@ -70,6 +68,9 @@ module.exports.routes = {
   'GET /orgUsers/:orgID': 'UserController.getOrgUsers',
 
   'GET /users/count': 'UserController.getUserCounts',
+
+  'GET /grants/totals': 'GrantController.getGrantTotals',
+  'GET /grants/count': 'GrantController.getGrantCount',
 
   'GET /UserNameExists': 'UserController.UserNameExists',
   'GET /EmailExists': 'UserController.EmailExists',
@@ -105,35 +106,34 @@ module.exports.routes = {
 
   'GET /getRankedLOIs': 'LOIController.getRankedLOIs',
 
-  /*** EMAILS ***/
+  /** * EMAILS ** */
 
-  //USER
+  // USER
   'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
   'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
   'POST /sendResetPasswordEmail': 'EmailController.sendResetPasswordEmail',
   'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
   'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
   'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
-  // 'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail', //if we need to have users notified when name changes
+  // 'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
+  // if we need to have users notified when name changes
 
   'POST /send501c3Status': 'EmailController.send501c3Status',
 
-  //DIRECTOR
+  // DIRECTOR
   'POST /sendValidate501c3': 'EmailController.sendValidate501c3',
 
   'POST /sendViewLOI': 'EmailController.sendViewLOI',
 
-  //PRESIDENT
+  // PRESIDENT
   'POST /loiFP': 'LOIController.loiFP',
   'POST /openFPs': 'LOIController.openFPs',
   'POST /notifyReject': 'LOIController.notifyReject',
 
-  //ADMIN
+  // ADMIN
   'GET /getUnSubmittedLOI': 'LOIController.getUnSubmittedLOI',
 
-  //submission years
-  'POST /closeSubmissionYear': 'SubmissionYearController.closeSubmissionYear'
-
-
+  // submission years
+  'POST /closeSubmissionYear': 'SubmissionYearController.closeSubmissionYear',
 
 };
