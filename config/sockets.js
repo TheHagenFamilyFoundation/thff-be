@@ -13,7 +13,7 @@
 module.exports.sockets = {
 
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * Node.js (and consequently Sails.js) apps scale horizontally. It's a      *
   * powerful, efficient approach, but it involves a tiny bit of planning. At *
@@ -37,7 +37,7 @@ module.exports.sockets = {
   * is left unset, Sails will try to connect to redis running on localhost   *
   * via port 6379                                                            *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
   // adapter: 'memory',
 
   //
@@ -51,8 +51,7 @@ module.exports.sockets = {
   // pass: '<redis auth password>',
 
 
-
- /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * Whether to expose a 'get /__getcookie' route with CORS support that sets *
   * a cookie (this is used by the sails.io.js socket client to get access to *
@@ -63,13 +62,12 @@ module.exports.sockets = {
   * connect, even for non-browser clients! (e.g. iOS apps, toasters, node.js *
   * unit tests)                                                              *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
 
   // grant3rdPartyCookie: true,
 
 
-
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * `beforeConnect`                                                          *
   *                                                                          *
@@ -105,7 +103,7 @@ module.exports.sockets = {
   * from client-side javascript. Using HTTP-only cookies is crucial for your *
   * app's security.                                                          *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
   // beforeConnect: function(handshake, cb) {
   //   // `true` allows the connection
   //   return cb(null, true);
@@ -114,20 +112,20 @@ module.exports.sockets = {
   // },
 
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * `afterDisconnect`                                                        *
   *                                                                          *
   * This custom afterDisconnect function will be run each time a socket      *
   * disconnects                                                              *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
   // afterDisconnect: function(session, socket, cb) {
   //   // By default: do nothing.
   //   return cb();
   // },
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * `transports`                                                             *
   *                                                                          *
@@ -135,7 +133,7 @@ module.exports.sockets = {
   * On server environments that don't support sticky sessions, the "polling" *
   * transport should be disabled.                                            *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
   // transports: ["polling", "websocket"]
 
 };
