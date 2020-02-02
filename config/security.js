@@ -14,7 +14,7 @@
  */
 
 module.exports.security = {
-  /***************************************************************************
+  /** *************************************************************************
    *                                                                          *
    * CORS is like a more modern version of JSONP-- it allows your application *
    * to circumvent browsers' same-origin policy, so that the responses from   *
@@ -25,24 +25,27 @@ module.exports.security = {
    * For additional options and more information, see:                        *
    * https://sailsjs.com/docs/concepts/security/cors                          *
    *                                                                          *
-   ***************************************************************************/
+   ************************************************************************** */
 
   cors: {
     allRoutes: true,
     allowOrigins: [
-      "https://hagen.foundation",
-      "https://www.hagen.foundation",
-      "http://hagen.foundation",
-      "http://localhost:4200",
-      "http://localhost:4201",
-      "https://thff-501c3.s3.amazonaws.com",
-      "https://thff-fe-production.herokuapp.com"
+      'https://hagen.foundation',
+      'https://www.hagen.foundation',
+      'https://www.hagenfamilyfoundation.org',
+      'https://hagenfamilyfoundation.org',
+      'http://hagen.foundation',
+      'http://localhost:4200',
+      'http://localhost:4201',
+      'https://thff-501c3.s3.amazonaws.com',
+      'https://thff-fe-production.herokuapp.com',
+      'https://thff-fe-stage.herokuapp.com',
     ],
     allowCredentials: false,
-    allowRequestHeaders: "content-type,x-csrf-token, origin"
+    allowRequestHeaders: 'content-type,x-csrf-token, origin',
   },
 
-  /****************************************************************************
+  /** **************************************************************************
    *                                                                           *
    * By default, Sails' built-in CSRF protection is disabled to facilitate     *
    * rapid development.  But be warned!  If your Sails app will be accessed by *
@@ -54,7 +57,7 @@ module.exports.security = {
    * For more information, see:                                                *
    * https://sailsjs.com/docs/concepts/security/csrf                           *
    *                                                                           *
-   ****************************************************************************/
+   *************************************************************************** */
 
-  csrf: false
+  csrf: false,
 };
