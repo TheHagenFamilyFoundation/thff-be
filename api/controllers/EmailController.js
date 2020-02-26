@@ -7,283 +7,277 @@
 
 module.exports = {
 
-    /*EXAMPLE*/
-    // create: async function (req, res) {
+  /* EXAMPLE */
+  // create: async function (req, res) {
 
-    //     sails.log('email create')
+  //     sails.log('email create')
 
-    //     const email = req.body
-    //     sails.hooks.email.send(
-    //         "resetPassword",
-    //         {
-    //             Name: email.name,
-    //         },
-    //         {
-    //             to: email.to,
-    //             subject: "THFF: Reset Password Email"
-    //         },
-    //         function (err) {
-    //             console.log(err || "Mail Sent!");
-    //         }
-    //     )
-    // },
+  //     const email = req.body
+  //     sails.hooks.email.send(
+  //         "resetPassword",
+  //         {
+  //             Name: email.name,
+  //         },
+  //         {
+  //             to: email.to,
+  //             subject: "THFF: Reset Password Email"
+  //         },
+  //         function (err) {
+  //             console.log(err || "Mail Sent!");
+  //         }
+  //     )
+  // },
 
-    sendResetPasswordEmail: async function (req, res) {
+  async sendResetPasswordEmail(req, res) {
+    sails.log('sendResetPasswordEmail');
+    sails.log(req.body);
 
-        sails.log("sendResetPasswordEmail")
+    const email = req.body;
 
-        const email = req.body;
+    const query = { email: email.to };
+    sails.log.debug('query', query);
 
-        sails.log(req.body);
-        sails.log("email.name = " + email.name);
-        sails.log("email.resetCode = " + email.resetCode);
+    // look up user
+    const user = await User.findOne(query);
 
-        var resetURL = '';
+    sails.log('user', user);
 
-        sails.log(sails.config.environment);
+    // sails.log(`email.name = ${email.name}`);
+    sails.log(`email.resetCode = ${email.resetCode}`);
 
-        if (sails.config.environment === 'production') {
-            resetURL = process.env.FE_API
-        }
-        else {
-            resetURL = 'http://localhost:4200'
-        }
+    let resetURL = '';
 
-        sails.log(resetURL)
+    sails.log(sails.config.environment);
 
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "THFF: Reset Password Email",
-            template: 'email-reset-password',
-            templateData: {
-                Name: email.name,
-                resetCode: email.resetCode,
-                resetURL: resetURL + '/type-new-password/' + email.name + '/' + email.resetCode
-            },
-            layout: false
-        });
-
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
-
-    } //sendResetEmail
-
-    ,
-    sendResetPasswordConfirmationEmail: async function (req, res) {
-
-        sails.log("sendResetPasswordConfirmationEmail")
-
-        sails.log(req.body);
-        const email = req.body;
-
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "Your THFF Password has Changed",
-            template: 'email-reset-password-confirm',
-            templateData: {
-                Name: email.name,
-                //To: email.to
-                // fullName: inputs.fullName,
-                // token: newUserRecord.emailProofToken
-            },
-            layout: false
-        });
-
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
-
+    if (sails.config.environment === 'production') {
+      resetURL = process.env.FE_API;
+    } else {
+      resetURL = 'http://localhost:4200';
     }
-    ,
-    sendUserNameEmail: async function (req, res) {
 
-        sails.log("sendUserNameEmail")
+    sails.log(resetURL);
+    sails.log('user.email', user.email);
 
-        sails.log(req.body);
-        const email = req.body;
+    await sails.helpers.sendTemplateEmail.with({
+      to: user.email,
+      subject: 'THFF: Reset Password Email',
+      template: 'email-reset-password',
+      templateData: {
+        Name: user.username,
+        resetCode: user.resetCode,
+        resetURL: `${resetURL}/type-new-password/${user.username}/${user.resetCode}`,
+      },
+      layout: false,
+    });
 
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "Your THFF Username",
-            template: 'email-username',
-            templateData: {
-                Name: email.name,
-                To: email.to
-                // fullName: inputs.fullName,
-                // token: newUserRecord.emailProofToken
-            },
-            layout: false
-        });
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  }, // sendResetEmail
 
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+  async sendResetPasswordConfirmationEmail(req, res) {
+    sails.log('sendResetPasswordConfirmationEmail');
 
-    },
+    sails.log(req.body);
+    const email = req.body;
 
-    sendRegisterUserEmail: async function (req, res) {
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Your THFF Password has Changed',
+      template: 'email-reset-password-confirm',
+      templateData: {
+        Name: email.name,
+        // To: email.to
+        // fullName: inputs.fullName,
+        // token: newUserRecord.emailProofToken
+      },
+      layout: false,
+    });
 
-        sails.log("sendRegisterUserEmail")
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async sendUserNameEmail(req, res) {
+    sails.log('sendUserNameEmail');
 
-        sails.log(req.body);
-        const email = req.body;
+    sails.log(req.body);
+    const email = req.body;
 
-        // Send "confirm account" email
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: 'Thank You For Registering A User Account', //Please confirm your account
-            template: 'email-register-user',
-            templateData: {
-                Name: email.name,
-                //To: email.to
-                // fullName: inputs.fullName,
-                // token: newUserRecord.emailProofToken
-            },
-            layout: false
-        });
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Your THFF Username',
+      template: 'email-username',
+      templateData: {
+        Name: email.name,
+        To: email.to,
+        // fullName: inputs.fullName,
+        // token: newUserRecord.emailProofToken
+      },
+      layout: false,
+    });
 
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
 
-    },
-    sendRegisterOrgEmail: async function (req, res) {
+  async sendRegisterUserEmail(req, res) {
+    sails.log('sendRegisterUserEmail');
 
-        sails.log("sendRegisterOrgEmail")
+    sails.log(req.body);
+    const email = req.body;
 
-        sails.log(req.body);
-        const email = req.body;
+    // Send "confirm account" email
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Thank You For Registering A User Account', // Please confirm your account
+      template: 'email-register-user',
+      templateData: {
+        Name: email.name,
+        // To: email.to
+        // fullName: inputs.fullName,
+        // token: newUserRecord.emailProofToken
+      },
+      layout: false,
+    });
 
-        // Send "confirm account" email
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "Thank You For Registering An Org Account",
-            template: 'email-register-org',
-            templateData: {
-                Name: email.name, //username that registered the org
-                OrgName: email.orgName
-            },
-            layout: false
-        });
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async sendRegisterOrgEmail(req, res) {
+    sails.log('sendRegisterOrgEmail');
 
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+    sails.log(req.body);
+    const email = req.body;
 
-    },
-    sendUserEmailChangeEmail: async function (req, res) {
+    // Send "confirm account" email
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Thank You For Registering An Org Account',
+      template: 'email-register-org',
+      templateData: {
+        Name: email.name, // username that registered the org
+        OrgName: email.orgName,
+      },
+      layout: false,
+    });
 
-        sails.log("sendUserEmailChangeEmail")
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async sendUserEmailChangeEmail(req, res) {
+    sails.log('sendUserEmailChangeEmail');
 
-        sails.log(req.body);
-        const email = req.body;
+    sails.log(req.body);
+    const email = req.body;
 
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "Your THFF Email has Changed",
-            template: 'email-user-email-change',
-            templateData: {
-                Name: email.name, //username
-                OldEmail: email.oldEmail, //old email
-                NewEmail: email.newEmail
-            },
-            layout: false
-        });
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Your THFF Email has Changed',
+      template: 'email-user-email-change',
+      templateData: {
+        Name: email.name, // username
+        OldEmail: email.oldEmail, // old email
+        NewEmail: email.newEmail,
+      },
+      layout: false,
+    });
 
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async send501c3Status(req, res) {
+    sails.log('send501c3Status');
 
-    },
-    send501c3Status: async function (req, res) {
+    sails.log(req.body);
+    const email = req.body;
 
-        sails.log("send501c3Status")
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to,
+      subject: 'Your Organization 501c3 Validation Status',
+      template: 'email-user-notify-501c3-status',
+      templateData: {
+        Name: email.name, // name
+        Organization: email.orgName, // organization name
+        OrgID: email.orgID,
+        Status: email.status,
+      },
+      layout: false,
+    });
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async sendValidate501c3(req, res) {
+    sails.log('sendValidate501c3');
 
-        sails.log(req.body);
-        const email = req.body;
+    sails.log(req.body);
+    const email = req.body;
 
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to,
-            subject: "Your Organization 501c3 Validation Status",
-            template: 'email-user-notify-501c3-status',
-            templateData: {
-                Name: email.name, //name
-                Organization: email.orgName, //organization name
-                OrgID: email.orgID,
-                Status: email.status
-            },
-            layout: false
-        });
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to, // directors email
+      subject: 'Validate 501c3',
+      template: 'email-director-validate-501c3',
+      templateData: {
+        Name: email.name, // username
+        Director: email.director,
+        Organization: email.orgName, // organization Name
+        OrgID: email.orgID,
+      },
+      layout: false,
+    });
 
-    },
-    sendValidate501c3: async function (req, res) {
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  async sendViewLOI(req, res) {
+    sails.log('sendViewLOI');
 
-        sails.log("sendValidate501c3")
+    sails.log(req.body);
+    const email = req.body;
 
-        sails.log(req.body);
-        const email = req.body;
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.to, // directors email
+      subject: 'New Letter of Intent Submitted',
+      template: 'email-director-view-loi',
+      templateData: {
+        Name: email.name, // username
+        Director: email.director,
+        Organization: email.orgName, // organization Name
+        OrgID: email.orgID,
+      },
+      layout: false,
+    });
 
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to, //directors email
-            subject: "Validate 501c3",
-            template: 'email-director-validate-501c3',
-            templateData: {
-                Name: email.name, //username
-                Director: email.director,
-                Organization: email.orgName, //organization Name
-                OrgID: email.orgID,
-            },
-            layout: false
-        });
+    return res.status(200).json(
+      { message: 'Mail Sent!' },
+    );
+  },
+  // called from LOI controller
+  async sendSubmitLOI(body) {
+    sails.log('sendSubmitLOI');
 
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
+    sails.log(body);
+    const email = body;
 
-    },
-    sendViewLOI: async function (req, res) {
+    await sails.helpers.sendTemplateEmail.with({
+      to: email.user.email, // user who created the loi
+      subject: 'Thank You For Submitting A Letter of Intent',
+      template: 'email-user-loi-submit',
+      templateData: {
+        Name: email.user.username, // username
+        LOIName: email.loi.name,
+      },
+      layout: false,
+    });
 
-        sails.log("sendViewLOI")
-
-        sails.log(req.body);
-        const email = req.body;
-
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.to, //directors email
-            subject: "New Letter of Intent Submitted",
-            template: 'email-director-view-loi',
-            templateData: {
-                Name: email.name, //username
-                Director: email.director,
-                Organization: email.orgName, //organization Name
-                OrgID: email.orgID,
-            },
-            layout: false
-        });
-
-        return res.status(200).json(
-            { message: 'Mail Sent!' })
-
-    },
-    //called from LOI controller
-    sendSubmitLOI: async function (body) {
-
-        sails.log("sendSubmitLOI")
-
-        sails.log(body);
-        const email = body;
-
-        await sails.helpers.sendTemplateEmail.with({
-            to: email.user.email, //user who created the loi
-            subject: "Thank You For Submitting A Letter of Intent",
-            template: 'email-user-loi-submit',
-            templateData: {
-                Name: email.user.username, //username
-                LOIName: email.loi.name
-            },
-            layout: false
-        });
-
-        // return res.status(200).json(
-        //     { message: 'Mail Sent!' })
-        return
-    }
+    // return res.status(200).json(
+    //     { message: 'Mail Sent!' })
+  },
 
 };
-
