@@ -1,7 +1,8 @@
 /**
  * LOI.js
  *
- * @description :: TODO: You might write a short summary of how this model works and what it represents here.
+ * @description :: TODO: You might write a short summary of how
+ * this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
@@ -11,61 +12,60 @@ module.exports = {
 
     name: {
       type: 'string',
-      //required: 'true',
-      unique: true // Yes unique one
+      // required: 'true',
+      unique: true, // Yes unique one
     },
     description: {
-      type: 'string'
+      type: 'string',
     },
     loiID: {
-      type: 'string'
+      type: 'string',
     },
     organization: {
-      model: 'organization'
+      model: 'organization',
     },
     userid: {
-      type: 'string'
+      type: 'string',
     },
     submitted: {
       type: 'boolean',
-      defaultsTo: false
+      defaultsTo: false,
     },
     submittedOn: {
-      type: 'string'
+      type: 'string',
     },
     info: {
       collection: 'loiInfo',
-      via: 'loi'
+      via: 'loi',
     },
     status: {
       type: 'number',
-      defaultsTo: 1
+      defaultsTo: 1,
 
-      //values: 
-      //1-created
-      //2- submitted
-      //3-under review //where people are looking at it
+      // values:
+      // 1-created
+      // 2-submitted
+      // 3-under review //where people are looking at it
       // 4-reviewed //done reviewing - we'll release the full proposal
-      // 5-declined //not for second round
+      // 5-not selected //not for second round <-- everything that didn't make it to full proposal
       // 6-need some indicator for second round - show the full proposal link
 
     },
     votes: {
       collection: 'vote',
-      via: 'letterOfIntent'
+      via: 'letterOfIntent',
     },
     openFp: {
       type: 'boolean',
-      defaultsTo: false
+      defaultsTo: false,
 
-      //set to true for full proposal
-      //set status to 6 - 2 routes
+      // set to true for full proposal
+      // set status to 6 - 2 routes
 
     },
     submissionYear: {
-      model: 'submissionYear'
-    }
+      model: 'submissionYear',
+    },
 
-  }
+  },
 };
-
