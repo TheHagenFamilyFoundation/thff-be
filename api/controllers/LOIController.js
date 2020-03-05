@@ -57,6 +57,17 @@ module.exports = {
       });
     });
   },
+
+  // Overriden find
+  async find(req, res) {
+    sails.log.info('finding loi');
+
+    const lois = await LOI.find();
+
+
+    return res.status(200).send(lois);
+  },
+
   async getLOIs(req, res) {
     console.log('getLOIs');
 
