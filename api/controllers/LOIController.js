@@ -61,9 +61,27 @@ module.exports = {
   // Overriden find
   async find(req, res) {
     sails.log.info('finding loi');
+    sails.log.debug('params', req.params);
+    sails.log.debug('query', req.query);
 
-    const lois = await LOI.find();
+    const query = {};
 
+    // if (req.params) {
+
+    // }
+
+    if (req.query.userid) {
+      query.userid = req.query.userid;
+    }
+
+    // also only querying 2020 - currentYear
+
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+
+    sails.log.debug('query for loi', query);
+    const lois = await LOI.find(query).populate('organization');
 
     return res.status(200).send(lois);
   },
@@ -72,6 +90,11 @@ module.exports = {
     console.log('getLOIs');
 
     const query = {};
+
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
 
     const lois = await LOI.find(query).populate('votes').populate('organization').populate('info');
 
@@ -151,6 +174,11 @@ module.exports = {
 
     sails.log('nextLOI - query', query);
 
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
+
     // query
     const lois = await LOI.find(query).populate('votes');
 
@@ -209,6 +237,11 @@ module.exports = {
     };
 
     sails.log('prevLOI - query', query);
+
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
 
     // query
     const lois = await LOI.find(query).populate('votes');
@@ -290,6 +323,11 @@ module.exports = {
 
     const query = {};
 
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
+
     const lois = await LOI.find(query).populate('votes').populate('organization').populate('info');
 
     const presLOIs = [];
@@ -322,6 +360,11 @@ module.exports = {
     sails.log('pending votes', req.query);
 
     const query = {};
+
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
 
     const lois = await LOI.find(query).populate('votes').populate('organization').populate('info');
 
@@ -358,6 +401,11 @@ module.exports = {
 
     const query = {};
     const presLois = [];
+
+    query.createdAt = {
+      '>=': new Date(new Date().getFullYear(), 0, 1),
+    };
+    sails.log.debug('query for loi', query);
 
     const lois = await LOI.find(query).populate('votes').populate('organization').populate('info');
 
