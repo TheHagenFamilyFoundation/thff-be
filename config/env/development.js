@@ -10,18 +10,18 @@
  *
  */
 
-var locals = require('../local.js');
+const locals = require('../local.js');
 
 // console.log(locals);
 // console.log(locals.datastores);
 
 module.exports = {
 
-  /***************************************************************************
+  /** *************************************************************************
    * Set the default database connection for models in the development       *
    * environment (see config/connections.js and config/models.js )           *
-   ***************************************************************************/
-  appName: "Hagen Family Foundation Backend",
+   ************************************************************************** */
+  appName: 'Hagen Family Foundation Backend',
 
   datastores: locals.datastores,
 
@@ -29,6 +29,6 @@ module.exports = {
 
   verifyEmailAddresses: true,
 
-  FE_API: process.env.FE_API | 'localhost:4200'
+  FE_API: process.env.FE_API || 'localhost:4200',
 
 };
