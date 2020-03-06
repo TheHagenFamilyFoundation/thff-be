@@ -74,6 +74,10 @@ module.exports = {
       query.userid = req.query.userid;
     }
 
+    if (req.query.loiID) {
+      query.loiID = req.query.loiID;
+    }
+
     // also only querying 2020 - currentYear
 
     query.createdAt = {
