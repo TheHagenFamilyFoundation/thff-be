@@ -20,7 +20,7 @@ module.exports = {
     }
 
     const query = {};
-    query.email = email;
+    query.email = email.lowerCase();
 
     User.findOne(query, (err, user) => {
       if (!user) {
