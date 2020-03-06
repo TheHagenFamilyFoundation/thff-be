@@ -85,7 +85,8 @@ module.exports = {
     };
 
     sails.log.debug('query for loi', query);
-    const lois = await LOI.find(query).populate('organization');
+    const lois = await LOI.find(query).populate('organization').populate('info').populate('votes')
+      .populate('submissionYear');
 
     return res.status(200).send(lois);
   },
