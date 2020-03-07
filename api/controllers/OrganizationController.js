@@ -172,7 +172,7 @@ module.exports = {
 
       Org501c3.findOne({
         organization: orgID,
-      }).exec(function (org501c3Found) {
+      }).exec((err, org501c3Found) => {
         sails.log('501c3:', org501c3Found);
 
         const { fileName } = org501c3Found;
