@@ -18,12 +18,12 @@ module.exports = {
     let grantTotal = 0;
 
     grants.forEach((grant) => {
-      sails.log.info('before grantTotal', grantTotal);
-      sails.log.info('amount', grant.Amount);
-      sails.log.info('typeof amount', typeof grant.Amount);
-      sails.log.info('grant', grant);
+      // sails.log.info('before grantTotal', grantTotal);
+      // sails.log.info('amount', grant.Amount);
+      // sails.log.info('typeof amount', typeof grant.Amount);
+      // sails.log.info('grant', grant);
       grantTotal += grant.Amount;
-      sails.log.info('after grantTotal', grantTotal);
+      // sails.log.info('after grantTotal', grantTotal);
     });
 
     // debug
@@ -39,8 +39,8 @@ module.exports = {
     const grantCount = await Grant.count({});
 
     // debug - keep
-    sails.log.debug('grant count = ', grantCount);
-    sails.log.info('grant count = ', grantCount);
+    // sails.log.debug('grant count = ', grantCount);
+    // sails.log.info('grant count = ', grantCount);
 
     const message = {
       grantCount,
