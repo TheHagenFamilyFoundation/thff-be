@@ -391,6 +391,7 @@ module.exports = {
     s3_key: process.env.S3_KEY,
     s3_secret: process.env.S3_SECRET,
     s3_bucket_name: process.env.S3_BUCKET_NAME,
+    s3_path: process.env.S3_PATH,
 
     verifyEmailAddresses: true,
 
