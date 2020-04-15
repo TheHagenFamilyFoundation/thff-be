@@ -22,7 +22,14 @@ module.exports = {
     const query = {};
     query.email = email.toLowerCase();
 
+    sails.log.debug(query);
+
     User.findOne(query, (err, user) => {
+      if (user.length > 1) {
+        sails.log.error('error');
+        sails.log.error(err);
+      }
+
       if (!user) {
         return res.status(400).json({
           err: 'invalid email or password',
