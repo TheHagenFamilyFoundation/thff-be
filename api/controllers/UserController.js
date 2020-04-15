@@ -13,7 +13,8 @@ module.exports = {
   async create(req, res) {
     sails.log('user create');
 
-    const userfound = await sails.helpers.user.userNameExists(req.body.username);
+    // const userfound = await sails.helpers.user.userNameExists(req.body.username);
+    const userfound = await sails.helpers.user.emailExists(req.body.email);
 
     if (!userfound) {
       if (req.body.password !== req.body.confirmPassword) {
