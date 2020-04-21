@@ -25,9 +25,12 @@ module.exports = {
     const query = {
       legalName: req.body.legalName,
     };
+
+    sails.log.info('query - ', query);
+
     OrganizationInfo.find(query).then((docs) => {
       if (docs.length > 0) {
-        sails.log('duplicate');
+        sails.log.error('duplicate organization');
         res.status(400).send({ code: 'ORG001', message: 'Duplicate Organization' });
       } else {
         const org = req.body;
