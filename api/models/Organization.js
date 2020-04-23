@@ -13,36 +13,35 @@ module.exports = {
 
     name: {
       type: 'string',
-      //required: 'true',
+      // required: 'true',
     },
     director: {
       type: 'string',
       // required: 'true'
     },
     description: {
-      type: 'string'
+      type: 'string',
     },
     users: {
       collection: 'user',
-      via: 'organizations'
+      via: 'organizations',
     },
     lois: {
       collection: 'loi',
-      via: 'organization'
+      via: 'organization',
     },
     organizationID: {
       type: 'string',
     },
     info: {
       collection: 'organizationInfo',
-      via: 'organization'
+      via: 'organization',
     },
     doc501c3: {
       collection: 'org501c3',
-      via: 'organization'
-    }
+      via: 'organization',
+    },
 
   },
 
 };
-
