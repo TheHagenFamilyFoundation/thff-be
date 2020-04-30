@@ -299,6 +299,7 @@ module.exports = {
   async getUnSubmittedLOI(req, res) {
     const query = {
       submitted: false,
+      createdAt: { '>=': new Date(new Date().getFullYear(), 0, 1) },
     };
 
     const lois = await LOI.find(query).populate('votes').populate('organization').populate('info');
