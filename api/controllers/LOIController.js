@@ -525,7 +525,7 @@ module.exports = {
     const query = {
       where: {
         // TODO
-        submitted: true, openFp: false, submittedOn: { '>': november1st }, submittedOn: { '<': nextNovember1st },
+        submitted: true, openFp: false, submittedOn: { '>': november1st, '<': nextNovember1st },
       },
     };
 
