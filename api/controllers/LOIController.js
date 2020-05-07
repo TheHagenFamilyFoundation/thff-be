@@ -172,16 +172,19 @@ module.exports = {
     sails.log('nextLOI user', req.query.user);
 
     const timeStamp = req.query.ts;
+
+    const currentYear = new Date(new Date().getFullYear(), 0, 1);
+
     const query = {
-      where: { createdAt: { '>': timeStamp } },
+      where: { createdAt: { '>': timeStamp, '>=': currentYear } },
       sort: 'createdAt ASC',
     };
 
     sails.log('nextLOI - query', query);
 
-    query.createdAt = {
-      '>=': new Date(new Date().getFullYear(), 0, 1),
-    };
+    // query.createdAt = {
+    //   '>=': new Date(new Date().getFullYear(), 0, 1),
+    // };
     sails.log.debug('query for loi', query);
 
     // query
@@ -236,16 +239,16 @@ module.exports = {
     sails.log('prevLOI user', req.query.user);
 
     const timeStamp = req.query.ts;
+
+    const currentYear = new Date(new Date().getFullYear(), 0, 1);
+
     const query = {
-      where: { createdAt: { '<': timeStamp } },
+      where: { createdAt: { '<': timeStamp, '>=': currentYear } },
       sort: 'createdAt DESC',
     };
 
     sails.log('prevLOI - query', query);
 
-    query.createdAt = {
-      '>=': new Date(new Date().getFullYear(), 0, 1),
-    };
     sails.log.debug('query for loi', query);
 
     // query
