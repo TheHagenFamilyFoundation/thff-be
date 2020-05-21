@@ -39,8 +39,8 @@ module.exports = {
           sails.log('req.body', req.body);
 
           User.create(req.body).exec((err3, user) => {
-            sails.log('User.create');
-            sails.log('User.create', err3);
+            if (err3) { sails.log.error(err3); }
+
             if (err3) {
               return res.status(409).json({ err3 });
             }
