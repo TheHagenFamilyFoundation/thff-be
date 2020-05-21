@@ -12,8 +12,8 @@ module.exports = {
       type: 'string',
       example: 'user@gmail.com',
       description: 'The email of the person to greet.',
-      required: true
-    }
+      required: true,
+    },
   },
 
   exits: {
@@ -25,28 +25,29 @@ module.exports = {
   },
 
 
-  fn: async function (inputs, exits) {
+  async fn(inputs, exits) {
+    sails.log('checking if email exits', inputs);
 
-    sails.log('inputs', inputs)
+    sails.log.verbose('inputs', inputs.email);
+    const query = {
+      email: inputs.email.toLowerCase(),
+    };
 
-    var docs = await User.find({ email: inputs.email })
+    const docs = await User.find(query);
 
-    var emailFound = false;
+    let emailFound = false;
 
     if (docs.length > 0) {
       emailFound = true;
-    }
-    else {
+    } else {
       emailFound = false;
     }
 
-    sails.log('emailFound', emailFound)
+    sails.log('emailFound', emailFound);
 
     // All done.
     return exits.success(emailFound);
-
-  }
+  },
 
 
 };
-

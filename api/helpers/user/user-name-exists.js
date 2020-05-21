@@ -12,8 +12,8 @@ module.exports = {
       type: 'string',
       example: 'Ami',
       description: 'The name of the person to greet.',
-      required: true
-    }
+      required: true,
+    },
   },
 
   exits: {
@@ -24,25 +24,25 @@ module.exports = {
 
   },
 
-  fn: async function (inputs, exits) {
+  async fn(inputs, exits) {
+    const query = {
+      username: inputs.username.toLowerCase(),
+    };
 
-    var docs = await User.find({ username: inputs.username })
+    const docs = await User.find(query);
 
-    var userFound = false;
+    let userFound = false;
 
     if (docs.length > 0) {
       userFound = true;
-    }
-    else {
+    } else {
       userFound = false;
     }
 
-    sails.log('userFound', userFound)
+    sails.log('userFound', userFound);
 
     // All done.
     return exits.success(userFound);
-
-  }
+  },
 
 };
-
