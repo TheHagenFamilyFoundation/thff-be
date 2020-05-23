@@ -6,13 +6,14 @@
  */
 
 module.exports = function (req, res, next) {
-  var token;
+  let token;
 
   if (req.headers && req.headers.authorization) {
-    var parts = req.headers.authorization.split(' ');
-    if (parts.length == 2) {
-      var scheme = parts[0],
-        credentials = parts[1];
+
+    const parts = req.headers.authorization.split(' ');
+    if (parts.length === 2) {
+      const scheme = parts[0];
+      const credentials = parts[1];
 
       if (/^Bearer$/i.test(scheme)) {
         token = credentials;
@@ -28,9 +29,9 @@ module.exports = function (req, res, next) {
     return res.status(401).json({ err: 'No Authorization header was found' });
   }
 
-  jwToken.verify(token, function (err, token) {
+  jwToken.verify(token, (err, verifiedToken) => {
     if (err) return res.status(401).json({ err: 'Invalid Token!' });
-    req.token = token; // This is the decrypted token or the payload you provided
+    req.token = verifiedToken; // This is the decrypted token or the payload you provided
     next();
   });
 };
