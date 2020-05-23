@@ -16,24 +16,23 @@
  * http://sailsjs.org/#!/documentation/reference/sails.config/sails.config.policies.html
  */
 
-
 module.exports.policies = {
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * Default policy for all controllers and actions (`true` allows public     *
   * access)                                                                  *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
 
   // '*': true,
 
-  /***************************************************************************
+  /** *************************************************************************
   *                                                                          *
   * Here's an example of mapping some policies to run before a controller    *
   * and its actions                                                          *
   *                                                                          *
-  ***************************************************************************/
+  ************************************************************************** */
   // RabbitController: {
 
   // Apply the `false` policy as the default for all of RabbitController's actions
@@ -42,25 +41,25 @@ module.exports.policies = {
 
   // For the action `nurture`, apply the 'isRabbitMother' policy
   // (this overrides `false` above)
-  // nurture	: 'isRabbitMother',
+  // nurture: 'isRabbitMother',
 
   // Apply the `isNiceToAnimals` AND `hasRabbitFood` policies
   // before letting any users feed our rabbits
   // feed : ['isNiceToAnimals', 'hasRabbitFood']
   // }
 
-  //'*': ['isAuthorized'], // Everything resctricted here
+  // '*': ['isAuthorized'], // Everything resctricted here
 
-  'UserController': {
-    'create': true, // We dont need authorization here, allowing public access
-    'UserNameExists': true, // We dont need authorization here, allowing public access
-    'EmailExists': true, // We dont need authorization here, allowing public access
-    'CreateResetCode': true, // We dont need authorization here, allowing public access
-    'setNewPassword': true, // We dont need authorization here, allowing public access
-    'ResetCodeCheck': true,
-    'changePassword': true,
-    'changeEmail': true,
-    'find': true
+  UserController: {
+    create: true, // We dont need authorization here, allowing public access
+    UserNameExists: true, // We dont need authorization here, allowing public access
+    EmailExists: true, // We dont need authorization here, allowing public access
+    CreateResetCode: true, // We dont need authorization here, allowing public access
+    setNewPassword: true, // We dont need authorization here, allowing public access
+    ResetCodeCheck: true,
+    // changePassword: true,
+    // changeEmail: true,
+    // find: true,
   },
 
   /* Debug */
@@ -68,43 +67,60 @@ module.exports.policies = {
   //   '*': true // We dont need authorization here, allowing public access
   // },
 
-
-
-  'AuthController': {
-    '*': true // We dont need authorization here, allowing public access
+  AuthController: {
+    '*': true, // We dont need authorization here, allowing public access
   },
 
-  'RequestsController': {
-    '*': true // We dont need authorization here, allowing public access
+  // To Display grants on the grants awarded page
+  RequestsController: {
+    '*': true, // We dont need authorization here, allowing public access
   },
 
-  'OrganizationController': {
-    '*': true // We dont need authorization here, allowing public access
+  // debug
+  GrantController: {
+    '*': true, // We dont need authorization here, allowing public access
   },
 
-
-  //debug
-  'GrantController': {
-    '*': true // We dont need authorization here, allowing public access
+  OrganizationController: {
+    '*': ['isAuthorized'],
   },
 
-  //debug
-  'LOIController': {
-    '*': true // We dont need authorization here, allowing public access
+  // debug
+  OrganizationInfoController: {
+    '*': ['isAuthorized'],
   },
 
-  //debug
-  'OrganizationInfoController': {
-    '*': true // We dont need authorization here, allowing public access
+  Org501c3Controller: {
+    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
   },
 
-
-
-  //all email routes are ok to access
-  'EmailController': {
-    '*': true // We dont need authorization here, allowing public access
+  // debug
+  LOIController: {
+    '*': ['isAuthorized'],
+  },
+  LOIInfoController: {
+    '*': ['isAuthorized'],
   },
 
+  FullProposalController: {
+    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
+  },
 
+  FullProposalItemController: {
+    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
+  },
+
+  // all email routes are ok to access
+  EmailController: {
+    '*': true, // We dont need authorization here, allowing public access
+  },
+
+  VoteController: {
+    '*': ['isAuthorized'],
+  },
+
+  SubmissionYearController: {
+    '*': ['isAuthorized'],
+  },
 
 };
