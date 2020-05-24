@@ -57,6 +57,7 @@ module.exports.policies = {
     CreateResetCode: true, // We dont need authorization here, allowing public access
     setNewPassword: true, // We dont need authorization here, allowing public access
     ResetCodeCheck: true,
+    '*': ['isAuthorized'],
     // changePassword: true,
     // changeEmail: true,
     // find: true,
