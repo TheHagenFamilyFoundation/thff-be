@@ -42,7 +42,7 @@ module.exports.security = {
       'https://thff-fe-stage.herokuapp.com',
     ],
     allowCredentials: false,
-    allowRequestHeaders: 'content-type,x-csrf-token, origin',
+    allowRequestHeaders: 'content-type,x-csrf-token,origin,authorization',
   },
 
   /** **************************************************************************

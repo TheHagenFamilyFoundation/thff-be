@@ -6,7 +6,7 @@
  */
 
 // We don't want to store password with out encryption
-var bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
 
@@ -18,19 +18,19 @@ module.exports = {
 
     email: {
       type: 'string',
-      //required: 'true',
-      unique: true // Yes unique one
+      // required: 'true',
+      unique: true, // Yes unique one
     },
     username: {
       type: 'string',
-      //required: 'true',
-      unique: true
+      // required: 'true',
+      unique: true,
     },
     firstName: {
-      type: 'string'
+      type: 'string',
     },
     lastName: {
-      type: 'string'
+      type: 'string',
     },
     organizations: {
       collection: 'organization',
@@ -38,13 +38,13 @@ module.exports = {
       dominant: true,
     },
     resetCode: {
-      type: 'string'
+      type: 'string',
     },
     resetPassword: {
-      type: 'boolean'
+      type: 'boolean',
     },
     resetTime: {
-      type: 'ref', columnType: 'datetime'
+      type: 'ref', columnType: 'datetime',
     },
     encryptedPassword: {
       type: 'string',
@@ -52,32 +52,31 @@ module.exports = {
     },
     accessLevel: {
       type: 'number',
-      defaultsTo: 1
-      //1-user
-      //2-director
-      //3-president
-      //4-admin(Logan)
-    }
+      defaultsTo: 1,
+      // 1-user
+      // 2-director
+      // 3-president
+      // 4-admin(Logan)
+    },
   },
   // We don't wan't to send back encrypted password either
-  customToJSON: function () {
+  customToJSON() {
     // Return a shallow copy of this record with the password and ssn removed.
-    return _.omit(this, ['encryptedPassword', 'resetPassword'])
+    return _.omit(this, ['encryptedPassword', 'resetPassword']);
   },
 
-  comparePassword: function (password, user, cb) {
+  comparePassword(password, user, cb) {
+    sails.log('comparePassword');
+    sails.log('password', password);
+    sails.log('user', user);
 
-    sails.log('comparePassword')
-    sails.log('password', password)
-    sails.log('user', user)
-
-    bcrypt.compare(password, user.encryptedPassword, function (err, match) {
+    bcrypt.compare(password, user.encryptedPassword, (err, match) => {
       if (err) cb(err);
       if (match) {
         cb(null, true);
       } else {
         cb(err);
       }
-    })
-  }
+    });
+  },
 };
