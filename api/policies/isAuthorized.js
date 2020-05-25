@@ -8,8 +8,9 @@
 module.exports = function (req, res, next) {
   let token;
 
-  if (req.headers && req.headers.authorization) {
+  sails.log.debug('req.headers', req.headers);
 
+  if (req.headers && req.headers.authorization) {
     const parts = req.headers.authorization.split(' ');
     if (parts.length === 2) {
       const scheme = parts[0];
