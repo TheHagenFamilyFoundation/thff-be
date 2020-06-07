@@ -22,7 +22,7 @@ module.exports = {
     const query = {};
     query.email = email.toLowerCase();
 
-    sails.log.debug(query);
+    // sails.log.debug(query);
 
     User.findOne(query, (err, user) => {
       if (user.length > 1) {
@@ -42,12 +42,19 @@ module.exports = {
           return res.status(err2.status).json({ err: 'forbidden' });
         }
 
+
         if (!valid) {
-          return res.status(400).json({
+          sails.log.debug('error not valid password');
+          const message = {
             err: 'invalid email or password',
             message: 'Invalid Email or Password',
-          });
+          };
+          sails.log.debug('returning ', message);
+          return res.status(400).json(message);
         }
+
+        sails.log.debug('success');
+
         return res.status(200).json({
           user,
           token: jwToken.issue({ id: user.id }),

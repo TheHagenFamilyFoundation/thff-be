@@ -66,9 +66,9 @@ module.exports = {
   },
 
   comparePassword(password, user, cb) {
-    sails.log('comparePassword');
-    sails.log('password', password);
-    sails.log('user', user);
+    sails.log.verbose('comparePassword');
+    sails.log.verbose('password', password);
+    sails.log.verbose('user', user);
 
     bcrypt.compare(password, user.encryptedPassword, (err, match) => {
       if (err) cb(err);
