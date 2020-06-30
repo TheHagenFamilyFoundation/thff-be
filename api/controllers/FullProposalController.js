@@ -87,6 +87,18 @@ module.exports = {
       };
     }
 
+    if (req.query.organization) {
+      query.organization = req.query.organization;
+    }
+
+    if (req.query.loi) {
+      query.loi = req.query.loi;
+    }
+
+    if (req.query.fpID) {
+      query.fpID = req.query.fpID;
+    }
+
     const fullProposals = await FullProposal.find(query)
       .populate('fpItems')
       .populate('organization')
