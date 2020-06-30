@@ -8,7 +8,7 @@
 module.exports = function (req, res, next) {
   let token;
 
-  sails.log.debug('req.headers', req.headers);
+  sails.log.verbose('req.headers', req.headers);
 
   if (req.headers && req.headers.authorization) {
     const parts = req.headers.authorization.split(' ');

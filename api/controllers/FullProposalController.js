@@ -5,120 +5,135 @@
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
 
-var FullProposalItemController = require('./FullProposalItemController')
+const FullProposalItemController = require('./FullProposalItemController');
 
 module.exports = {
 
-    create: function (req, res, next) {
+  create(req, res, next) {
+    sails.log('full proposal create');
 
-        sails.log("full proposal create");
+    sails.log('before req.body', req.body);
 
-        sails.log('before req.body', req.body)
+    const { fpItems } = req.body;
 
-        var fpItems = req.body.fpItems;
+    delete req.body.fpItems;
+    sails.log('after req.body', req.body);
+    const fp = req.body; // fp
 
-        delete req.body.fpItems;
-        sails.log('after req.body', req.body)
-        var fp = req.body; //fp
+    const orgID = fp.org;
 
-        let orgID = fp.org;
+    // create fpID
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-        //create fpID
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 5; i += 1) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
 
-        for (var i = 0; i < 5; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
+    const fpID = text;
+    // add fpID to fp object - fp
 
-        var fpID = text;
-        //add fpID to fp object - fp
+    fp.fpID = fpID;
 
-        fp.fpID = fpID;
+    const query = {};
+    query.organizationID = orgID;
 
-        let query = {};
-        query.organizationID = orgID;
+    let newFP = null;
 
-        let newFP = null;
+    Organization.find(query)
+      .then((org) => {
+        sails.log('found org', org);
+        sails.log('found org', org[0].id);
 
-        Organization.find(query)
-            .then((org) => {
+        fp.organization = org[0].id;
 
-                sails.log('found org', org)
-                sails.log('found org', org[0].id)
+        sails.log(fp);
 
-                fp.organization = org[0].id;
+        return FullProposal.create(fp);
+      }).then((createdFp) => {
+        newFP = createdFp;
+        sails.log('FullProposal.create');
 
-                sails.log(fp)
+        // fp is filled with organization new data..
+        sails.log('FP data has been created', newFP, orgID);
 
-                return FullProposal.create(fp)
-            }).then((fp) => {
-                newFP = fp;
-                sails.log("FullProposal.create")
+        sails.log('now create FPItems', fpItems);
 
-                // fp is filled with organization new data..
-                sails.log("FP data has been created", newFP, orgID);
+        const promises = [];
+        fpItems.forEach((fpItem) => {
+          const createFPItem = fpItem;
+          createFPItem.fp = newFP.id;
 
-                sails.log('now create FPItems', fpItems)
-
-                let promises = [];
-                fpItems.forEach(fpItem => {
-                    let createFPItem = fpItem;
-                    createFPItem.fp = newFP.id;
-
-                    promises.push(FullProposalItemController.createFPItem(createFPItem))
-
-                });
-
-
-                return Promise.all(promises)
-
-
-            }).then(() => {
-
-                return res.json({ 'status': true, 'result': newFP });
-            }).catch((err) => {
-                sails.log('err', err)
-                return res.status(err.status).json({ err: err });
-            })
-
-    },
-
-    update: async function (req, res, next) {
-
-        sails.log("fp update", req.body);
-
-        let fp = req.body;
-
-        let newfpItems = req.body.newfpItems;
-        delete req.body.newfpItems;
-
-        let updatedFP = await FullProposal.update({ id: fp.id }, fp)
-
-        sails.log('updatedFP', updatedFP)
-
-        sails.log('now create FPItems', newfpItems)
-
-        let promises = [];
-        newfpItems.forEach(fpItem => {
-
-            if (!fpItem.fpItemID) {
-
-                let createFPItem = fpItem;
-                sails.log('updatedFP.id', updatedFP[0].id)
-                createFPItem.fp = updatedFP[0].id;
-
-                promises.push(FullProposalItemController.createFPItem(createFPItem))
-
-            }
-
+          promises.push(FullProposalItemController.createFPItem(createFPItem));
         });
 
-        Promise.all(promises).then(
-            () => {
-                return res.json({ 'status': true, 'result': updatedFP });
-            })
 
+        return Promise.all(promises);
+      }).then(() => res.json({ status: true, result: newFP }))
+      .catch((err) => {
+        sails.log('err', err);
+        return res.status(err.status).json({ err });
+      });
+  },
+
+  async find(req, res, next) {
+    sails.log.debug('getting the full proposals');
+
+    sails.log.debug('req.query', req.query);
+    const query = {};
+    if (req.query.year) {
+      query.createdAt = {
+        '>=': new Date(req.query.year, 0, 1),
+      };
     }
+
+    if (req.query.organization) {
+      query.organization = req.query.organization;
+    }
+
+    if (req.query.loi) {
+      query.loi = req.query.loi;
+    }
+
+    if (req.query.fpID) {
+      query.fpID = req.query.fpID;
+    }
+
+    const fullProposals = await FullProposal.find(query)
+      .populate('fpItems')
+      .populate('organization')
+      .populate('loi');
+    return res.status(200).send(fullProposals);
+  },
+
+  async update(req, res, next) {
+    sails.log('fp update', req.body);
+
+    const fp = req.body;
+
+    const { newfpItems } = req.body;
+    delete req.body.newfpItems;
+
+    const updatedFP = await FullProposal.update({ id: fp.id }, fp);
+
+    sails.log('updatedFP', updatedFP);
+
+    sails.log('now create FPItems', newfpItems);
+
+    const promises = [];
+    newfpItems.forEach((fpItem) => {
+      if (!fpItem.fpItemID) {
+        const createFPItem = fpItem;
+        sails.log('updatedFP.id', updatedFP[0].id);
+        createFPItem.fp = updatedFP[0].id;
+
+        promises.push(FullProposalItemController.createFPItem(createFPItem));
+      }
+    });
+
+    Promise.all(promises).then(
+      () => res.json({ status: true, result: updatedFP }),
+    );
+  },
 
 };
