@@ -50,8 +50,8 @@ module.exports = {
         sails.log(fp);
 
         return FullProposal.create(fp);
-      }).then((fp) => {
-        newFP = fp;
+      }).then((createdFp) => {
+        newFP = createdFp;
         sails.log('FullProposal.create');
 
         // fp is filled with organization new data..
@@ -74,6 +74,24 @@ module.exports = {
         sails.log('err', err);
         return res.status(err.status).json({ err });
       });
+  },
+
+  async find(req, res, next) {
+    sails.log.debug('getting the full proposals');
+
+    sails.log.debug('req.query', req.query);
+    const query = {};
+    if (req.query.year) {
+      query.createdAt = {
+        '>=': new Date(req.query.year, 0, 1),
+      };
+    }
+
+    const fullProposals = await FullProposal.find(query)
+      .populate('fpItems')
+      .populate('organization')
+      .populate('loi');
+    return res.status(200).send(fullProposals);
   },
 
   async update(req, res, next) {

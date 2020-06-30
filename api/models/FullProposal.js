@@ -14,82 +14,82 @@ module.exports = {
     //  ╩  ╩╚═╩╩ ╩╩ ╩ ╩ ╚╝ ╚═╝╚═╝
 
     organization: {
-      model: 'organization'
+      model: 'organization',
     },
     loi: {
-      model: 'loi'
+      model: 'loi',
     },
     fpID: {
-      type: 'string'
+      type: 'string',
     },
     executiveSummary: {
-      type: 'string'
+      type: 'string',
     },
     targetPopulation: {
-      type: 'string'
+      type: 'string',
     },
     goals: {
-      type: 'string'
+      type: 'string',
     },
     activity: {
       type: 'number',
-      defaultsTo: 1
-      //values
-      //1-new
-      //2-ongoing
+      defaultsTo: 1,
+      // values
+      // 1-new
+      // 2-ongoing
     },
     timeTable: {
-      type: 'string'
+      type: 'string',
     },
     partners: {
-      type: 'string'
+      type: 'string',
     },
     differ: {
-      //differs from other projects in organization and outside
-      type: 'string'
+      // differs from other projects in organization and outside
+      type: 'string',
     },
     involve: {
-      type: 'string'
+      type: 'string',
     },
     staff: {
-      type: 'string'
+      type: 'string',
     },
     strategy: {
-      type: 'string'
+      type: 'string',
     },
     evaluation: {
-      type: 'string'
+      type: 'string',
     },
     dissemination: {
-      type: 'string'
+      type: 'string',
     },
     active: {
-      type: 'string'
+      type: 'string',
     },
     priority: {
-      type: 'string'
+      type: 'string',
     },
     history: {
-      type: 'string'
+      type: 'string',
     },
     website: {
-      type: 'string'
+      type: 'string',
     },
     submitted: {
       type: 'boolean',
-      defaultsTo: false
+      defaultsTo: false,
     },
     submittedOn: {
-      type: 'string'
+      type: 'string',
     },
     status: {
       type: 'number',
-      defaultsTo: 1
+      defaultsTo: 1,
 
-      //values: 
-      //1-created
-      //2- submitted
-      //3-under review //where people are looking at it
+      // values:
+      // 1-created
+      // 2- submitted
+      // 3-under review //where people are looking at it
       // 4-reviewed //done reviewing - we'll release the full proposal
       // 5-declined //not for second round
       // 6-need some indicator for second round - show the full proposal link
@@ -97,8 +97,8 @@ module.exports = {
     },
     fpItems: {
       collection: 'FullProposalItem',
-      via: 'fp'
-    }
+      via: 'fp',
+    },
 
     //  ╔═╗╔╦╗╔╗ ╔═╗╔╦╗╔═╗
     //  ║╣ ║║║╠╩╗║╣  ║║╚═╗
@@ -112,4 +112,3 @@ module.exports = {
   },
 
 };
-
