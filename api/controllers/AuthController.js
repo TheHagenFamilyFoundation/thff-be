@@ -25,10 +25,6 @@ module.exports = {
     // sails.log.debug(query);
 
     User.findOne(query, (err, user) => {
-      if (user.length > 1) {
-        sails.log.error('error');
-        sails.log.error(err);
-      }
 
       if (!user) {
         return res.status(400).json({
@@ -36,6 +32,13 @@ module.exports = {
           message: 'Invalid Email or Password',
         });
       }
+
+      if (user.length > 1) {
+        sails.log.error('error');
+        sails.log.error(err);
+      }
+
+
 
       User.comparePassword(password, user, (err2, valid) => {
         if (err2) {
