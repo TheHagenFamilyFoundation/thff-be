@@ -16,12 +16,12 @@ module.exports.datastores = {
 
   default: {
     adapter: require('sails-mongo'),
-    url: process.env.MONGODB_URI
+    url: process.env.DB_URI
   }
 
   // productionMongo: {
   //   adapter: require('sails-mongo'),
-  //   url: process.env.MONGODB_URI
+  //   url: process.env.DB_URI
   // },
 
 };
