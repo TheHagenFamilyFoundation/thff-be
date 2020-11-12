@@ -38,7 +38,7 @@
     "sails-hook-organics": "^0.14.5",
     "sails-hook-orm": "^2.1.1",
     "sails-hook-sockets": "^1.5.3",
-    "sails-mongo": "^1.0.1",
+    "sails-mongo": "^1.2.0",
     "skipper-s3": "^0.6.0"
   },
   "scripts": {
