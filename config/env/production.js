@@ -50,7 +50,7 @@ module.exports = {
     *                                                                          *
     ************************************************************************** */
     default: {
-      url: process.env.MONGODB_URI,
+      url: process.env.DB_URI,
       // adapter: 'sails-mysql',
       // url: 'mysql://user:password@host:port/database',
       //--------------------------------------------------------------------------

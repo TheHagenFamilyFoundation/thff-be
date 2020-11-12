@@ -21,7 +21,7 @@ module.exports.jobs = {
     // Define the directory where jobs are stored
     "jobsDirectory": "api/jobs",
     "db": {
-        "address": (process.env.MONGODB_URI) ? process.env.MONGODB_URI : locals.datastores.default.url,
+        "address": (process.env.DB_URI) ? process.env.DB_URI : locals.datastores.default.url,
         "collection": "sailsjobs"
     },
     "name": "SailsJs Jobs",
