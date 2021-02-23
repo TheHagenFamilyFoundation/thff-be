@@ -236,7 +236,7 @@ module.exports = {
     );
   },
   async sendViewLOI(req, res) {
-    sails.log('sendViewLOI');
+    sails.log('sendViewLOI',req.body);
 
     sails.log(req.body);
     const email = req.body;
