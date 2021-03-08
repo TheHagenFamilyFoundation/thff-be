@@ -242,11 +242,11 @@ module.exports = {
             sails.log('Reset Successful');
 
             await sails.helpers.sendTemplateEmail.with({
-              to: email.to,
+              to: user.email,
               subject: 'Your THFF Password has Changed',
               template: 'email-reset-password-confirm',
               templateData: {
-                Name: username,
+                Name: user.name,
                 // To: email.to
                 // fullName: inputs.fullName,
                 // token: newUserRecord.emailProofToken
