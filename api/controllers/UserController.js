@@ -240,6 +240,7 @@ module.exports = {
 
             // sails.log(user);
             sails.log('Reset Successful');
+            sails.log(user);//debug the user object
 
             await sails.helpers.sendTemplateEmail.with({
               to: user.email,
