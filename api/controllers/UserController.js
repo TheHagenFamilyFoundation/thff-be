@@ -233,7 +233,7 @@ module.exports = {
           }, {
             // resetPassword: false,
             encryptedPassword: hash,
-          }).exec((err4) => {
+          }).exec(async (err4) => {
             if (err4) {
               return res.status(err4.status).json({ reset: false });
             }
