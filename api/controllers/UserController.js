@@ -240,6 +240,20 @@ module.exports = {
 
             // sails.log(user);
             sails.log('Reset Successful');
+
+            await sails.helpers.sendTemplateEmail.with({
+              to: email.to,
+              subject: 'Your THFF Password has Changed',
+              template: 'email-reset-password-confirm',
+              templateData: {
+                Name: username,
+                // To: email.to
+                // fullName: inputs.fullName,
+                // token: newUserRecord.emailProofToken
+              },
+              layout: false,
+            });
+
             return res.status(200).json({ reset: true, message: 'Reset Successful' });
           });
         });
