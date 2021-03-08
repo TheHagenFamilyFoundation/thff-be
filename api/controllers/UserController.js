@@ -241,6 +241,10 @@ module.exports = {
             // sails.log(user);
             sails.log('Reset Successful');
 
+            sails.log('user[0]',user[0])
+            sails.log('user[0].email',user[0].email)
+            sails.log('user[0].username',user[0].username)
+
             await sails.helpers.sendTemplateEmail.with({
               to: user[0].email,
               subject: 'Your THFF Password has Changed',
