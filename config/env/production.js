@@ -396,6 +396,7 @@ module.exports = {
     verifyEmailAddresses: true,
 
     FE_API: (process.env.FE_API) ? process.env.FE_API : 'localhost:4200',
+    BE_API: (process.env.BE_API) ? process.env.BE_API : 'localhost:1337',
 
   },
 
