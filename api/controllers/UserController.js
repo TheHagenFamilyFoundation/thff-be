@@ -462,6 +462,11 @@ module.exports = {
       query.username = req.query.username;
     }
 
+    if(req.query.id)
+    {
+      query.id = req.query.id;
+    }
+
     // generic all - all users
     const all = await User.find(query).populate('organizations');
 
