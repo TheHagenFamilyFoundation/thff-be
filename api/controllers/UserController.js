@@ -205,7 +205,7 @@ module.exports = {
     });
   }, // end of ResetCodeCheck
   async setNewPassword(req, res) {
-    sails.log('setNewPassword');
+    sails.log('setNewPassword',req.body);
 
     const newPassword = req.body.np;
     const username = req.body.un;
