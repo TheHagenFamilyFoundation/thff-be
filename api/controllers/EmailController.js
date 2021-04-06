@@ -65,7 +65,7 @@ module.exports = {
       templateData: {
         Name: user.username,
         resetCode: user.resetCode,
-        resetURL: `${resetURL}/pages/auth/type-new-password/${user.username}/${user.resetCode}`,
+        resetURL: `${resetURL}/pages/auth/type-new-password/${user.resetCode}`,
       },
       layout: false,
     });
