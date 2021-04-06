@@ -184,7 +184,7 @@ module.exports = {
               if (now - user[0].resetTime < TWENTYFOUR_HOURS) {
                 sails.log('reset time is valid');
 
-                return res.status(200).json({ validresetCode: true, message: 'reset time is valid' });
+                return res.status(200).json({ user: user[0], validresetCode: true, message: 'reset time is valid' });
               }
 
 
