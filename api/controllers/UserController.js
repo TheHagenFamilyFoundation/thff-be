@@ -225,7 +225,7 @@ module.exports = {
 
         if (validresetCode.length > 0) {
           sails.log('reset code is valid'); // reset code was found
-          sails.log('set new password - user',user)
+          sails.log('set new password - user 1',user)
           if (validresetCode[0].resetPassword) {
             // set in the db the resetPassword to false
             User.update({
@@ -236,7 +236,7 @@ module.exports = {
               if (err2) {
                 return res.status(err2.status).json({ reset: false });
               }
-
+              sails.log('set new password - user 2',user[0])
               // now for checking the resetTime
 
               const now = new Date();
@@ -250,12 +250,12 @@ module.exports = {
                 sails.log('reset time is valid');
 
                 User.find({
-                  id: user.id,
+                  id: user[0].id,
                 }).exec((err, user) => {
                   if (err) {
                     return res.status(err.status).json({ reset: false });
                   }
-            
+                  sails.log('set new password - user 3',user[0])
                   sails.log('bcrypt gen salting');
             
                   bcrypt.genSalt(10, (err2, salt) => {
