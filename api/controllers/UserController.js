@@ -205,7 +205,7 @@ module.exports = {
     });
   }, // end of ResetCodeCheck
   async setNewPassword(req, res) {
-    sails.log('setNewPassword',req.body);
+    sails.log('setNewPassword', req.body);
 
     const newPassword = req.body.np;
     const username = req.body.un;
@@ -225,7 +225,7 @@ module.exports = {
 
         if (validresetCode.length > 0) {
           sails.log('reset code is valid'); // reset code was found
-          sails.log('set new password - user 1',user)
+          sails.log('set new password - user 1', user)
           if (validresetCode[0].resetPassword) {
             // set in the db the resetPassword to false
             User.update({
@@ -236,7 +236,7 @@ module.exports = {
               if (err2) {
                 return res.status(err2.status).json({ reset: false });
               }
-              sails.log('set new password - user 2',user[0])
+              sails.log('set new password - user 2', user[0])
               // now for checking the resetTime
 
               const now = new Date();
@@ -255,17 +255,17 @@ module.exports = {
                   if (err) {
                     return res.status(err.status).json({ reset: false });
                   }
-                  sails.log('set new password - user 3',user[0])
+                  sails.log('set new password - user 3', user[0])
                   sails.log('bcrypt gen salting');
-            
+
                   bcrypt.genSalt(10, (err2, salt) => {
                     if (err2) return next(err2);
-            
+
                     bcrypt.hash(newPassword, salt, null, (err3, hash) => {
                       if (err3) return next(err3);
                       sails.log('new hash');
                       sails.log(hash);
-            
+
                       // then set the user password to that hash
                       User.update({
                         id: user[0].id,
@@ -276,14 +276,14 @@ module.exports = {
                         if (err4) {
                           return res.status(err4.status).json({ reset: false });
                         }
-            
+
                         // sails.log(user);
                         sails.log('Reset Successful');
-            
-                        sails.log('user[0]',user[0])
-                        sails.log('user[0].email',user[0].email)
-                        sails.log('user[0].username',user[0].username)
-            
+
+                        sails.log('user[0]', user[0])
+                        sails.log('user[0].email', user[0].email)
+                        sails.log('user[0].username', user[0].username)
+
                         await sails.helpers.sendTemplateEmail.with({
                           to: user[0].email,
                           subject: 'Your THFF Password has Changed',
@@ -296,24 +296,25 @@ module.exports = {
                           },
                           layout: false,
                         });
-            
+
                         return res.status(200).json({ reset: true, message: 'Reset Successful' });
                       });
                     });
                   });
-            
+
                 });
 
                 // return res.status(200).json({ user: user[0], validresetCode: true, message: 'reset time is valid' });
               }
-
-              sails.log('reset time is invalid');
-
-              // reset time is invalid
-              return res.status(401).json({ validresetCode: false, message: 'Reset password link has expired. Please try again.' });
+              else {
+                sails.log('reset time is invalid');
+                // reset time is invalid
+                return res.status(401).json({ validresetCode: false, message: 'Reset password link has expired. Please try again.' });
+              }
             });
           } else {
             // resetPassword is false
+            sails.log('reset code already been used')
             return res.status(401).json({ validresetCode: false, message: 'Reset code has already been used. Please try again.' });
           }
         } else {
@@ -522,8 +523,7 @@ module.exports = {
       query.username = req.query.username;
     }
 
-    if(req.query.id)
-    {
+    if (req.query.id) {
       query.id = req.query.id;
     }
 
