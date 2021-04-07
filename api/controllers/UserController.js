@@ -209,60 +209,120 @@ module.exports = {
 
     const newPassword = req.body.np;
     const username = req.body.un;
+    const resetCode = req.body.rc; // reset code
+    let user = null;
 
     User.find({
-      username,
-    }).exec((err, user) => {
+      resetCode,
+    }).exec((err, validresetCode) => {
       if (err) {
-        return res.status(err.status).json({ reset: false });
+        return res.status(err.status).json({ err });
       }
 
-      sails.log('bcrypt gen salting');
+      if (validresetCode) {
 
-      bcrypt.genSalt(10, (err2, salt) => {
-        if (err2) return next(err2);
+        user = validresetCode[0];
 
-        bcrypt.hash(newPassword, salt, null, (err3, hash) => {
-          if (err3) return next(err3);
-          sails.log('new hash');
-          sails.log(hash);
+        if (validresetCode.length > 0) {
+          sails.log('reset code is valid'); // reset code was found
+          sails.log('set new password - user',user)
+          if (validresetCode[0].resetPassword) {
+            // set in the db the resetPassword to false
+            User.update({
+              _id: user._id,
+            }, {
+              resetPassword: false,
+            }).exec((err2, user) => {
+              if (err2) {
+                return res.status(err2.status).json({ reset: false });
+              }
 
-          // then set the user password to that hash
-          User.update({
-            id: user[0].id,
-          }, {
-            // resetPassword: false,
-            encryptedPassword: hash,
-          }).exec(async (err4) => {
-            if (err4) {
-              return res.status(err4.status).json({ reset: false });
-            }
+              // now for checking the resetTime
 
-            // sails.log(user);
-            sails.log('Reset Successful');
+              const now = new Date();
+              const TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
 
-            sails.log('user[0]',user[0])
-            sails.log('user[0].email',user[0].email)
-            sails.log('user[0].username',user[0].username)
+              sails.log(now);
+              sails.log(user[0].resetTime);
+              sails.log(TWENTYFOUR_HOURS);
 
-            await sails.helpers.sendTemplateEmail.with({
-              to: user[0].email,
-              subject: 'Your THFF Password has Changed',
-              template: 'email-reset-password-confirm',
-              templateData: {
-                Name: user[0].username,
-                // To: email.to
-                // fullName: inputs.fullName,
-                // token: newUserRecord.emailProofToken
-              },
-              layout: false,
+              if (now - user[0].resetTime < TWENTYFOUR_HOURS) {
+                sails.log('reset time is valid');
+
+                User.find({
+                  _id: user._id,
+                }).exec((err, user) => {
+                  if (err) {
+                    return res.status(err.status).json({ reset: false });
+                  }
+            
+                  sails.log('bcrypt gen salting');
+            
+                  bcrypt.genSalt(10, (err2, salt) => {
+                    if (err2) return next(err2);
+            
+                    bcrypt.hash(newPassword, salt, null, (err3, hash) => {
+                      if (err3) return next(err3);
+                      sails.log('new hash');
+                      sails.log(hash);
+            
+                      // then set the user password to that hash
+                      User.update({
+                        id: user[0].id,
+                      }, {
+                        // resetPassword: false,
+                        encryptedPassword: hash,
+                      }).exec(async (err4) => {
+                        if (err4) {
+                          return res.status(err4.status).json({ reset: false });
+                        }
+            
+                        // sails.log(user);
+                        sails.log('Reset Successful');
+            
+                        sails.log('user[0]',user[0])
+                        sails.log('user[0].email',user[0].email)
+                        sails.log('user[0].username',user[0].username)
+            
+                        await sails.helpers.sendTemplateEmail.with({
+                          to: user[0].email,
+                          subject: 'Your THFF Password has Changed',
+                          template: 'email-reset-password-confirm',
+                          templateData: {
+                            Name: user[0].username,
+                            // To: email.to
+                            // fullName: inputs.fullName,
+                            // token: newUserRecord.emailProofToken
+                          },
+                          layout: false,
+                        });
+            
+                        return res.status(200).json({ reset: true, message: 'Reset Successful' });
+                      });
+                    });
+                  });
+            
+                });
+
+                return res.status(200).json({ user: user[0], validresetCode: true, message: 'reset time is valid' });
+              }
+
+              sails.log('reset time is invalid');
+
+              // reset time is invalid
+              return res.status(401).json({ validresetCode: false, message: 'Reset password link has expired. Please try again.' });
             });
-
-            return res.status(200).json({ reset: true, message: 'Reset Successful' });
-          });
-        });
-      });
+          } else {
+            // resetPassword is false
+            return res.status(401).json({ validresetCode: false, message: 'Reset code has already been used. Please try again.' });
+          }
+        } else {
+          sails.log('reset code is invalid');
+          return res.status(401).json({ validresetCode: false, message: 'Reset code is invalid.' });
+        }
+      }// end of resetCode if
     });
+
   }, // end of setNewPassword
 
   changePassword(req, res) {
