@@ -304,7 +304,7 @@ module.exports = {
             
                 });
 
-                return res.status(200).json({ user: user[0], validresetCode: true, message: 'reset time is valid' });
+                // return res.status(200).json({ user: user[0], validresetCode: true, message: 'reset time is valid' });
               }
 
               sails.log('reset time is invalid');
