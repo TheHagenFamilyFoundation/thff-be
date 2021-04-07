@@ -216,7 +216,7 @@ module.exports = {
       resetCode,
     }).exec((err, validresetCode) => {
       if (err) {
-        return res.status(err.status).json({ err });
+        return res.status(err.status).json({ reset: false });
       }
 
       if (validresetCode) {
