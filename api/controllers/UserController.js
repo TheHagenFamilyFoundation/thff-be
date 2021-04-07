@@ -229,7 +229,7 @@ module.exports = {
           if (validresetCode[0].resetPassword) {
             // set in the db the resetPassword to false
             User.update({
-              _id: user._id,
+              id: user.id,
             }, {
               resetPassword: false,
             }).exec((err2, user) => {
@@ -250,7 +250,7 @@ module.exports = {
                 sails.log('reset time is valid');
 
                 User.find({
-                  _id: user._id,
+                  id: user.id,
                 }).exec((err, user) => {
                   if (err) {
                     return res.status(err.status).json({ reset: false });
