@@ -9,8 +9,7 @@ module.exports = {
   login(req, res) {
     sails.log('User trying to login... email: ', req.body.email);
 
-    const { email } = req.body;
-    const { password } = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -37,8 +36,6 @@ module.exports = {
         sails.log.error('error');
         sails.log.error(err);
       }
-
-
 
       User.comparePassword(password, user, (err2, valid) => {
         if (err2) {
