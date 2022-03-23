@@ -21,119 +21,119 @@
  */
 
 module.exports.routes = {
-
   /** *************************************************************************
-  *                                                                          *
-  * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
-  * etc. depending on your default view engine) your home page.              *
-  *                                                                          *
-  * (Alternatively, remove this and add an `index.html` file in your         *
-  * `assets` directory)                                                      *
-  *                                                                          *
-  ************************************************************************** */
+   *                                                                          *
+   * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
+   * etc. depending on your default view engine) your home page.              *
+   *                                                                          *
+   * (Alternatively, remove this and add an `index.html` file in your         *
+   * `assets` directory)                                                      *
+   *                                                                          *
+   ************************************************************************** */
 
-  '/': {
-    view: 'homepage',
+  "/": {
+    view: "homepage",
   },
   /** *************************************************************************
-  *                                                                          *
-  * Custom routes here...                                                    *
-  *                                                                          *
-  * If a request to a URL doesn't match any of the custom routes above, it   *
-  * is matched against Sails route blueprints. See `config/blueprints.js`    *
-  * for configuration options and examples.                                  *
-  *                                                                          *
-  ************************************************************************** */
+   *                                                                          *
+   * Custom routes here...                                                    *
+   *                                                                          *
+   * If a request to a URL doesn't match any of the custom routes above, it   *
+   * is matched against Sails route blueprints. See `config/blueprints.js`    *
+   * for configuration options and examples.                                  *
+   *                                                                          *
+   ************************************************************************** */
 
-  '/foo': function (req, res) {
-    sails.log('accessing foo'); return res.send(
-      {
-        employees: [
-          { firstName: 'John', lastName: 'Doe' },
-          { firstName: 'Anna', lastName: 'Smith' },
-          { firstName: 'Peter', lastName: 'Jones' },
-        ],
-      },
-
-    );
+  "/foo": function (req, res) {
+    sails.log("accessing foo");
+    return res.send({
+      employees: [
+        { firstName: "John", lastName: "Doe" },
+        { firstName: "Anna", lastName: "Smith" },
+        { firstName: "Peter", lastName: "Jones" },
+      ],
+    });
   }, // end of foo
 
-  'GET /csrfToken': { action: 'security/grant-csrf-token' },
+  "GET /csrfToken": { action: "security/grant-csrf-token" },
 
-  'GET /authTest': 'AuthController.authTest',
-  'PUT /login': 'AuthController.login',
+  //AUTH
+  "GET /authTest": "AuthController.authTest",
+  "PUT /auth/login": "AuthController.login",
+  "POST /auth/forgot-password": "AuthController.forgotPassword",
+  // "GET /auth/reset-code-check": "AuthController.resetCodeCheck", //questionable GET removing
 
-  'GET /directors': 'UserController.getDirectors',
+  "GET /directors": "UserController.getDirectors",
 
-  'GET /orgUsers/:orgID': 'UserController.getOrgUsers',
+  "GET /orgUsers/:orgID": "UserController.getOrgUsers",
 
-  'GET /users/count': 'UserController.getUserCounts',
+  "GET /users/count": "UserController.getUserCounts",
 
-  'GET /grants/total': 'GrantController.getGrantsTotal',
-  'GET /grants/count': 'GrantController.getGrantsCount',
+  "GET /grants/total": "GrantController.getGrantsTotal",
+  "GET /grants/count": "GrantController.getGrantsCount",
 
-  'GET /UserNameExists': 'UserController.UserNameExists',
-  'GET /EmailExists': 'UserController.EmailExists',
-  'GET /ResetCodeCheck': 'UserController.ResetCodeCheck',
+  "GET /UserNameExists": "UserController.UserNameExists",
+  "GET /EmailExists": "UserController.EmailExists",
+  // "GET /reset-code-check": "UserController.ResetCodeCheck",
 
-  'PUT /CreateResetCode': 'UserController.CreateResetCode',
-  'PUT /setNewPassword': 'UserController.setNewPassword',
-  'PUT /changePassword': 'UserController.changePassword',
-  'PUT /changeEmail': 'UserController.changeEmail',
-  'PUT /updateName': 'UserController.updateName',
+  // "PUT /CreateResetCode": "UserController.CreateResetCode", //old
+  "PUT /auth/reset-password": "UserController.setNewPassword",
+  "PUT /changePassword": "UserController.changePassword",
+  "PUT /changeEmail": "UserController.changeEmail",
+  "PUT /updateName": "UserController.updateName",
 
-  'PUT /validate501c3': 'Org501c3Controller.validate501c3',
+  "PUT /validate501c3": "Org501c3Controller.validate501c3",
 
-  'POST /addUser': 'OrganizationController.addUser',
+  "POST /addUser": "OrganizationController.addUser",
 
-  'POST /upload501c3': 'OrganizationController.upload501c3',
+  "POST /upload501c3": "OrganizationController.upload501c3",
 
-  'GET /get501c3/:orgID': 'OrganizationController.get501c3',
+  "GET /get501c3/:orgID": "OrganizationController.get501c3",
 
-  'DELETE /delete501c3/:orgID': 'OrganizationController.delete501c3',
+  "DELETE /delete501c3/:orgID": "OrganizationController.delete501c3",
 
-  'GET /submitLOI/:loiID': 'LOIController.submitLOI',
+  "GET /submitLOI/:loiID": "LOIController.submitLOI",
 
-  'POST /fpItems': 'FullProposalItemController.createFPItems',
+  "POST /fpItems": "FullProposalItemController.createFPItems",
 
-  'GET /getLOIs': 'LOIController.getLOIs',
+  "GET /getLOIs": "LOIController.getLOIs",
 
-  'GET /nextLOI': 'LOIController.nextLOI',
-  'GET /prevLOI': 'LOIController.prevLOI',
+  "GET /nextLOI": "LOIController.nextLOI",
+  "GET /prevLOI": "LOIController.prevLOI",
 
-  'GET /presVotes': 'LOIController.presVotes',
-  'GET /pendingVotes': 'LOIController.pendingVotes',
+  "GET /presVotes": "LOIController.presVotes",
+  "GET /pendingVotes": "LOIController.pendingVotes",
 
-  'GET /getRankedLOIs': 'LOIController.getRankedLOIs',
+  "GET /getRankedLOIs": "LOIController.getRankedLOIs",
 
   /** * EMAILS ** */
 
   // USER
-  'POST /sendRegisterUserEmail': 'EmailController.sendRegisterUserEmail',
-  'POST /sendRegisterOrgEmail': 'EmailController.sendRegisterOrgEmail',
-  'POST /sendResetPasswordEmail': 'EmailController.sendResetPasswordEmail',
-  'POST /sendResetPasswordConfirmationEmail': 'EmailController.sendResetPasswordConfirmationEmail',
-  'POST /sendUserNameEmail': 'EmailController.sendUserNameEmail',
-  'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
+  "POST /sendRegisterUserEmail": "EmailController.sendRegisterUserEmail",
+  "POST /sendRegisterOrgEmail": "EmailController.sendRegisterOrgEmail",
+  "POST /sendResetPasswordEmail": "EmailController.sendResetPasswordEmail",
+  "POST /sendResetPasswordConfirmationEmail":
+    "EmailController.sendResetPasswordConfirmationEmail",
+  "POST /sendUserNameEmail": "EmailController.sendUserNameEmail",
+  "POST /sendUserEmailChangeEmail": "EmailController.sendUserEmailChangeEmail",
   // 'POST /sendUserEmailChangeEmail': 'EmailController.sendUserEmailChangeEmail',
   // if we need to have users notified when name changes
 
-  'POST /send501c3Status': 'EmailController.send501c3Status',
+  "POST /send501c3Status": "EmailController.send501c3Status",
 
   // DIRECTOR
-  'POST /sendValidate501c3': 'EmailController.sendValidate501c3',
+  "POST /sendValidate501c3": "EmailController.sendValidate501c3",
 
-  'POST /sendViewLOI': 'EmailController.sendViewLOI',
+  "POST /sendViewLOI": "EmailController.sendViewLOI",
 
   // PRESIDENT
-  'POST /loiFP': 'LOIController.loiFP',
-  'POST /openFPs': 'LOIController.openFPs',
-  'POST /notifyReject': 'LOIController.notifyReject',
+  "POST /loiFP": "LOIController.loiFP",
+  "POST /openFPs": "LOIController.openFPs",
+  "POST /notifyReject": "LOIController.notifyReject",
 
   // ADMIN
-  'GET /getUnSubmittedLOI': 'LOIController.getUnSubmittedLOI',
+  "GET /getUnSubmittedLOI": "LOIController.getUnSubmittedLOI",
 
   // submission years
-  'POST /closeSubmissionYear': 'SubmissionYearController.closeSubmissionYear',
-
+  "POST /closeSubmissionYear": "SubmissionYearController.closeSubmissionYear",
 };
