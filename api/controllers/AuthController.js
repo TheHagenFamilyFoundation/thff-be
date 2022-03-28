@@ -5,6 +5,10 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
+const bcrypt = require("bcrypt-nodejs");
+
+const saltRounds = 10;
+
 module.exports = {
   login(req, res) {
     sails.log("User trying to login... email: ", req.body.email);
@@ -145,97 +149,72 @@ module.exports = {
     // return res.status(200).json(message);
   },
 
-  resetCodeCheck(req, res) {
-    sails.log("req.query", req.query.rc);
-    //debug
+  async signUp(req, res) {
+    sails.log("sign up - req.body", req.body);
 
-    let testQuery = {
-      resetCode: req.query.rc,
-    };
+    //check if email is already taken
+    const userfound = await sails.helpers.user.userEmailExists(req.body.email);
 
-    sails.log("testQuery", testQuery);
-    let message = `reset code = ${req.query.rc}`;
-    return res.status(401).json(message);
-    // User.find({
-    //   resetCode: req.query.rc,
-    // }).exec((err, validResetCode) => {
-    //   if (err) {
-    //     return res.status(err.status).json({ err });
-    //   }
+    if (!userfound) {
+      req.body.email = req.body.email.toLowerCase();
 
-    //   sails.log("validResetCode", validResetCode.length);
+      bcrypt.genSalt(saltRounds, (err, salt) => {
+        if (err) return res.status(err.status).json({ err });
 
-    //   if (validResetCode && validResetCode.length > 0) {
-    //     sails.log("reset code is valid"); // reset code was found
+        bcrypt.hash(req.body.password, salt, null, (err2, hash) => {
+          if (err2) return res.status(err2.status).json({ err2 });
 
-    //     // //TODO:debug
-    //     let message = `reset code = ${req.query.rc}`;
-    //     return res.status(401).json(message);
+          req.body.encryptedPassword = hash;
 
-    //     // sails.log("reset code is invalid");
-    //     // return res
-    //     //   .status(200)
-    //     //   .json({ validResetCode: false, message: "Reset code is invalid." });
+          User.create(req.body).exec(async (err3, user) => {
+            if (err3) {
+              sails.log.error(err3);
+            }
 
-    //     //     if (validResetCode[0].resetPassword) {
-    //     //       // set in the db the resetPassword to false
-    //     //       User.update(
-    //     //         {
-    //     //           resetCode: req.query.resetCode,
-    //     //         },
-    //     //         {
-    //     //           resetPassword: false,
-    //     //         }
-    //     //       ).exec((err2, user) => {
-    //     //         if (err2) {
-    //     //           return res.status(err2.status).json({ reset: false });
-    //     //         }
+            sails.log.debug("user created: ");
+            sails.log.debug(user);
 
-    //     //         // now for checking the resetTime
+            // If user created successfuly we return user and token as response
+            if (user) {
+              // NOTE: payload is { id: user.id}
 
-    //     //         const now = new Date();
-    //     //         const TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
+              if (sails.config.environment === "production") {
+                resetURL = process.env.FE_API;
+              } else {
+                resetURL = "http://localhost:4200";
+              }
 
-    //     //         sails.log(now);
-    //     //         sails.log(user[0].resetTime);
-    //     //         sails.log(TWENTYFOUR_HOURS);
+              let confirmCode = generateCode();
 
-    //     //         if (now - user[0].resetTime < TWENTYFOUR_HOURS) {
-    //     //           sails.log("reset time is valid");
+              //send email
+              await sails.helpers.sendTemplateEmail.with({
+                to: user.email,
+                subject: "THFF Account Confirmation",
+                template: "email-register-confirm",
+                templateData: {
+                  email: user.email,
+                  resetURL: `${resetURL}/confirmation?code=${confirmCode}`,
+                  // To: email.to
+                  // fullName: inputs.fullName,
+                  // token: newUserRecord.emailProofToken
+                },
+                layout: false,
+              });
 
-    //     //           return res.status(200).json({
-    //     //             user: user[0],
-    //     //             validResetCode: true,
-    //     //             message: "reset time is valid",
-    //     //           });
-    //     //         }
+              let message = "User created";
+              res.status(200).json({ message });
+            }
+          });
+        });
+      });
+    } else {
+      return res
+        .status(400)
+        .json({ code: "USER001", message: "Duplicate User" });
+    }
 
-    //     //         sails.log("reset time is invalid");
-
-    //     //         // reset time is invalid
-    //     //         return res.status(401).json({
-    //     //           validResetCode: false,
-    //     //           message: "Reset password link has expired. Please try again.",
-    //     //         });
-    //     //       });
-    //     //     } else {
-    //     //       // resetPassword is false
-    //     //       return res.status(401).json({
-    //     //         validResetCode: false,
-    //     //         message: "Reset code has already been used. Please try again.",
-    //     //       });
-    //     //     }
-    //   } else {
-    //     sails.log("reset code is invalid");
-    //     return res
-    //       .status(401)
-    //       .json({ validResetCode: false, message: "Reset code is invalid." });
-    //   }
-    // });
-
-    // let message = `reset code = ${req.query.rc}`;
-    // return res.status(200).json(message);
-  }, // end of resetCodeCheck
+    // return res.status(200).json(req.body);
+  },
 };
 //TODO: move to utils
 function generateCode() {

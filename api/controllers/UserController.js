@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt-nodejs");
 const saltRounds = 10;
 
 module.exports = {
+  //TODO: old - remove
   async create(req, res) {
     sails.log("user create");
 
@@ -241,10 +242,10 @@ module.exports = {
     sails.log("setNewPassword", req.body);
 
     const newPassword = req.body.np;
-    // const username = req.body.un;
+    // const username = req.body.un; //old can remove
     const resetCode = req.body.rc; // reset code
     let user = null;
-
+    // return res.status(400).json({ reset: false });
     User.find({
       resetCode,
     }).exec((err, validresetCode) => {
@@ -258,6 +259,7 @@ module.exports = {
         if (validresetCode.length > 0) {
           sails.log("reset code is valid"); // reset code was found
           sails.log("set new password - user 1", user);
+
           if (validresetCode[0].resetPassword) {
             // set in the db the resetPassword to false
             User.update(
@@ -316,11 +318,11 @@ module.exports = {
                         }
 
                         // sails.log(user);
-                        sails.log("Reset Successful");
+                        sails.log.verbose("Reset Successful");
 
-                        sails.log("user[0]", user[0]);
-                        sails.log("user[0].email", user[0].email);
-                        sails.log("user[0].username", user[0].username);
+                        sails.log.verbose("user[0]", user[0]);
+                        sails.log.verbose("user[0].email", user[0].email);
+                        sails.log.verbose("user[0].username", user[0].username);
 
                         await sails.helpers.sendTemplateEmail.with({
                           to: user[0].email,
@@ -347,7 +349,7 @@ module.exports = {
               } else {
                 sails.log("reset time is invalid");
                 // reset time is invalid
-                return res.status(401).json({
+                return res.status(400).json({
                   validresetCode: false,
                   message: "Reset password link has expired. Please try again.",
                 });
@@ -356,7 +358,7 @@ module.exports = {
           } else {
             // resetPassword is false
             sails.log("reset code already been used");
-            return res.status(401).json({
+            return res.status(400).json({
               validresetCode: false,
               message: "Reset code has already been used. Please try again.",
             });
@@ -364,10 +366,10 @@ module.exports = {
         } else {
           sails.log("reset code is invalid");
           return res
-            .status(401)
+            .status(400)
             .json({ validresetCode: false, message: "Reset code is invalid." });
         }
-      } // end of resetCode if
+      }
     });
   }, // end of setNewPassword
 

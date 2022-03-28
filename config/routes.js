@@ -61,6 +61,7 @@ module.exports.routes = {
   "GET /authTest": "AuthController.authTest",
   "PUT /auth/login": "AuthController.login",
   "POST /auth/forgot-password": "AuthController.forgotPassword",
+  "POST /auth/sign-up": "AuthController.signUp",
   // "GET /auth/reset-code-check": "AuthController.resetCodeCheck", //questionable GET removing
 
   "GET /directors": "UserController.getDirectors",
