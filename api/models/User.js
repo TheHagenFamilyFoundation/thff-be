@@ -21,6 +21,10 @@ module.exports = {
     },
     confirmed: {
       type: "boolean",
+      defaultsTo: false,
+    },
+    confirmCode: {
+      type: "string",
     },
     username: {
       type: "string",

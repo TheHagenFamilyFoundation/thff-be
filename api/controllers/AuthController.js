@@ -22,8 +22,14 @@ module.exports = {
       });
     }
 
+    const message = {
+      err: "invalid email or password",
+      message: "Invalid Email or Password",
+    };
+
     const query = {};
     query.email = email.toLowerCase();
+    // query.confirmed = true; //check for confirmation
 
     // sails.log.debug(query);
 
@@ -40,28 +46,33 @@ module.exports = {
         sails.log.error(err);
       }
 
-      User.comparePassword(password, user, (err2, valid) => {
-        if (err2) {
-          return res.status(err2.status).json({ err: "forbidden" });
-        }
+      if (user.confirmed) {
+        User.comparePassword(password, user, (err2, valid) => {
+          if (err2) {
+            return res.status(err2.status).json({ err: "forbidden" });
+          }
 
-        if (!valid) {
-          sails.log.debug("error not valid password");
-          const message = {
-            err: "invalid email or password",
-            message: "Invalid Email or Password",
-          };
-          sails.log.debug("returning ", message);
-          return res.status(400).json(message);
-        }
+          if (!valid) {
+            sails.log.debug("error not valid password");
+            sails.log.debug("returning ", message);
+            return res.status(400).json(message);
+          }
 
-        sails.log.debug("success");
+          sails.log.debug("success");
 
-        return res.status(200).json({
-          user,
-          token: jwToken.issue({ id: user.id }),
+          return res.status(200).json({
+            user,
+            token: jwToken.issue({ id: user.id }),
+          });
         });
-      });
+      } else {
+        sails.log("user not confirmed");
+        message.err =
+          "User is not confirmed. Please check your email for confirmation email.";
+        message.message =
+          "User is not confirmed. Please check your email for confirmation email.";
+        return res.status(400).json(message);
+      }
     });
   },
 
@@ -166,6 +177,9 @@ module.exports = {
 
           req.body.encryptedPassword = hash;
 
+          //create confirm code and add to the user object
+          req.body.confirmCode = generateCode();
+
           User.create(req.body).exec(async (err3, user) => {
             if (err3) {
               sails.log.error(err3);
@@ -184,8 +198,6 @@ module.exports = {
                 resetURL = "http://localhost:4200";
               }
 
-              let confirmCode = generateCode();
-
               //send email
               await sails.helpers.sendTemplateEmail.with({
                 to: user.email,
@@ -193,7 +205,7 @@ module.exports = {
                 template: "email-register-confirm",
                 templateData: {
                   email: user.email,
-                  resetURL: `${resetURL}/confirmation?code=${confirmCode}`,
+                  resetURL: `${resetURL}/confirmation?code=${user.confirmCode}`,
                   // To: email.to
                   // fullName: inputs.fullName,
                   // token: newUserRecord.emailProofToken
@@ -214,6 +226,36 @@ module.exports = {
     }
 
     // return res.status(200).json(req.body);
+  },
+  async confirmUser(req, res) {
+    //debug
+    sails.log("confirmUser", req.body);
+
+    //search the unconfirmed
+    //check code
+    User.find({
+      confirmed: false,
+      confirmCode: req.body.confirmCode,
+    }).exec(async (err, userfound) => {
+      sails.log(userfound);
+
+      if (userfound && userfound.length > 0) {
+        //update the user confirmed field
+        User.update(
+          { id: userfound[0].id },
+          {
+            confirmed: true,
+          }
+        ).exec(async () => {
+          sails.log("confirming");
+          let message = `Account confirmed`;
+          return res.status(200).json({ message });
+        });
+      } else {
+        let message = `Account already confirmed`;
+        return res.status(200).json({ message });
+      }
+    });
   },
 };
 //TODO: move to utils
