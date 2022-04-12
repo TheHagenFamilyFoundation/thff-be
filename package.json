@@ -7,7 +7,7 @@
   "dependencies": {
     "@sailshq/connect-redis": "^3.2.1",
     "@sailshq/upgrade": "^1.0.9",
-    "async": "2.1.4",
+    "async": "3.2.2",
     "aws-sdk": "^2.635.0",
     "bcrypt": "^5.0.0",
     "bcrypt-nodejs": "0.0.3",
