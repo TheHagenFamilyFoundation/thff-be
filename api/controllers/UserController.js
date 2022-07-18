@@ -6,6 +6,7 @@
  */
 
 const bcrypt = require("bcrypt-nodejs");
+const Settings = require("../models/Settings");
 
 const saltRounds = 10;
 
@@ -42,22 +43,32 @@ module.exports = {
           sails.log("req.body", req.body);
 
           User.create(req.body).exec((err3, user) => {
+            //old code
             if (err3) {
               sails.log.error(err3);
-            }
-
-            if (err3) {
               return res.status(409).json({ err3 });
             }
 
             sails.log.debug("user created: ");
-
-            // If user created successfuly we return user and token as response
             if (user) {
-              // NOTE: payload is { id: user.id}
-              res
-                .status(200)
-                .json({ user, token: jwToken.issue({ id: user.id }) });
+              let defaultSettings = {
+                theme: "light",
+                userID: user.id,
+              };
+              // If user created successfuly we return user and token as response
+
+              Settings.create(defaultSettings).exec((err4, settings) => {
+                if (err4) {
+                  sails.log.error(err4);
+                  return res.status(409).json({ err4 });
+                }
+
+                res.status(200).json({
+                  user,
+                  token: jwToken.issue({ id: user.id }),
+                  settings,
+                });
+              });
             }
           });
         });

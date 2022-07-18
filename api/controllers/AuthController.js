@@ -60,9 +60,31 @@ module.exports = {
 
           sails.log.debug("success");
 
-          return res.status(200).json({
-            user,
-            token: jwToken.issue({ id: user.id }),
+          let settingsQuery = {
+            userID: user.id,
+          };
+
+          //find the settings
+          Settings.findOne(settingsQuery, async (err, settings) => {
+            if (!settings) {
+              //create settings
+
+              console.log("no settings");
+
+              let defaultSettings = {
+                theme: "light",
+                userID: user.id,
+              };
+              // If user logged in successfuly we return user, token, and settings as response
+
+              settings = await Settings.create(defaultSettings);
+            }
+
+            return res.status(200).json({
+              user,
+              token: jwToken.issue({ id: user.id }),
+              settings,
+            });
           });
         });
       } else {
