@@ -72,7 +72,7 @@ module.exports = {
               console.log("no settings");
 
               let defaultSettings = {
-                theme: "light",
+                scheme: "light",
                 userID: user.id,
               };
               // If user logged in successfuly we return user, token, and settings as response

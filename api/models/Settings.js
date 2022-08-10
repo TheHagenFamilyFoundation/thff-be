@@ -7,7 +7,7 @@
 
 module.exports = {
   attributes: {
-    theme: {
+    scheme: {
       type: "string",
       defaultsTo: "light",
     },

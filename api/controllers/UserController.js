@@ -52,7 +52,7 @@ module.exports = {
             sails.log.debug("user created: ");
             if (user) {
               let defaultSettings = {
-                theme: "light",
+                scheme: "light",
                 userID: user.id,
               };
               // If user created successfuly we return user and token as response
