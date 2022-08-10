@@ -7,7 +7,7 @@
 
 module.exports = {
   async updateSetting(req, res) {
-    console.log("updateSetting", req.body);
+    sails.log.debug("updateSetting", req.body);
 
     Settings.findOne({
       userID: req.body.userID,
