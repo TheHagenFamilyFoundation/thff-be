@@ -17,22 +17,21 @@
  */
 
 module.exports.policies = {
-
   /** *************************************************************************
-  *                                                                          *
-  * Default policy for all controllers and actions (`true` allows public     *
-  * access)                                                                  *
-  *                                                                          *
-  ************************************************************************** */
+   *                                                                          *
+   * Default policy for all controllers and actions (`true` allows public     *
+   * access)                                                                  *
+   *                                                                          *
+   ************************************************************************** */
 
   // '*': true,
 
   /** *************************************************************************
-  *                                                                          *
-  * Here's an example of mapping some policies to run before a controller    *
-  * and its actions                                                          *
-  *                                                                          *
-  ************************************************************************** */
+   *                                                                          *
+   * Here's an example of mapping some policies to run before a controller    *
+   * and its actions                                                          *
+   *                                                                          *
+   ************************************************************************** */
   // RabbitController: {
 
   // Apply the `false` policy as the default for all of RabbitController's actions
@@ -57,7 +56,7 @@ module.exports.policies = {
     CreateResetCode: true, // We dont need authorization here, allowing public access
     setNewPassword: true, // We dont need authorization here, allowing public access
     ResetCodeCheck: true,
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
     // changePassword: true,
     // changeEmail: true,
     // find: true,
@@ -69,59 +68,62 @@ module.exports.policies = {
   // },
 
   AuthController: {
-    '*': true, // We dont need authorization here, allowing public access
+    "*": true, // We dont need authorization here, allowing public access
   },
 
   // To Display grants on the grants awarded page
   RequestsController: {
-    '*': true, // We dont need authorization here, allowing public access
+    "*": true, // We dont need authorization here, allowing public access
   },
 
   // debug
   GrantController: {
-    '*': true, // We dont need authorization here, allowing public access
+    "*": true, // We dont need authorization here, allowing public access
   },
 
   OrganizationController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
 
   // debug
   OrganizationInfoController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
 
   Org501c3Controller: {
-    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
   },
 
   // debug
   LOIController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
   LOIInfoController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
 
   FullProposalController: {
-    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
   },
 
   FullProposalItemController: {
-    '*': ['isAuthorized'], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
   },
 
   // all email routes are ok to access
   EmailController: {
-    '*': true, // We dont need authorization here, allowing public access
+    "*": true, // We dont need authorization here, allowing public access
   },
 
   VoteController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
 
   SubmissionYearController: {
-    '*': ['isAuthorized'],
+    "*": ["isAuthorized"],
   },
 
+  SettingsController: {
+    "*": ["isAuthorized"],
+  },
 };

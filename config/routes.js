@@ -138,4 +138,6 @@ module.exports.routes = {
 
   // submission years
   "POST /closeSubmissionYear": "SubmissionYearController.closeSubmissionYear",
+
+  "PUT /settings": "SettingsController.updateSetting",
 };
