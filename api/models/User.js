@@ -6,52 +6,58 @@
  */
 
 // We don't want to store password with out encryption
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 const saltRounds = 10;
 
 module.exports = {
-
   schema: true,
 
   attributes: {
-
     email: {
-      type: 'string',
+      type: "string",
       // required: 'true',
       unique: true, // Yes unique one
     },
+    confirmed: {
+      type: "boolean",
+      defaultsTo: false,
+    },
+    confirmCode: {
+      type: "string",
+    },
     username: {
-      type: 'string',
+      type: "string",
       // required: 'true',
       unique: true,
     },
     firstName: {
-      type: 'string',
+      type: "string",
     },
     lastName: {
-      type: 'string',
+      type: "string",
     },
     organizations: {
-      collection: 'organization',
-      via: 'users',
+      collection: "organization",
+      via: "users",
       dominant: true,
     },
     resetCode: {
-      type: 'string',
+      type: "string",
     },
     resetPassword: {
-      type: 'boolean',
+      type: "boolean",
     },
     resetTime: {
-      type: 'ref', columnType: 'datetime',
+      type: "ref",
+      columnType: "datetime",
     },
     encryptedPassword: {
-      type: 'string',
+      type: "string",
       protect: true,
     },
     accessLevel: {
-      type: 'number',
+      type: "number",
       defaultsTo: 1,
       // 1-user
       // 2-director
@@ -62,13 +68,13 @@ module.exports = {
   // We don't wan't to send back encrypted password either
   customToJSON() {
     // Return a shallow copy of this record with the password and ssn removed.
-    return _.omit(this, ['encryptedPassword', 'resetPassword']);
+    return _.omit(this, ["encryptedPassword", "resetPassword"]);
   },
 
   comparePassword(password, user, cb) {
-    sails.log.verbose('comparePassword');
-    sails.log.verbose('password', password);
-    sails.log.verbose('user', user);
+    sails.log.verbose("comparePassword");
+    sails.log.verbose("password", password);
+    sails.log.verbose("user", user);
 
     bcrypt.compare(password, user.encryptedPassword, (err, match) => {
       if (err) cb(err);
