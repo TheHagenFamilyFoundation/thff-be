@@ -188,7 +188,6 @@ module.exports = {
     ************************************************************************** */
     adapter: '@sailshq/connect-redis',
     url: process.env.REDIS_URL,
-    tls: {},
     //--------------------------------------------------------------------------
     // /\   OR, to avoid checking it in to version control, you might opt to
     // ||   set sensitive credentials like this using an environment variable.
