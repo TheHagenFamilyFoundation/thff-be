@@ -186,8 +186,8 @@ module.exports = {
     * > (For a full list, see https://sailsjs.com/plugins/sessions)            *
     *                                                                          *
     ************************************************************************** */
-    adapter: '@sailshq/connect-redis',
-    url: process.env.REDIS_TLS_URL,
+    // adapter: '@sailshq/connect-redis',
+    // url: process.env.REDIS_URL,
     //--------------------------------------------------------------------------
     // /\   OR, to avoid checking it in to version control, you might opt to
     // ||   set sensitive credentials like this using an environment variable.
@@ -199,11 +199,12 @@ module.exports = {
     //
     //--------------------------------------------------------------------------
 
-    // adapter: 'redis',
-    // host: process.env.REDIS_HOST,
-    // port: process.env.REDIS_PORT,
-    // db: process.env.REDIS_DB,
-    // pass: process.env.REDIS_PASSWORD,
+    adapter: '@sailshq/connect-redis',
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    db: process.env.REDIS_DB,
+    pass: process.env.REDIS_PASS,
+    tls: process.env.ENV === 'STAGING'? null : { rejectUnauthorized: false },
 
     /** *************************************************************************
     *                                                                          *
