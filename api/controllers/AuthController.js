@@ -80,6 +80,7 @@ module.exports = {
               settings = await Settings.create(defaultSettings);
             }
 
+            sails.log('logging in user',user)
             return res.status(200).json({
               user,
               token: jwToken.issue({ id: user.id }),
@@ -96,6 +97,80 @@ module.exports = {
         return res.status(400).json(message);
       }
     });
+  },
+
+  refreshAccessToken(req,res) {
+
+     // Get the access token
+     const accessToken = req.body.accessToken;
+     const user = JSON.parse(req.body.user);
+     const body = req.body;
+     sails.log('body',body);
+
+     jwToken.verify(accessToken, (err) => {
+      if (err) return res.status(401).json({ err: 'Invalid Token!' });
+      
+      let settingsQuery = {
+        userID: user.id,
+      };
+
+      //find the settings
+      Settings.findOne(settingsQuery, async (err, settings) => {
+        if (!settings) {
+          //create settings
+
+          console.log("no settings");
+
+          let defaultSettings = {
+            scheme: "light",
+            userID: user.id,
+          };
+          // If user logged in successfuly we return user, token, and settings as response
+
+          settings = await Settings.create(defaultSettings);
+        }
+
+        return res.status(200).json({
+          user,
+          token: jwToken.issue({ id: user.id }),
+          settings,
+        });
+      });
+
+
+      // //generate new token
+      // return res.status(200).json({
+      //   user,
+      //   token: jwToken.issue({ id: user.id }),
+      //   settings,
+      // });
+
+    });
+
+    //  // Verify the token
+    //  if ( jwToken.verify(accessToken, (err, verifiedToken) =>{
+
+    //  }) )
+    //  {
+    //      return [
+    //          200,
+    //          {
+    //              user       : cloneDeep(this._user),
+    //              accessToken: this._generateJWTToken(),
+    //              tokenType  : 'bearer'
+    //          }
+    //      ];
+    //  }
+
+    //  // Invalid token
+    //  return [
+    //      401,
+    //      {
+    //          error: 'Invalid token'
+    //      }
+    //  ];
+
+
   },
 
   authTest(req, res) {

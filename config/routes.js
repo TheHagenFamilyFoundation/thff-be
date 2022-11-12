@@ -60,6 +60,7 @@ module.exports.routes = {
   //AUTH
   "GET /authTest": "AuthController.authTest",
   "PUT /auth/login": "AuthController.login",
+  "POST /auth/refresh-access-token": "AuthController.refreshAccessToken",
   "POST /auth/forgot-password": "AuthController.forgotPassword",
   "POST /auth/sign-up": "AuthController.signUp",
   "POST /auth/confirm-user": "AuthController.confirmUser",
