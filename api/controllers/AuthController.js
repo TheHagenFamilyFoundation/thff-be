@@ -238,7 +238,19 @@ module.exports = {
             resetURL = "http://localhost:4200";
           }
 
-          await sails.helpers.sendTemplateEmail.with({
+          // await sails.helpers.sendTemplateEmail.with({
+          //   to: user.email,
+          //   subject: "THFF: Reset Password Email",
+          //   template: "email-reset-password",
+          //   templateData: {
+          //     Name: user.username,
+          //     resetCode: newCode,
+          //     resetURL: `${resetURL}/reset-password?rc=${newCode}`,
+          //   },
+          //   layout: false,
+          // });
+
+          await sails.helpers.sendEmail.with({
             to: user.email,
             subject: "THFF: Reset Password Email",
             template: "email-reset-password",
