@@ -80,7 +80,6 @@ module.exports = {
 
   },
 
-
   async fn(inputs, exits) {
     sails.log('sending template email', inputs);
 
@@ -201,7 +200,7 @@ module.exports = {
 
       sails.log('sending template email 3', inputs);
       sails.log('htmlEmailContents', htmlEmailContents);
-
+      sails.log('sails.helpers.mailgun',sails.helpers.mailgun)
       await sails.helpers.mailgun.sendHtmlEmail.with({
         htmlMessage: htmlEmailContents,
         to: inputs.to,

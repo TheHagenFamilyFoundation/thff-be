@@ -189,20 +189,21 @@ module.exports = {
     sails.log("User forgot password... email: ", req.body);
 
     //generate code
-    User.find({
-      email: req.body.email,
-    }).exec(async (err, emailfound) => {
-      if (err) {
-        return res.status(err.status).json({ err });
+    //find user check
+    let emailFound = await User.find({email: req.body.email})
+    sails.log.debug('emailFound',emailFound);
+
+      if (emailFound.length < 1) {
+        sails.log.error("EMAIL001 - Email not found.")
+        return res.status(400).json({code: "EMAIL001", message: "Email not found"});
       }
 
-      if (emailfound && emailfound.length > 0) {
-        sails.log("email is found");
+        sails.log.debug("email is found");
         // debug
-        sails.log(emailfound[0].id);
-        sails.log(emailfound);
+        sails.log.debug("user id", emailFound[0].id);
+        sails.log.debug("emailfound array", emailFound);
 
-        let user = emailfound[0];
+        let user = emailFound[0];
 
         let newCode = generateCode();
 
@@ -210,21 +211,26 @@ module.exports = {
         const now = new Date();
 
         //can remove
-        sails.log(now);
+        sails.log.debug("date",now);
 
-        User.update(
-          { id: user.id },
-          {
+        await User.update({ id: user.id }, {
             resetCode: newCode,
             resetPassword: true,
             resetTime: now,
-          }
-        ).exec(async () => {
-          //TODO: make verbose
-          sails.log("user", user);
-          sails.log("user.email", user.email);
-          sails.log("user.username", user.username);
-          sails.log("user.resetCode", newCode);
+          })
+
+          sails.log.debug("user updated", user);
+
+          //debug find user again to verify change
+          // emailFound = await User.find({email: req.body.email})
+          // sails.log.debug('emailFound',emailFound);
+
+    //     // ).exec(async () => {
+    //       //TODO: make verbose
+          sails.log.debug("user", user);
+          sails.log.debug("user.email", user.email);
+          sails.log.debug("user.username", user.username);
+          sails.log.debug("user.resetCode", newCode);
 
           if (sails.config.environment === "production") {
             resetURL = process.env.FE_API;
@@ -245,16 +251,16 @@ module.exports = {
           });
 
           let message = `forgot password ${req.body.email}`;
-          return res.status(200).json(message);
-        });
-      } else {
-        sails.log("email is not found");
-        return res.status(401).json({ resetCodeCreated: false });
-      }
-    });
+    //       return res.status(200).json(message);
+    //     });
+    //   } else {
+    //     sails.log("email is not found");
+    //     return res.status(401).json({ resetCodeCreated: false });
+    //   }
+    // });
     //send email
 
-    // return res.status(200).json(message);
+    return res.status(200).json(message);
   },
 
   async signUp(req, res) {
@@ -366,7 +372,7 @@ function generateCode() {
   }
 
   //TODO: verbose
-  sails.log(code);
+  sails.log.debug(code);
 
   return code;
 }
