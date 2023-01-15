@@ -80,7 +80,7 @@ module.exports = {
               settings = await Settings.create(defaultSettings);
             }
 
-            sails.log('logging in user',user)
+            sails.log('logging in user', user)
             return res.status(200).json({
               user,
               token: jwToken.issue({ id: user.id }),
@@ -99,17 +99,17 @@ module.exports = {
     });
   },
 
-  refreshAccessToken(req,res) {
+  refreshAccessToken(req, res) {
 
-     // Get the access token
-     const accessToken = req.body.accessToken;
-     const user = JSON.parse(req.body.user);
-     const body = req.body;
-     sails.log('body',body);
+    // Get the access token
+    const accessToken = req.body.accessToken;
+    const user = JSON.parse(req.body.user);
+    const body = req.body;
+    sails.log('body', body);
 
-     jwToken.verify(accessToken, (err) => {
+    jwToken.verify(accessToken, (err) => {
       if (err) return res.status(401).json({ err: 'Invalid Token!' });
-      
+
       let settingsQuery = {
         userID: user.id,
       };
@@ -190,79 +190,79 @@ module.exports = {
 
     //generate code
     //find user check
-    let emailFound = await User.find({email: req.body.email})
-    sails.log.debug('emailFound',emailFound);
+    let emailFound = await User.find({ email: req.body.email })
+    sails.log.debug('emailFound', emailFound);
 
-      if (emailFound.length < 1) {
-        sails.log.error("EMAIL001 - Email not found.")
-        return res.status(400).json({code: "EMAIL001", message: "Email not found"});
-      }
+    if (emailFound.length < 1) {
+      sails.log.error("EMAIL001 - Email not found.")
+      return res.status(400).json({ code: "EMAIL001", message: "Email not found" });
+    }
 
-        sails.log.debug("email is found");
-        // debug
-        sails.log.debug("user id", emailFound[0].id);
-        sails.log.debug("emailfound array", emailFound);
+    sails.log.debug("email is found");
+    // debug
+    sails.log.debug("user id", emailFound[0].id);
+    sails.log.debug("emailfound array", emailFound);
 
-        let user = emailFound[0];
+    let user = emailFound[0];
 
-        let newCode = generateCode();
+    let newCode = generateCode();
 
-        //get date
-        const now = new Date();
+    //get date
+    const now = new Date();
 
-        //can remove
-        sails.log.debug("date",now);
+    //can remove
+    sails.log.debug("date", now);
 
-        await User.update({ id: user.id }, {
-            resetCode: newCode,
-            resetPassword: true,
-            resetTime: now,
-          })
+    await User.update({ id: user.id }, {
+      resetCode: newCode,
+      resetPassword: true,
+      resetTime: now,
+    })
 
-          sails.log.debug("user updated", user);
+    sails.log.debug("user updated", user);
 
-          //debug find user again to verify change
-          // emailFound = await User.find({email: req.body.email})
-          // sails.log.debug('emailFound',emailFound);
+    //debug find user again to verify change
+    // emailFound = await User.find({email: req.body.email})
+    // sails.log.debug('emailFound',emailFound);
 
     //     // ).exec(async () => {
     //       //TODO: make verbose
-          sails.log.debug("user", user);
-          sails.log.debug("user.email", user.email);
-          sails.log.debug("user.username", user.username);
-          sails.log.debug("user.resetCode", newCode);
+    sails.log.debug("user", user);
+    sails.log.debug("user.email", user.email);
+    sails.log.debug("user.username", user.username);
+    sails.log.debug("user.resetCode", newCode);
 
-          if (sails.config.environment === "production") {
-            resetURL = process.env.FE_API;
-          } else {
-            resetURL = "http://localhost:4200";
-          }
+    if (sails.config.environment === "production") {
+      resetURL = process.env.FE_API;
+    } else {
+      resetURL = "http://localhost:4200";
+    }
 
-          // await sails.helpers.sendTemplateEmail.with({
-          //   to: user.email,
-          //   subject: "THFF: Reset Password Email",
-          //   template: "email-reset-password",
-          //   templateData: {
-          //     Name: user.username,
-          //     resetCode: newCode,
-          //     resetURL: `${resetURL}/reset-password?rc=${newCode}`,
-          //   },
-          //   layout: false,
-          // });
+    await sails.helpers.sendTemplateEmail.with({
+      to: user.email,
+      subject: "THFF: Reset Password Email",
+      template: "email-reset-password",
+      templateData: {
+        Name: user.username,
+        resetCode: newCode,
+        resetURL: `${resetURL}/reset-password?rc=${newCode}`,
+      },
+      layout: false,
+    });
 
-          await sails.helpers.sendEmail.with({
-            to: user.email,
-            subject: "THFF: Reset Password Email",
-            template: "email-reset-password",
-            templateData: {
-              Name: user.username,
-              resetCode: newCode,
-              resetURL: `${resetURL}/reset-password?rc=${newCode}`,
-            },
-            layout: false,
-          });
+    // await sails.helpers.sendEmail.with({
+    //   to: user.email,
+    //   subject: "THFF: Reset Password Email",
+    //   template: "email-reset-password",
+    //   templateData: {
+    //     Name: user.username,
+    //     resetCode: newCode,
+    //     resetURL: `${resetURL}/reset-password?rc=${newCode}`,
+    //   },
+    //   layout: false,
+    // });
 
-          let message = `forgot password ${req.body.email}`;
+    let message = `forgot password ${req.body.email}`;
     //       return res.status(200).json(message);
     //     });
     //   } else {

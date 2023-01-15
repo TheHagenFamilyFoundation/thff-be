@@ -8,7 +8,7 @@ module.exports = {
 
 
   extendedDescription:
-        `To ease testing and development, if the provided "to" email address ends in "@example.com",
+    `To ease testing and development, if the provided "to" email address ends in "@example.com",
   then the email message will be written to the terminal instead of actually being sent.
   (Thanks [@simonratner](https://github.com/simonratner)!)`,
 
@@ -18,7 +18,7 @@ module.exports = {
     template: {
       description: 'The relative path to an EJS template within our `views/emails/` folder -- WITHOUT the file extension.',
       extendedDescription:
-                `Use strings like "foo" or "foo/bar", but NEVER "foo/bar.ejs".  For example, "marketing/welcome" would send an email
+        `Use strings like "foo" or "foo/bar", but NEVER "foo/bar.ejs".  For example, "marketing/welcome" would send an email
   using the "views/emails/marketing/welcome.ejs" template.`,
       example: 'reset-password',
       type: 'string',
@@ -28,7 +28,7 @@ module.exports = {
     templateData: {
       description: 'A dictionary of data which will be accessible in the EJS template.',
       extendedDescription:
-                `Each key will be a local variable accessible in the template.  For instance, if you supply
+        `Each key will be a local variable accessible in the template.  For instance, if you supply
   a dictionary with a \`friends\` key, and \`friends\` is an array like \`[{name:"Chandra"}, {name:"Mary"}]\`),
   then you will be able to access \`friends\` from the template:
   \`\`\`
@@ -45,7 +45,7 @@ module.exports = {
     to: {
       description: 'The email address of the primary recipient.',
       extendedDescription:
-                `If this is any address ending in "@example.com", then don't actually deliver the message.
+        `If this is any address ending in "@example.com", then don't actually deliver the message.
   Instead, just log it to the console.`,
       example: 'foo@bar.com',
       required: true,
@@ -59,8 +59,8 @@ module.exports = {
 
     layout: {
       description:
-                'Set to `false` to disable layouts altogether, or provide the path (relative '
-                + 'from `views/layouts/`) to an override email layout.',
+        'Set to `false` to disable layouts altogether, or provide the path (relative '
+        + 'from `views/layouts/`) to an override email layout.',
       defaultsTo: 'layout-email',
       custom: (layout) => layout === false || _.isString(layout),
     },
@@ -93,23 +93,23 @@ module.exports = {
     if (!_.startsWith(path.basename(inputs.template), 'email-')) {
       sails.log.warn(
         'The "template" that was passed in to `sendTemplateEmail()` does not begin with '
-                + '"email-" -- but by convention, all email template files in `views/emails/` should '
-                + 'be namespaced in this way.  (This makes it easier to look up email templates by '
-                + 'filename; e.g. when using CMD/CTRL+P in Sublime Text.)\n'
-                + 'Continuing regardless...',
+        + '"email-" -- but by convention, all email template files in `views/emails/` should '
+        + 'be namespaced in this way.  (This makes it easier to look up email templates by '
+        + 'filename; e.g. when using CMD/CTRL+P in Sublime Text.)\n'
+        + 'Continuing regardless...',
       );
     }
 
     if (_.startsWith(inputs.template, 'views/') || _.startsWith(inputs.template, 'emails/')) {
       throw new Error(
         'The "template" that was passed in to `sendTemplateEmail()` was prefixed with\n'
-                + '`emails/` or `views/` -- but that part is supposed to be omitted.  Instead, please\n'
-                + 'just specify the path to the desired email template relative from `views/emails/`.\n'
-                + 'For example:\n'
-                + '  template: \'email-reset-password\'\n'
-                + 'Or:\n'
-                + '  template: \'admin/email-contact-form\'\n'
-                + ' [?] If you\'re unsure or need advice, see https://sailsjs.com/support',
+        + '`emails/` or `views/` -- but that part is supposed to be omitted.  Instead, please\n'
+        + 'just specify the path to the desired email template relative from `views/emails/`.\n'
+        + 'For example:\n'
+        + '  template: \'email-reset-password\'\n'
+        + 'Or:\n'
+        + '  template: \'admin/email-contact-form\'\n'
+        + ' [?] If you\'re unsure or need advice, see https://sailsjs.com/support',
       );
     }// •
 
@@ -135,9 +135,8 @@ module.exports = {
     )
       .intercept((err) => {
         err.message = `${'Could not compile view template.\n'
-                    + '(Usually, this means the provided data is invalid, or missing a piece.)\n'
-                    + 'Details:\n'}${
-          err.message}`;
+          + '(Usually, this means the provided data is invalid, or missing a piece.)\n'
+          + 'Details:\n'}${err.message}`;
         return err;
       });
 
@@ -176,15 +175,15 @@ module.exports = {
       if (!sails.config.custom.mailgunSecret || !sails.config.custom.mailgunDomain) {
         throw new Error(`Cannot deliver email to "${inputs.to}" because:
             ${(() => {
-    const problems = [];
-    if (!sails.config.custom.mailgunSecret) {
-      problems.push(' • Mailgun secret is missing from this app\'s configuration (`sails.config.custom.mailgunSecret`)');
-    }
-    if (!sails.config.custom.mailgunDomain) {
-      problems.push(' • Mailgun domain is missing from this app\'s configuration (`sails.config.custom.mailgunDomain`)');
-    }
-    return problems.join('\n');
-  })()}
+            const problems = [];
+            if (!sails.config.custom.mailgunSecret) {
+              problems.push(' • Mailgun secret is missing from this app\'s configuration (`sails.config.custom.mailgunSecret`)');
+            }
+            if (!sails.config.custom.mailgunDomain) {
+              problems.push(' • Mailgun domain is missing from this app\'s configuration (`sails.config.custom.mailgunDomain`)');
+            }
+            return problems.join('\n');
+          })()}
   To resolve these configuration issues, add the missing config variables to
   \`config/custom.js\`-- or in staging/production, set them up as system
   environment vars.  (If you don't have a Mailgun domain or secret, you can
@@ -200,13 +199,41 @@ module.exports = {
 
       sails.log('sending template email 3', inputs);
       sails.log('htmlEmailContents', htmlEmailContents);
-      sails.log('sails.helpers.mailgun',sails.helpers.mailgun)
-      await sails.helpers.mailgun.sendHtmlEmail.with({
-        htmlMessage: htmlEmailContents,
-        to: inputs.to,
+
+      var API_KEY = sails.config.custom.mailgunSecret;
+      var DOMAIN = sails.config.custom.mailgunDomain;
+
+      const formData = require('form-data');
+      const Mailgun = require('mailgun.js');
+      const mailgun = new Mailgun(formData);
+      const mg = mailgun.client({ username: 'api', key: API_KEY });
+
+      //  ({apiKey: API_KEY, domain: DOMAIN});
+
+      // await sails.helpers.mailgun.sendHtmlEmail.with({
+      //   htmlMessage: htmlEmailContents,
+      //   to: inputs.to,
+      //   subject: inputs.subject,
+      //   testMode: false,
+      // });
+      // let data =
+      // {
+      //   html: htmlEmailContents,
+      //   to: inputs.to,
+      //   subject: inputs.subject,
+      //   testMode: false,
+      //   from: 'admin@hagenfamilyfoundation.org'
+      // }
+      // await mailgun.messages().send(data)
+
+
+      await mg.messages.create(DOMAIN, {
+        from: "admin@hagenfamilyfoundation.org",
+        to: [inputs.to],
         subject: inputs.subject,
-        testMode: false,
-      });
+        // text: "Testing some Mailgun awesomness!",
+        html: htmlEmailContents
+      })
 
       sails.log('sending template email 4', inputs);
     }// ﬁ
