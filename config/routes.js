@@ -129,6 +129,9 @@ module.exports.routes = {
 
   "POST /sendViewLOI": "EmailController.sendViewLOI",
 
+  // ORGANIZATION INFO
+  "PATCH /organizationInfo": "OrganizationInfoController.update",
+
   // PRESIDENT
   "POST /loiFP": "LOIController.loiFP",
   "POST /openFPs": "LOIController.openFPs",
@@ -137,8 +140,9 @@ module.exports.routes = {
   // ADMIN
   "GET /getUnSubmittedLOI": "LOIController.getUnSubmittedLOI",
 
-  // submission years
+  //SUBMISSION YEARS
   "POST /closeSubmissionYear": "SubmissionYearController.closeSubmissionYear",
 
+  //SETTINGS
   "PUT /settings": "SettingsController.updateSetting",
 };
