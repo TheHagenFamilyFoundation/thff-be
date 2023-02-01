@@ -31,14 +31,14 @@
     "mailgun.js": "^2.0.1",
     "npm": "^8.19.2",
     "rc": "^1.2.7",
-    "sails": "^1.2.3",
+    "sails": "^1.5.3",
     "sails-disk": "^1.1.2",
     "sails-hook-grunt": "^5.0.0",
     "sails-hook-jobs": "^0.1.6",
     "sails-hook-organics": "^2.2.1",
     "sails-hook-orm": "^2.1.1",
     "sails-hook-sockets": "^2.0.3",
-    "sails-mongo": "^1.0.1",
+    "sails-mongo": "^2.0.0",
     "skipper-s3": "^0.6.0"
   },
   "scripts": {
