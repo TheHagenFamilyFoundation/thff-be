@@ -83,11 +83,13 @@ module.exports.policies = {
 
   OrganizationController: {
     "*": ["isAuthorized"],
+    // "*": true
   },
 
   // debug
   OrganizationInfoController: {
     "*": ["isAuthorized"],
+    // "*": true
   },
 
   Org501c3Controller: {
