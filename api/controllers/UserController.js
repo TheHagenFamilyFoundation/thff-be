@@ -389,9 +389,7 @@ module.exports = {
 
     sails.log(req.body);
 
-    const { currentPassword } = req.body;
-    const { newPassword } = req.body;
-    const { username } = req.body;
+    const { currentPassword, newPassword, username } = req.body;
 
     User.find({
       username,

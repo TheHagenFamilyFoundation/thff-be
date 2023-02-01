@@ -60,6 +60,7 @@ module.exports.routes = {
   //AUTH
   "GET /authTest": "AuthController.authTest",
   "PUT /auth/login": "AuthController.login",
+  "POST /auth/refresh-access-token": "AuthController.refreshAccessToken",
   "POST /auth/forgot-password": "AuthController.forgotPassword",
   "POST /auth/sign-up": "AuthController.signUp",
   "POST /auth/confirm-user": "AuthController.confirmUser",
@@ -128,6 +129,9 @@ module.exports.routes = {
 
   "POST /sendViewLOI": "EmailController.sendViewLOI",
 
+  // ORGANIZATION INFO
+  "PATCH /organizationInfo": "OrganizationInfoController.update",
+
   // PRESIDENT
   "POST /loiFP": "LOIController.loiFP",
   "POST /openFPs": "LOIController.openFPs",
@@ -136,8 +140,9 @@ module.exports.routes = {
   // ADMIN
   "GET /getUnSubmittedLOI": "LOIController.getUnSubmittedLOI",
 
-  // submission years
+  //SUBMISSION YEARS
   "POST /closeSubmissionYear": "SubmissionYearController.closeSubmissionYear",
 
+  //SETTINGS
   "PUT /settings": "SettingsController.updateSetting",
 };

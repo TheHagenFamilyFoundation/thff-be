@@ -150,8 +150,15 @@ module.exports = {
 
         })
 
-    }
+    },
 
+    update: async function (req, res, next) {
+        sails.log.debug('updating', req.query);
+        sails.log.debug('updated field', req.body) // check for full update now 
+        let updatedInfo = await OrganizationInfo.updateOne({ organizationInfoID: req.query.organizationInfoID }, req.body)
+
+        return res.status(200).json(updatedInfo);
+    }
 
 };
 
