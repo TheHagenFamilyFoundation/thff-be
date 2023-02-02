@@ -56,6 +56,10 @@ try {
 }
 
 console.log('process.env.ENV', process.env.ENV);
+console.log('process.env.REDIS_HOST', process.env.REDIS_HOST);
+console.log('process.env.REDIS_PORT', process.env.REDIS_PORT);
+console.log('process.env.REDIS_DB', process.env.REDIS_DB);
+console.log('process.env.REDIS_PASS', process.env.REDIS_PASS);
 
 // Start server
 sails.lift(rc('sails'));
