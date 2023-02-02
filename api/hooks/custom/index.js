@@ -18,6 +18,10 @@ module.exports = function defineCustomHook(sails) {
 
             sails.log.info('Initializing hook... (`api/hooks/custom`)');
 
+
+            console.log('sails.config.session', sails.config.session);
+
+
             // Check Mailgun configuration (for emails).
             var MANDATORY_MAILGUN_CONFIG = ['mailgunSecret', 'mailgunDomain', 'internalEmailAddress'];
             var isMissingMailgunConfig = _.difference(MANDATORY_MAILGUN_CONFIG, Object.keys(sails.config.custom)).length > 0;
@@ -119,7 +123,6 @@ module.exports = function defineCustomHook(sails) {
                             res.locals.me = undefined;
 
                         }//ﬁ
-
 
                         // No session? Proceed as usual.
                         // (e.g. request for a static asset)
