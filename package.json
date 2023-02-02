@@ -44,8 +44,7 @@
   },
   "scripts": {
     "debug": "node debug app.js",
-    "start": "NODE_ENV=production node app.js",
-    "start-staging": "NODE_ENV=staging node app.js"
+    "start": "node app.js"
   },
   "main": "app.js",
   "repository": {
