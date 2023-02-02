@@ -204,7 +204,7 @@ module.exports = {
     port: process.env.REDIS_PORT,
     db: process.env.REDIS_DB,
     pass: process.env.REDIS_PASS,
-    tls: process.env.ENV === 'STAGING' ? null : { rejectUnauthorized: false },
+    tls: (process.env.ENV === 'STAGING') ? null : { rejectUnauthorized: false },
 
     /** *************************************************************************
     *                                                                          *
