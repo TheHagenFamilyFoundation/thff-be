@@ -200,10 +200,11 @@ module.exports = {
     //--------------------------------------------------------------------------
 
     adapter: '@sailshq/connect-redis',
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    db: process.env.REDIS_DB,
-    pass: process.env.REDIS_PASS,
+    url: (process.env.ENV === 'STAGING') ? process.env.REDIS_URL : null,
+    host: (process.env.ENV === 'STAGING') ? null : process.env.REDIS_HOST,
+    port: (process.env.ENV === 'STAGING') ? null : process.env.REDIS_PORT,
+    db: (process.env.ENV === 'STAGING') ? null : process.env.REDIS_DB,
+    pass: (process.env.ENV === 'STAGING') ? null : process.env.REDIS_PASS,
     tls: (process.env.ENV === 'STAGING') ? null : { rejectUnauthorized: false },
 
     /** *************************************************************************
