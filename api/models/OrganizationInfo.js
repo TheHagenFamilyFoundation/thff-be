@@ -24,7 +24,7 @@ module.exports = {
     },
     currentOperatingBudget: {
       // -Current Operating Budget 
-      type: 'string'
+      type: 'number'
     },
     director: {
       type: 'string',

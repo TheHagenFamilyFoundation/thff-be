@@ -6,6 +6,7 @@
  */
 
 const AWS = require('aws-sdk');
+const OrganizationInfoController = require('./OrganizationInfoController');
 
 AWS.config.update({
   accessKeyId: sails.config.custom.s3_key,
@@ -17,56 +18,83 @@ const s3 = new AWS.S3();
 
 module.exports = {
 
-  create(req, res) {
+  async create(req, res) {
     sails.log('organization create');
 
     sails.log('req.body', req.body);
 
     const query = {
-      legalName: req.body.legalName,
+      legalName: req.body.orgInfo.legalName,
     };
 
     sails.log.info('query - ', query);
 
-    OrganizationInfo.find(query).then((docs) => {
-      if (docs.length > 0) {
-        sails.log.error('duplicate organization');
-        res.status(400).send({ code: 'ORG001', message: 'Duplicate Organization' });
-      } else {
-        const org = req.body;
+    //check for duplicate organization
+    //compare legalnames 
 
-        const userID = org.userid;
+    let orgInfoCheck = await OrganizationInfo.find(query);
+    sails.log.debug('orgInfoCheck', orgInfoCheck);
 
-        // create orgID
-        let text = '';
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    if (orgInfoCheck.length > 0) {
+      sails.log.error('duplicate organization');
+      res.status(400).send({ code: 'ORG001', message: 'Duplicate Organization' });
+    } else {
 
-        for (let i = 0; i < 5; i += 1) {
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
+      let text = '';
+      const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-        const organizationID = text;
-        // add organizationID to org object
-
-        org.organizationID = organizationID;
-
-        Organization.create(org)
-          .then((newOrg, err) => {
-            if (err) {
-              return res.status(err.status).json({ err });
-            }
-
-            sails.log(newOrg);
-
-            // add the user who created the org into the users list
-            Organization.addToCollection(newOrg.id, 'users').members(userID).then(() => {
-              sails.log(newOrg);
-
-              return res.json({ status: true, result: newOrg });
-            });
-          });
+      for (let i = 0; i < 5; i += 1) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
       }
-    });
+
+      const organizationID = text;
+      // add organizationID to org object
+
+      let newOrg = {
+        description: req.body.description,
+        name: req.body.orgInfo.legalName,
+        organizationID: organizationID
+      }
+
+      //create organization obj
+      let createdOrg = await Organization.create(newOrg)
+      sails.log.debug('createdOrg', createdOrg)
+
+      const userID = req.body.userId;
+
+      let addedToCollection = await Organization.addToCollection(createdOrg.id, 'users').members(userID);
+      sails.log.debug('addedToCollection', addedToCollection)
+
+      //create organizationInfo object now
+
+      let newOrgInfo = req.body.orgInfo;
+
+      //create orgInfoID
+
+      //reset text for the ID
+      text = '';
+      for (var i = 0; i < 5; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+
+      var organizationInfoID = text;
+      //add organizationInfoID to orgInfo object
+
+      newOrgInfo.organizationInfoID = organizationInfoID;
+      //validate the orgInfo
+      let validatedOrgInfo = await OrganizationInfoController.validOrgInfo(newOrgInfo)
+      sails.log.debug('validatedOrgInfo', validatedOrgInfo);
+      newOrgInfo.validOrgInfo = validatedOrgInfo;
+      newOrgInfo.organization = newOrg.id;
+
+      let createdOrgInfo = await OrganizationInfo.create(newOrgInfo);
+
+      sails.log.debug('createdOrgInfo', createdOrgInfo);
+
+      return res.status(200).json({
+        message: 'Org Created', org: createdOrg
+      });
+    }
   },
   addUser(req, res) {
     sails.log('addUser', req.body);
