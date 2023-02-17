@@ -261,8 +261,36 @@ module.exports = {
         sails.log.debug('updating', req.query);
         sails.log.debug('updated field', req.body) // check for full update now 
         let updatedInfo = await OrganizationInfo.updateOne({ organizationInfoID: req.query.organizationInfoID }, req.body)
+        
+        sails.log.debug('updatedInfo',updatedInfo);
 
-        return res.status(200).json(updatedInfo);
+        //if legal name changed then change the organization object name to legal name
+        if(req.body.legalName)
+        {
+            //update org object
+            sails.log.debug('updating org object');
+            let orgId = updatedInfo.organization
+            let orgToUpdate = await Organization.findOne(orgId)
+            sails.log.debug('before - orgToUpdate',orgToUpdate)
+            if(orgToUpdate){
+                
+                let updatedOrg = await Organization.updateOne(orgId,{name: req.body.legalName})
+                sails.log.debug('updatedOrg',updatedOrg)
+            }
+            else {
+                sails.log.error('organization not found - detached',orgId)
+                //error
+                return res.status(500).json({
+                    message: 'Org Not Found'
+                  });
+            }
+            sails.log.debug('found org',orgToUpdate)
+            // let updatedOrg = await 
+        }
+
+        return res.status(200).json({
+            message: 'Org Info Updated', info: updatedInfo
+          });
     }
 
 };
