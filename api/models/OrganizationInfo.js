@@ -6,78 +6,76 @@
  */
 
 module.exports = {
-
   attributes: {
-
     organizationInfoID: {
-      type: 'string'
+      type: "string",
     },
     legalName: {
-      //  -Legal Name of Organization Applying: 
-      type: 'string',
+      //  -Legal Name of Organization Applying:
+      type: "string",
       //required: 'true',
-      unique: true // Yes unique one
+      unique: true, // Yes unique one
     },
     yearFounded: {
-      // -Year Founded 
-      type: 'number'
+      // -Year Founded
+      type: "number",
     },
     currentOperatingBudget: {
-      // -Current Operating Budget 
-      type: 'number'
+      // -Current Operating Budget
+      type: "number",
     },
     director: {
-      type: 'string',
+      type: "string",
     },
     phone: {
-      // -Phone Number 
-      type: 'string',
+      // -Phone Number
+      type: "string",
     },
     contactPerson: {
-      //-Contact person/title/phone number 
-      type: 'string',
+      //-Contact person/title/phone number
+      type: "string",
     },
     contactPersonTitle: {
-      //  contact person's title 
-      type: 'string',
+      //  contact person's title
+      type: "string",
     },
     contactPersonPhoneNumber: {
-      type: 'string'
+      type: "string",
     },
     email: {
-      //  email 
-      type: 'string',
+      //  email
+      type: "string",
     },
     address: {
-      //-Address (principal/administrative office) 
-      type: 'string',
+      //-Address (principal/administrative office)
+      type: "string",
     },
     city: {
-      //  city 
-      type: 'string',
+      //  city
+      type: "string",
     },
     state: {
-      //  state 
-      type: 'string',
+      //  state
+      type: "string",
     },
     zip: {
       // -zip
-      type: 'number'
+      type: "number",
     },
     fax: {
       // -fax number
-      type: 'string'
+      type: "string",
+    },
+    website: {
+      type: "string",
     },
     organization: {
-      model: 'organization',
-      unique: true
+      model: "organization",
+      unique: true,
     },
     validOrgInfo: {
-      type: 'boolean',
-      defaultsTo: false
-    }
-
+      type: "boolean",
+      defaultsTo: false,
+    },
   },
-
 };
-
