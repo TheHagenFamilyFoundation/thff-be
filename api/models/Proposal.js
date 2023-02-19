@@ -51,9 +51,8 @@ module.exports = {
     totalProjectCost: {
       type: "number",
     },
-    pItems: {
-      collection: "ProposalItem",
-      via: "prop",
+    itemizedBudget: {
+      type: "string",
     },
   },
 };
