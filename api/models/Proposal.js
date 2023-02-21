@@ -26,14 +26,6 @@ module.exports = {
     goals: {
       type: "string",
     },
-    // New or Ongoing?
-    activity: {
-      type: "number",
-      defaultsTo: 1,
-      // values
-      // 1-new
-      // 2-ongoing
-    },
     // Project Narrative - Describe, in detail, the project with emphasis on the following: (1) description of any partners in the project; (2) key staff; (3) involvement of constituents; (4) strategy for long term funding; and (5) plans for evaluation and dissemination.
     narrative: {
       type: "string",
