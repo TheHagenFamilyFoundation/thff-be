@@ -132,6 +132,9 @@ module.exports.routes = {
   // ORGANIZATION INFO
   "PATCH /organizationInfo": "OrganizationInfoController.update",
 
+  // PROPOSALS
+  "PATCH /proposal": "ProposalController.update",
+
   // PRESIDENT
   "POST /loiFP": "LOIController.loiFP",
   "POST /openFPs": "LOIController.openFPs",
