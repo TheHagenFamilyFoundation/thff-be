@@ -5,7 +5,8 @@
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
 
-const ProposalItemController = require("./ProposalItemController");
+// const ProposalItemController = require("./ProposalItemController");
+const emailController = require("./EmailController");
 
 module.exports = {
   async create(req, res, next) {
@@ -30,6 +31,8 @@ module.exports = {
       sails.log.error(err);
       return res.status(400).send({ code: "PROP001", message: err.message });
     }
+
+    const sendEmail = await emailController.sendSubmittingProposal(newProposal);
 
     //return the proposal, frontend will send user to the view proposal page
     return res.status(200).send(newProposal);

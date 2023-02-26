@@ -26,11 +26,6 @@ module.exports = {
     confirmCode: {
       type: "string",
     },
-    username: {
-      type: "string",
-      // required: 'true',
-      unique: true,
-    },
     firstName: {
       type: "string",
     },

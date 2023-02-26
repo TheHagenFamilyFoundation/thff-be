@@ -80,7 +80,7 @@ module.exports = {
               settings = await Settings.create(defaultSettings);
             }
 
-            sails.log('logging in user', user)
+            sails.log("logging in user", user);
             return res.status(200).json({
               user,
               token: jwToken.issue({ id: user.id }),
@@ -100,15 +100,14 @@ module.exports = {
   },
 
   refreshAccessToken(req, res) {
-
     // Get the access token
     const accessToken = req.body.accessToken;
     const user = JSON.parse(req.body.user);
     const body = req.body;
-    sails.log('body', body);
+    sails.log("body", body);
 
     jwToken.verify(accessToken, (err) => {
-      if (err) return res.status(401).json({ err: 'Invalid Token!' });
+      if (err) return res.status(401).json({ err: "Invalid Token!" });
 
       let settingsQuery = {
         userID: user.id,
@@ -137,14 +136,12 @@ module.exports = {
         });
       });
 
-
       // //generate new token
       // return res.status(200).json({
       //   user,
       //   token: jwToken.issue({ id: user.id }),
       //   settings,
       // });
-
     });
 
     //  // Verify the token
@@ -169,8 +166,6 @@ module.exports = {
     //          error: 'Invalid token'
     //      }
     //  ];
-
-
   },
 
   authTest(req, res) {
@@ -190,12 +185,14 @@ module.exports = {
 
     //generate code
     //find user check
-    let emailFound = await User.find({ email: req.body.email })
-    sails.log.debug('emailFound', emailFound);
+    let emailFound = await User.find({ email: req.body.email });
+    sails.log.debug("emailFound", emailFound);
 
     if (emailFound.length < 1) {
-      sails.log.error("EMAIL001 - Email not found.")
-      return res.status(400).json({ code: "EMAIL001", message: "Email not found" });
+      sails.log.error("EMAIL001 - Email not found.");
+      return res
+        .status(400)
+        .json({ code: "EMAIL001", message: "Email not found" });
     }
 
     sails.log.debug("email is found");
@@ -213,11 +210,14 @@ module.exports = {
     //can remove
     sails.log.debug("date", now);
 
-    await User.update({ id: user.id }, {
-      resetCode: newCode,
-      resetPassword: true,
-      resetTime: now,
-    })
+    await User.update(
+      { id: user.id },
+      {
+        resetCode: newCode,
+        resetPassword: true,
+        resetTime: now,
+      }
+    );
 
     sails.log.debug("user updated", user);
 
@@ -287,7 +287,7 @@ module.exports = {
       bcrypt.genSalt(saltRounds, (err, salt) => {
         if (err) return res.status(err.status).json({ err });
 
-        bcrypt.hash(req.body.password, salt, null, (err2, hash) => {
+        bcrypt.hash(req.body.password, salt, null, async (err2, hash) => {
           if (err2) return res.status(err2.status).json({ err2 });
 
           req.body.encryptedPassword = hash;
@@ -295,16 +295,13 @@ module.exports = {
           //create confirm code and add to the user object
           req.body.confirmCode = generateCode();
 
-          User.create(req.body).exec(async (err3, user) => {
-            if (err3) {
-              sails.log.error(err3);
-            }
+          sails.log.debug("creating user: ", req.body);
 
-            sails.log.debug("user created: ");
-            sails.log.debug(user);
+          try {
+            let createdUser = await User.create(req.body);
+            sails.log.debug("createdUser", createdUser);
 
-            // If user created successfuly we return user and token as response
-            if (user) {
+            if (createdUser) {
               // NOTE: payload is { id: user.id}
 
               if (sails.config.environment === "production") {
@@ -315,12 +312,12 @@ module.exports = {
 
               //send email
               await sails.helpers.sendTemplateEmail.with({
-                to: user.email,
+                to: createdUser.email,
                 subject: "THFF Account Confirmation",
                 template: "email-register-confirm",
                 templateData: {
-                  email: user.email,
-                  resetURL: `${resetURL}/confirmation?code=${user.confirmCode}`,
+                  email: createdUser.email,
+                  resetURL: `${resetURL}/confirmation?code=${createdUser.confirmCode}`,
                   // To: email.to
                   // fullName: inputs.fullName,
                   // token: newUserRecord.emailProofToken
@@ -330,11 +327,19 @@ module.exports = {
 
               let message = "User created";
               res.status(200).json({ message });
+            } else {
+              throw new Error("User Not Created");
             }
-          });
+          } catch (e) {
+            sails.log.error(e);
+            return res
+              .status(400)
+              .json({ code: "USER002", message: "Error Creating User" });
+          }
         });
       });
     } else {
+      sails.log.error("Duplicate Email");
       return res
         .status(400)
         .json({ code: "USER001", message: "Duplicate User" });
