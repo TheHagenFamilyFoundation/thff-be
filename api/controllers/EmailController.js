@@ -239,6 +239,8 @@ module.exports = {
 
     return res.status(200).json({ message: "Mail Sent!" });
   },
+
+  //old
   // called from LOI controller
   async sendSubmitLOI(body) {
     sails.log("sendSubmitLOI");
@@ -263,42 +265,68 @@ module.exports = {
 
   // called from Proposal controller
   async sendSubmittingProposal(body) {
-    sails.log("sendSubmittingProposal");
+    return new Promise(async (resolve, reject) => {
+      sails.log("sendSubmittingProposal");
 
-    sails.log(body);
-    const proposal = body;
+      sails.log(body);
+      const proposal = body;
 
-    //query organization users
-    let organization = await Organization.findOne({
-      id: proposal.organization,
-    }).populate("users");
-    //email them separately
+      //query organization users
+      let organization = await Organization.findOne({
+        id: proposal.organization,
+      }).populate("users");
+      //email them separately
 
-    sails.log.debug("emailcontroller - organization", organization);
+      sails.log.debug("emailcontroller - organization", organization);
 
-    let promises = [];
-    organization.users.forEach((user) => {
-      promises.push(
-        sails.helpers.sendTemplateEmail.with({
-          to: user.email, // organization users
-          subject: "Thank You For Submitting A Proposal",
-          template: "email-user-proposal-submit",
+      let promises = [];
+      organization.users.forEach((user) => {
+        promises.push(
+          sails.helpers.sendTemplateEmail.with({
+            to: user.email, // organization users
+            subject: "Thank You For Submitting A Proposal",
+            template: "email-user-proposal-submit",
+            templateData: {
+              Name: user.email, // email
+              ProjectTitle: proposal.projectTitle,
+            },
+            layout: false,
+          })
+        );
+      });
+
+      try {
+        await Promise.all(promises);
+        resolve();
+      } catch (e) {
+        sails.log.error("Emails not sent");
+        sails.log.error(e);
+        reject(e);
+      }
+    });
+  },
+  async sendRegisteredOrgEmail(body) {
+    return new Promise(async (resolve, reject) => {
+      sails.log.debug("sendRegisteredOrgEmail");
+      sails.log.debug(body);
+
+      try {
+        // Send "confirm account" email
+        await sails.helpers.sendTemplateEmail.with({
+          to: body.email,
+          subject: "Thank You For Registering An Org Account",
+          template: "email-register-org-basic",
           templateData: {
-            Name: user.email, // email
-            ProjectTitle: proposal.projectTitle,
+            Name: body.email,
+            OrgName: body.orgName,
           },
           layout: false,
-        })
-      );
+        });
+        resolve();
+      } catch (e) {
+        sails.log.error(e);
+        reject(e);
+      }
     });
-
-    try {
-      await Promise.all(promises);
-
-      // return res.status(200).json({ message: "Mail Sent!" });
-    } catch (e) {
-      sails.log.error("Emails not sent");
-      // return res.status(500).json({ message: "EMails Not Sent!" });
-    }
   },
 };

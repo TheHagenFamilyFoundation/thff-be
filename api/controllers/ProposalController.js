@@ -32,10 +32,15 @@ module.exports = {
       return res.status(400).send({ code: "PROP001", message: err.message });
     }
 
-    const sendEmail = await emailController.sendSubmittingProposal(newProposal);
-
-    //return the proposal, frontend will send user to the view proposal page
-    return res.status(200).send(newProposal);
+    try {
+      await emailController.sendSubmittingProposal(newProposal);
+      //return the proposal, frontend will send user to the view proposal page
+      return res.status(200).send(newProposal);
+    } catch (err) {
+      sails.log.error("error in the email sending");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP001", message: err.message });
+    }
   },
   update: async function (req, res, next) {
     sails.log.debug("updating proposal", req.query);
