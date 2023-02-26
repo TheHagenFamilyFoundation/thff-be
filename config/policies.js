@@ -83,17 +83,17 @@ module.exports.policies = {
 
   OrganizationController: {
     "*": ["isAuthorized"],
-    // "*": true
+    // "*": true,
   },
 
   // debug
   OrganizationInfoController: {
     "*": ["isAuthorized"],
-    // "*": true
+    // "*": true,
   },
 
   Org501c3Controller: {
-    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"],
   },
 
   // debug
@@ -105,11 +105,16 @@ module.exports.policies = {
   },
 
   FullProposalController: {
-    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"],
   },
 
   FullProposalItemController: {
-    "*": ["isAuthorized"], // We dont need authorization here, allowing public access
+    "*": ["isAuthorized"],
+  },
+
+  ProposalController: {
+    "*": ["isAuthorized"],
+    // "*": true,
   },
 
   // all email routes are ok to access

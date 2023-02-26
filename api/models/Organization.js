@@ -6,42 +6,42 @@
  */
 
 module.exports = {
-
   schema: true,
 
   attributes: {
-
     name: {
-      type: 'string',
+      type: "string",
       // required: 'true',
     },
     director: {
-      type: 'string',
+      type: "string",
       // required: 'true'
     },
     description: {
-      type: 'string',
+      type: "string",
     },
     users: {
-      collection: 'user',
-      via: 'organizations',
+      collection: "user",
+      via: "organizations",
     },
     lois: {
-      collection: 'loi',
-      via: 'organization',
+      collection: "loi",
+      via: "organization",
     },
     organizationID: {
-      type: 'string',
+      type: "string",
     },
     info: {
-      collection: 'organizationInfo',
-      via: 'organization',
+      collection: "organizationInfo",
+      via: "organization",
     },
     doc501c3: {
-      collection: 'org501c3',
-      via: 'organization',
+      collection: "org501c3",
+      via: "organization",
     },
-
+    proposals: {
+      collection: "proposal",
+      via: "organization",
+    },
   },
-
 };
