@@ -62,7 +62,7 @@ module.exports = {
       subject: "THFF: Reset Password Email",
       template: "email-reset-password",
       templateData: {
-        Name: user.username,
+        Name: user.username | user.email,
         resetCode: user.resetCode,
         resetURL: `${resetURL}/pages/auth/type-new-password/${user.resetCode}`,
       },
