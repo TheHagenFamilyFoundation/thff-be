@@ -340,7 +340,7 @@ module.exports = {
                           subject: "Your THFF Password has Changed",
                           template: "email-reset-password-confirm",
                           templateData: {
-                            Name: user[0].username,
+                            Name: user[0].email,
                             // To: email.to
                             // fullName: inputs.fullName,
                             // token: newUserRecord.emailProofToken
