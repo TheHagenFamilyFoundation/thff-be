@@ -122,36 +122,108 @@ module.exports = {
 
     return res.json({ status: true, result: users });
   },
-  upload501c3(req, res) {
+  async upload501c3(req, res) {
     sails.log("uploading to s3");
+    sails.log.debug("req.params", req.params);
+    let org = null;
+    let organizationID = null;
 
-    req.file("avatar").upload(
-      {
-        adapter: require("skipper-s3"),
-        key: sails.config.custom.s3_key,
-        secret: sails.config.custom.s3_secret,
-        bucket: sails.config.custom.s3_bucket_name,
-      },
-      (err, filesUploaded) => {
-        sails.log("after upload");
-        sails.log("after upload- err ", err);
-        sails.log("after upload", filesUploaded);
-        sails.log("after upload", filesUploaded[0]);
+    let orgID = req.params.orgID;
 
-        const path = `${sails.config.s3_path}/${filesUploaded[0].fd}`;
+    //delete the old 501c3 object
+    try {
+      org = await Organization.findOne({
+        organizationID: orgID,
+      });
+      sails.log("org:", org);
 
-        filesUploaded[0].extra = {
-          Location: path,
-        };
+      organizationID = org.id;
 
-        sails.log("after filesUploaded", filesUploaded);
-        if (err) return res.serverError(err);
-        return res.status(200).send({
-          files: filesUploaded,
-          textParams: req.allParams(),
-        });
+      sails.log("orgID", orgID);
+    } catch (err) {
+      sails.log.error(err);
+      //001 creating
+      //002 deleting
+      return res
+        .status(400)
+        .send({ code: "ORG501C3002", message: err.message });
+    }
+
+    let obj501c3 = null;
+    try {
+      org501c3 = await Org501c3.findOne({
+        organization: organizationID,
+      });
+      sails.log("501c3:", obj501c3);
+    } catch (err) {
+      sails.log.error(err);
+      return res
+        .status(400)
+        .send({ code: "ORG501C3002", message: err.message });
+    }
+
+    //delete the old if there exists one
+    if (obj501c3) {
+      const { fileName } = obj501c3;
+
+      sails.log("fileName:", fileName);
+
+      //delete
+      // sails.log('deleting the 501c3 from s3')
+
+      try {
+        //deleting the s3 object
+        await deletes3(fileName);
+      } catch (err) {
+        sails.log.error(err);
+        return res
+          .status(400)
+          .send({ code: "ORG501C3002", message: err.message });
       }
-    );
+
+      // then delete from the mongodb
+
+      sails.log("deleting from the mongodb");
+
+      try {
+        await Org501c3.destroy({ organization: organizationID });
+      } catch (err) {
+        sails.log.error(err);
+        return res
+          .status(400)
+          .send({ code: "ORG501C3002", message: err.message });
+      }
+    }
+
+    //upload the new
+    // upload to s3
+    let fileUploaded = null;
+    try {
+      fileUploaded = await uploads3(req);
+    } catch (err) {
+      sails.log.error(err);
+      return res
+        .status(400)
+        .send({ code: "ORG501C3002", message: err.message });
+    }
+
+    sails.log("after fileUploaded", fileUploaded);
+
+    const body = {
+      url: fileUploaded.files[0].extra.Location,
+      fileName: fileUploaded.files[0].fd,
+      organization: organizationID,
+      orgID,
+    };
+
+    //create the 501c3 object
+    let newOrg501c3 = await Org501c3.create(body);
+    sails.log.debug("newOrg501c3", newOrg501c3);
+
+    return res.status(200).json({
+      message: "Uploading the 501c3",
+      org,
+    });
   },
   get501c3(req, res) {
     sails.log("getting 501c3 for org", req.params);
@@ -265,3 +337,56 @@ module.exports = {
     });
   }, // end of Delete501c3
 };
+
+//pass in the fileName
+function deletes3(fileName) {
+  return new Promise((resolve, reject) => {
+    const params = {
+      Bucket: sails.config.custom.s3_bucket_name,
+      Key: fileName,
+    };
+
+    //delete the s3 object
+    s3.deleteObject(params, (err2) => {
+      if (err2) {
+        this.logger.error(err2, err2.stack);
+        // return res.status(500);
+        reject();
+      }
+    });
+
+    resolve();
+  });
+}
+
+function uploads3(req) {
+  return new Promise((resolve, reject) => {
+    req.file("avatar").upload(
+      {
+        adapter: require("skipper-s3"),
+        key: sails.config.custom.s3_key,
+        secret: sails.config.custom.s3_secret,
+        bucket: sails.config.custom.s3_bucket_name,
+      },
+      (err, filesUploaded) => {
+        sails.log("after upload");
+        sails.log("after upload- err ", err);
+        sails.log("after upload", filesUploaded);
+        sails.log("after upload", filesUploaded[0]);
+
+        const path = `${sails.config.s3_path}/${filesUploaded[0].fd}`;
+
+        filesUploaded[0].extra = {
+          Location: path,
+        };
+
+        sails.log("after filesUploaded", filesUploaded);
+        if (err) return reject();
+        return resolve({
+          files: filesUploaded,
+          textParams: req.allParams(),
+        });
+      }
+    );
+  });
+}
