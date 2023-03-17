@@ -89,7 +89,7 @@ module.exports.routes = {
 
   "POST /addUser": "OrganizationController.addUser",
 
-  "POST /upload501c3": "OrganizationController.upload501c3",
+  "POST /upload501c3/:orgID": "OrganizationController.upload501c3",
 
   "GET /get501c3/:orgID": "OrganizationController.get501c3",
 
