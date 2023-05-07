@@ -105,6 +105,25 @@ module.exports = {
       }
     }
   },
+
+  async countOrganizations(req, res) {
+    try {
+      let { filter } = req.query;
+
+      let query = {};
+      if (filter && filter.length !== 0) {
+        query.where = { name: { contains: filter } };
+      }
+      let count = await Organization.count(query);
+      return res.status(200).json(count);
+    }
+    catch (err) {
+      sails.log.error("Error Retrieving Organization Count");
+      sails.log.error(err);
+      return res.status(400).send({ code: "ORG002", message: err.message });
+    }
+  },
+
   addUser(req, res) {
     sails.log("addUser", req.body);
 
@@ -117,7 +136,7 @@ module.exports = {
 
       Organization.addToCollection(orgID, "users")
         .members(userID)
-        .then(() => {});
+        .then(() => { });
     });
 
     return res.json({ status: true, result: users });
