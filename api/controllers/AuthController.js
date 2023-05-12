@@ -83,7 +83,7 @@ module.exports = {
             sails.log("logging in user", user);
             return res.status(200).json({
               user,
-              token: jwToken.issue({ id: user.id }),
+              token: jwToken.issue({ accessLevel: user.accessLevel, id: user.id }),
               settings,
             });
           });
@@ -131,7 +131,7 @@ module.exports = {
 
         return res.status(200).json({
           user,
-          token: jwToken.issue({ id: user.id }),
+          token: jwToken.issue({ accessLevel: user.accessLevel, id: user.id }),
           settings,
         });
       });
