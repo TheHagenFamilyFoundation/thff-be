@@ -138,6 +138,7 @@ module.exports.routes = {
 
   // PROPOSALS
   "PATCH /proposal": "ProposalController.update",
+  "GET /proposalCount": "ProposalController.countProposals",
 
   // PRESIDENT
   "POST /loiFP": "LOIController.loiFP",
