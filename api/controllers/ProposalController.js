@@ -63,7 +63,7 @@ module.exports = {
 
       let query = {};
       if (filter && filter.length !== 0) {
-        query.where = { name: { contains: filter } };
+        query.where = { projectTitle: { contains: filter } };
       }
       let count = await Proposal.count(query);
       return res.status(200).json(count);
