@@ -65,7 +65,7 @@ module.exports = {
 
                 res.status(200).json({
                   user,
-                  token: jwToken.issue({ id: user.id }),
+                  token: jwToken.issue({ accessLevel: user.accessLevel, id: user.id }),
                   settings,
                 });
               });

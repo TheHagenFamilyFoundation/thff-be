@@ -129,6 +129,10 @@ module.exports.routes = {
 
   "POST /sendViewLOI": "EmailController.sendViewLOI",
 
+  // ORGANIZATION
+  // "GET /organization" -- keeping this one with sails
+  "GET /organizationCount": "OrganizationController.countOrganizations",
+
   // ORGANIZATION INFO
   "PATCH /organizationInfo": "OrganizationInfoController.update",
 
