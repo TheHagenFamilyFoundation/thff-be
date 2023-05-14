@@ -57,4 +57,21 @@ module.exports = {
       proposal: updatedProposal,
     });
   },
+  async countProposals(req, res) {
+    try {
+      let { filter } = req.query;
+
+      let query = {};
+      if (filter && filter.length !== 0) {
+        query.where = { name: { contains: filter } };
+      }
+      let count = await Proposal.count(query);
+      return res.status(200).json(count);
+    }
+    catch (err) {
+      sails.log.error("Error Retrieving Proposal Count");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP002", message: err.message });
+    }
+  },
 };
