@@ -74,4 +74,62 @@ module.exports = {
       return res.status(400).send({ code: "PROP002", message: err.message });
     }
   },
+
+  async getProposals(req, res) {
+    try {
+      let { limit, skip, filter, sort, dir } = req.query;
+
+      let query = {};
+
+      //just filtering on projectTitle right now
+      if (filter && filter.length !== 0) {
+        query.where = { projectTitle: { contains: filter } };
+      }
+
+      let proposals = await Proposal.find(query);
+
+      //sort
+      //for notes
+      // ASC  -> a.length - b.length
+      // DESC -> b.length - a.length
+      switch (sort) {
+
+        case 'projectTitle':
+          if (dir === 'asc') {
+            proposals.sort((a, b) => b.projectTitle.localeCompare(a.projectTitle));
+          }
+          else {
+            proposals.sort((a, b) => a.projectTitle.localeCompare(b.projectTitle))
+          }
+          break;
+        case 'amountRequested':
+          proposals.sort(function (a, b) {
+            return dir === 'asc' ? (a.amountRequested - b.amountRequested) : (b.amountRequested - a.amountRequested);
+          });
+          break;
+        case 'totalProjectCost':
+          proposals.sort(function (a, b) {
+            return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
+          });
+          break;
+        case 'createdOn':
+          proposals.sort(function (a, b) {
+            return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
+          });
+          break;
+      }
+
+      //skip and limit
+      let props = proposals.slice(skip, +skip + +limit);
+
+      return res.status(200).json(props);
+    }
+    catch (err) {
+      sails.log.error("Error Retrieving Proposals");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP003", message: err.message });
+    }
+  },
+
+
 };
