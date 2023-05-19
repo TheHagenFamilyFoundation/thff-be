@@ -130,14 +130,14 @@ module.exports.routes = {
   "POST /sendViewLOI": "EmailController.sendViewLOI",
 
   // ORGANIZATION
-  "GET /organization": "OrganizationController.getOrganizations",
+  "GET /organizations": "OrganizationController.getOrganizations",
   "GET /organizationCount": "OrganizationController.countOrganizations",
 
   // ORGANIZATION INFO
   "PATCH /organizationInfo": "OrganizationInfoController.update",
 
   // PROPOSALS
-  "GET /proposal": "ProposalController.getProposals",
+  "GET /proposals": "ProposalController.getProposals",
   "PATCH /proposal": "ProposalController.update",
   "GET /proposalCount": "ProposalController.countProposals",
 
