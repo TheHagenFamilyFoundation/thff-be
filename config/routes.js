@@ -130,7 +130,7 @@ module.exports.routes = {
   "POST /sendViewLOI": "EmailController.sendViewLOI",
 
   // ORGANIZATION
-  // "GET /organization" -- keeping this one with sails
+  "GET /organization": "OrganizationController.getOrganizations",
   "GET /organizationCount": "OrganizationController.countOrganizations",
 
   // ORGANIZATION INFO
