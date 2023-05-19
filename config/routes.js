@@ -137,6 +137,7 @@ module.exports.routes = {
   "PATCH /organizationInfo": "OrganizationInfoController.update",
 
   // PROPOSALS
+  "GET /proposal": "ProposalController.getProposals",
   "PATCH /proposal": "ProposalController.update",
   "GET /proposalCount": "ProposalController.countProposals",
 

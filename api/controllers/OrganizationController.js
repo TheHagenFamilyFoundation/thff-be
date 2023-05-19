@@ -110,55 +110,36 @@ module.exports = {
     try {
       let { limit, skip, filter, sort, dir } = req.query;
 
-      sails.log.debug('filter', filter);
-      sails.log.debug('sort', sort); //field name
-      sails.log.debug('dir', dir); //sort direction
-
       let query = {};
-      // let query = {
-      //   limit, skip
-      // };
+
       if (filter && filter.length !== 0) {
         query.where = { name: { contains: filter } };
       }
-      sails.log.debug('query', query);
+
       let organizations = await Organization.find(query).populate('users').populate('proposals');
 
-      //sorting
-      sails.log.debug('organizations', organizations.length);
+      //sort
+      //for notes
+      // ASC  -> a.length - b.length
+      // DESC -> b.length - a.length
       switch (sort) {
 
         case 'users':
           organizations.sort(function (a, b) {
-            // ASC  -> a.length - b.length
-            // DESC -> b.length - a.length
             return dir === 'asc' ? (a.users.length - b.users.length) : (b.users.length - a.users.length);
           });
           break;
         case 'proposals':
           organizations.sort(function (a, b) {
-            // ASC  -> a.length - b.length
-            // DESC -> b.length - a.length
             return dir === 'asc' ? (a.proposals.length - b.proposals.length) : (b.proposals.length - a.proposals.length);
           });
           break;
         case 'createdOn':
           organizations.sort(function (a, b) {
-            // ASC  -> a.length - b.length
-            // DESC -> b.length - a.length
             return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
           });
           break;
         case 'name':
-          // sails.log.debug('name sort');
-          // organizations.forEach(org => {
-          //   sails.log.debug('org.name', org.name);
-          // })
-          // organizations.sort(function (a, b) {
-          //   // ASC  -> a.length - b.length
-          //   // DESC -> b.length - a.length
-          //   return dir === 'asc' ? (a.name > b.name) : (b.name > a.name);
-          // });
           if (dir === 'asc') {
             organizations.sort((a, b) => b.name.localeCompare(a.name));
           }
@@ -168,7 +149,6 @@ module.exports = {
 
           break;
       }
-
 
       //skip and limit
       let orgs = organizations.slice(skip, +skip + +limit);
