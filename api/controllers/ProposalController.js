@@ -81,9 +81,9 @@ module.exports = {
 
       let query = {};
 
-      //just filtering on name right now
+      //just filtering on projectTitle right now
       if (filter && filter.length !== 0) {
-        query.where = { name: { contains: filter } };
+        query.where = { projectTitle: { contains: filter } };
       }
 
       let proposals = await Proposal.find(query);
