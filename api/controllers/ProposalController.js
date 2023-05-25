@@ -77,6 +77,7 @@ module.exports = {
 
   async getProposals(req, res) {
     try {
+
       let { limit, skip, filter, sort, dir } = req.query;
 
       let query = {};
@@ -86,8 +87,7 @@ module.exports = {
         query.where = { projectTitle: { contains: filter } };
       }
 
-      let proposals = await Proposal.find(query);
-
+      let proposals = await Proposal.find(query).populate('organization');
       //sort
       //for notes
       // ASC  -> a.length - b.length
@@ -101,6 +101,15 @@ module.exports = {
           else {
             proposals.sort((a, b) => a.projectTitle.localeCompare(b.projectTitle))
           }
+          break;
+        case 'organization': //sort by organization name
+          if (dir === 'asc') {
+            proposals.sort((a, b) => b.organization?.name.localeCompare(a.organization?.name));
+          }
+          else {
+            proposals.sort((a, b) => a.organization?.name.localeCompare(b.organization?.name))
+          }
+          break;
           break;
         case 'amountRequested':
           proposals.sort(function (a, b) {
