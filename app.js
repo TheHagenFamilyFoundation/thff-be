@@ -56,6 +56,9 @@ try {
 }
 
 console.log('ENV', process.env.NODE_ENV);
+console.log('REDIS_URL', process.env.REDIS_URL);
+// console.log('ENV', process.env.NODE_ENV);
+// console.log('ENV', process.env.NODE_ENV);
 
 // Start server
 sails.lift(rc('sails'));
