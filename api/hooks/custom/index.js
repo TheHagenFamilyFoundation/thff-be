@@ -120,7 +120,6 @@ module.exports = function defineCustomHook(sails) {
 
                         }//ﬁ
 
-
                         // No session? Proceed as usual.
                         // (e.g. request for a static asset)
                         if (!req.session) { return next(); }
