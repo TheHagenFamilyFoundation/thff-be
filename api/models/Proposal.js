@@ -46,6 +46,10 @@ module.exports = {
     itemizedBudget: {
       type: "string",
     },
+    votes: {
+      collection: 'vote',
+      via: 'prop',
+    },
     sponsor: {
       model: 'user',
     },
