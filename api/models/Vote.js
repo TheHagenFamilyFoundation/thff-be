@@ -23,10 +23,10 @@ module.exports = {
     //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
     prop: {
-      model: 'proposal'
+      model: 'proposal',
     },
     userID: {
-      type: 'string'
+      type: 'string',
     },
     vote: {
       type: 'number',
