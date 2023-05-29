@@ -52,6 +52,7 @@ module.exports = {
     },
     score: {
       type: 'number',
+      defaultsTo: 0,
     },
     sponsor: {
       model: 'user',

@@ -122,6 +122,19 @@ module.exports = {
             return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
           });
           break;
+        case 'votes':
+          proposals.sort(function (a, b) {
+            return dir === 'asc' ? (a?.votes.length - b?.votes.length) : (b?.votes.length - a?.votes.length);
+          });
+          break;
+        case 'score':
+          sails.log.debug('sorting by score');
+          proposals.sort(function (a, b) {
+            let aScore = (typeof a.score !== 'undefined') ? a.score : 0;
+            let bScore = (typeof b.score !== 'undefined') ? b.score : 0;
+            return dir === 'asc' ? (aScore - bScore) : (bScore - aScore);
+          });
+          break;
         case 'createdOn':
           proposals.sort(function (a, b) {
             return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
