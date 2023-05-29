@@ -50,6 +50,9 @@ module.exports = {
       collection: 'vote',
       via: 'prop',
     },
+    score: {
+      type: 'number',
+    },
     sponsor: {
       model: 'user',
     },

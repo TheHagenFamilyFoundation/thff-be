@@ -5,6 +5,8 @@
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
 
+const ProposalController = require("./ProposalController");
+
 module.exports = {
 
   create: async function (req, res) {
@@ -19,7 +21,8 @@ module.exports = {
     }
 
     try {
-      await Vote.destroy(query)
+      await Vote.destroy(query);
+      await ProposalController.recalculatePropScore(prop);
     }
     catch (err) {
       sails.log.error("Error Deleting Vote");
@@ -29,6 +32,8 @@ module.exports = {
 
     try {
       await Vote.create(req.body);
+      await ProposalController.recalculatePropScore(prop);
+
     }
     catch (err) {
       sails.log.error("Error Creating Vote");
