@@ -52,7 +52,7 @@ module.exports = {
 
     },
     votes: {
-      collection: 'vote',
+      collection: 'voteloi',
       via: 'letterOfIntent',
     },
     openFp: {

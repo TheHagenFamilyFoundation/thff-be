@@ -124,6 +124,12 @@ module.exports.policies = {
 
   VoteController: {
     "*": ["isAuthorized"],
+    // "*": true
+  },
+
+  VoteloiController: {
+    "*": ["isAuthorized"],
+    // "*": true
   },
 
   SubmissionYearController: {

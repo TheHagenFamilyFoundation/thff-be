@@ -87,7 +87,8 @@ module.exports = {
         query.where = { projectTitle: { contains: filter } };
       }
 
-      let proposals = await Proposal.find(query).populate('organization');
+      let proposals = await Proposal.find(query).populate('organization').populate('votes');
+
       //sort
       //for notes
       // ASC  -> a.length - b.length
@@ -121,6 +122,19 @@ module.exports = {
             return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
           });
           break;
+        case 'votes':
+          proposals.sort(function (a, b) {
+            return dir === 'asc' ? (a?.votes.length - b?.votes.length) : (b?.votes.length - a?.votes.length);
+          });
+          break;
+        case 'score':
+          sails.log.debug('sorting by score');
+          proposals.sort(function (a, b) {
+            let aScore = (typeof a.score !== 'undefined') ? a.score : 0;
+            let bScore = (typeof b.score !== 'undefined') ? b.score : 0;
+            return dir === 'asc' ? (aScore - bScore) : (bScore - aScore);
+          });
+          break;
         case 'createdOn':
           proposals.sort(function (a, b) {
             return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
@@ -140,5 +154,45 @@ module.exports = {
     }
   },
 
+  //called from vote controller
+  async recalculatePropScore(proposal_id) {
+
+    let proposal = null;
+    let score = 0;
+    try {
+      proposal = await Proposal.findOne({ _id: proposal_id }).populate('votes');
+    }
+    catch (err) {
+      sails.log.error("Error Retrieving Proposal");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP003", message: err.message });
+    }
+    try {
+      score = await this.calculatePropScore(proposal.votes);
+    }
+    catch (err) {
+      sails.log.error("Error Calculating Proposal Score");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP005", message: err.message });
+    }
+    //update proposal score
+    try {
+      await Proposal.updateOne({ _id: proposal_id }, { score });
+    }
+    catch (err) {
+      sails.log.error("Error Updating Proposal Score");
+      sails.log.error(err);
+      return res.status(400).send({ code: "PROP004", message: err.message });
+    }
+  },
+
+  //utility
+  async calculatePropScore(votes) {
+    let score = 0;
+    votes.forEach(vote => {
+      score += score !== -1 ? vote.vote : 0;
+    })
+    return score;
+  }
 
 };
