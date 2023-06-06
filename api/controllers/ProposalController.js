@@ -59,6 +59,7 @@ module.exports = {
   //handles
   //body update
   //sponsor
+  //TODO: combine the query and params
   update: async function (req, res, next) {
     sails.log.debug("updating proposal", req.query);
     sails.log.debug("updated field", req.body); // check for full update now
@@ -89,9 +90,7 @@ module.exports = {
     else {
       try {
         let updatedProposal = await Proposal.updateOne(
-          { proposalID: req.query.proposalID },
-          req.body
-        );
+          { proposalID: req.query.proposalID }).set(req.body);
 
         sails.log.debug("updatedProposal", updatedProposal);
 
@@ -171,6 +170,14 @@ module.exports = {
         case 'totalProjectCost':
           proposals.sort(function (a, b) {
             return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
+          });
+          break;
+        case 'sponsored':
+          sails.log.debug('sorting by sponsors');
+          proposals.sort(function (a, b) {
+            let aSponsor = ((typeof a.sponsor !== 'undefined') && a.sponsor !== null) ? 1 : 0;
+            let bSponsor = ((typeof b.sponsor !== 'undefined') && b.sponsor !== null) ? 1 : 0;
+            return dir === 'asc' ? (aSponsor - bSponsor) : (bSponsor - aSponsor);
           });
           break;
         case 'votes':
