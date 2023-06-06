@@ -5,6 +5,18 @@
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
 
+/* Error Codes
+PROP001 - Create Proposal Error
+PROP002 - Error Retrieving Proposal Count
+PROP003 - Retrieve Proposals Error
+PROP004 - Error Updating Proposal Score
+PROP005 - Error Calculating Proposal Score
+PROP006 - Error Updating Proposal
+PROP007
+PROP008
+*/
+
+
 // const ProposalItemController = require("./ProposalItemController");
 const emailController = require("./EmailController");
 
@@ -28,6 +40,8 @@ module.exports = {
       sails.log.debug("newProposal - ", newProposal);
       //   throw new Error("Test Error");
     } catch (err) {
+      //THROW possibly
+      sails.log.error("error in the creating proposal");
       sails.log.error(err);
       return res.status(400).send({ code: "PROP001", message: err.message });
     }
@@ -42,20 +56,56 @@ module.exports = {
       return res.status(400).send({ code: "PROP001", message: err.message });
     }
   },
+  //handles
+  //body update
+  //sponsor
+  //TODO: combine the query and params
   update: async function (req, res, next) {
     sails.log.debug("updating proposal", req.query);
     sails.log.debug("updated field", req.body); // check for full update now
-    let updatedProposal = await Proposal.updateOne(
-      { proposalID: req.query.proposalID },
-      req.body
-    );
+    sails.log.debug('sponsor', req.params);
 
-    sails.log.debug("updatedProposal", updatedProposal);
+    let { id } = req.params;
 
-    return res.status(200).json({
-      message: "Proposal Updated",
-      proposal: updatedProposal,
-    });
+    //sponsor or update
+    if (id) {
+
+      try {
+        let updatedProposal = await Proposal.updateOne(
+          { id }).set(req.body)
+
+        sails.log.debug("updatedProposal", updatedProposal);
+
+        return res.status(200).json({
+          message: "Proposal Updated",
+          proposal: updatedProposal,
+        });
+      }
+      catch (err) {
+        sails.log.error("Error Updating Proposal - Param");
+        sails.log.error(err);
+        return res.status(400).send({ code: "PROP006", message: err.message });
+      }
+    }
+    else {
+      try {
+        let updatedProposal = await Proposal.updateOne(
+          { proposalID: req.query.proposalID }).set(req.body);
+
+        sails.log.debug("updatedProposal", updatedProposal);
+
+        return res.status(200).json({
+          message: "Proposal Updated",
+          proposal: updatedProposal,
+        });
+      }
+      catch (err) {
+        sails.log.error("Error Updating Proposal - Query");
+        sails.log.error(err);
+        return res.status(400).send({ code: "PROP006", message: err.message });
+      }
+    }
+
   },
   async countProposals(req, res) {
     try {
@@ -120,6 +170,14 @@ module.exports = {
         case 'totalProjectCost':
           proposals.sort(function (a, b) {
             return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
+          });
+          break;
+        case 'sponsored':
+          sails.log.debug('sorting by sponsors');
+          proposals.sort(function (a, b) {
+            let aSponsor = ((typeof a.sponsor !== 'undefined') && a.sponsor !== null) ? 1 : 0;
+            let bSponsor = ((typeof b.sponsor !== 'undefined') && b.sponsor !== null) ? 1 : 0;
+            return dir === 'asc' ? (aSponsor - bSponsor) : (bSponsor - aSponsor);
           });
           break;
         case 'votes':
