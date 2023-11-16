@@ -10,7 +10,7 @@ console.log('trigger build');
 console.log('another trigger build');
 
 app.get('/', (req, res) => {
-  res.status(200).send(`Welcome to ${Config.appEnv} THFF Backend!`)
+  res.status(200).send(`Welcome to ${Config.appENV} THFF Backend!`)
 })
 
 app.get('/health', (req,res)=>{
