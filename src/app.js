@@ -6,8 +6,7 @@ const port = Config.appPort;
 
 //testing
 console.log('process.env.APP_ENV', process.env.APP_ENV);
-console.log('trigger build');
-console.log('another trigger build');
+console.log('Config', Config);
 
 app.get('/', (req, res) => {
   res.status(200).send(`Welcome to ${Config.appEnv} THFF Backend!`)
