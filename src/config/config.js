@@ -2,6 +2,7 @@ import appConfig from '../../package.json' assert { type: 'json' }
 
 const Config = {
     nodeEnv: (process.env.NODE_ENV || 'development'),
+    appENV: process.env.APP_ENV,
     appName: appConfig.name,
     appPort: (process.env.APP_PORT || 1337),
     appURL: process.env.APP_URL || 'http://localhost:1337',
