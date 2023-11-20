@@ -4,7 +4,7 @@ import { Config } from './config/index.js';
 const app = express();
 const port = Config.appPort;
 
-//testing
+//testing not
 console.log('process.env.APP_ENV', process.env.APP_ENV);
 console.log('Config', Config);
 
