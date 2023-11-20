@@ -12,6 +12,7 @@ app.get('/', (req, res) => {
   res.status(200).send(`Welcome to ${Config.appEnv} THFF Backend!`)
 })
 
+//health route
 app.get('/health', (req, res) => {
   res.status(200).send('server is up');
 })
