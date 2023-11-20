@@ -7,12 +7,12 @@ const port = Config.appPort;
 //testing
 console.log('process.env.APP_ENV', process.env.APP_ENV);
 console.log('Config', Config);
-
+//code push
 app.get('/', (req, res) => {
   res.status(200).send(`Welcome to ${Config.appEnv} THFF Backend!`)
 })
 
-app.get('/health', (req,res)=>{
+app.get('/health', (req, res) => {
   res.status(200).send('server is up');
 })
 
