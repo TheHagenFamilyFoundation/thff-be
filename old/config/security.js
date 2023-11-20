@@ -40,6 +40,7 @@ module.exports.security = {
       'https://thff-501c3.s3.amazonaws.com',
       'https://thff-fe-production.herokuapp.com',
       'https://thff-fe-stage.herokuapp.com',
+      'http://thff-fe-env.eba-hia6nu3p.us-east-1.elasticbeanstalk.com',
     ],
     allowCredentials: false,
     allowRequestHeaders: 'content-type,x-csrf-token,origin,authorization',
