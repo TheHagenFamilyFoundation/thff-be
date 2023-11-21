@@ -14,7 +14,11 @@ app.get('/', (req, res) => {
 
 //health route
 app.get('/health', (req, res) => {
-  res.status(200).send('server is up');
+  res.set('Access-Control-Allow-Origin', 'http://localhost:4200');
+  let response = {
+    message: 'server is up'
+  };
+  res.status(200).send(response);
 })
 
 app.listen(port, () => {
