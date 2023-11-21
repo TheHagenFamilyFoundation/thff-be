@@ -21,8 +21,13 @@ module.exports = {
   "parserOptions": {
     "requireConfigFile": false,
     "ecmaVersion": "latest",
-    "sourceType": "module"
-
+    "sourceType": "module",
+    "importAttributes": true,
+    'babelOptions': {
+      'plugins': [
+        '@babel/plugin-syntax-import-assertions'
+      ],
+    },
   },
   "rules": {
   }
