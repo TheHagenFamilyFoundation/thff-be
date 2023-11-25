@@ -1,6 +1,4 @@
 node_modules
 
 # env Files
-.env.development
-.env.production
-.env.staging
+.env.*
