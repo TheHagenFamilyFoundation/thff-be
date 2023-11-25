@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
-import config from './config';
-import Logger from '../utils/logger';
+import config from './config.js';
+import Logger from '../utils/logger.js';
 
 mongoose.connect(config.databaseURI, {
-  keepAlive: true,
-  keepAliveInitialDelay: 300000,
+  // keepAlive: true,
+  // keepAliveInitialDelay: 300000,
   useNewUrlParser: true
 });
 
