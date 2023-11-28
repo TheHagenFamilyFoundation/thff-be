@@ -22,5 +22,4 @@ db.once('connected', () => {
   Logger.info(`Connected to MongoDB @ ${config.databaseURI}`);
 });
 
-
 export default mongoose;
