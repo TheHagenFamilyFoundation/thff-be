@@ -1,8 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const organizationSchema = mongoose.Schema({
-
+const organizationSchema = Schema({
   name: {
     type: String,
     unique: true,
@@ -20,7 +19,7 @@ const organizationSchema = mongoose.Schema({
   }],
   lois: [{
     type: Schema.Types.ObjectId,
-    ref: 'Loi'
+    ref: 'LetterOfIntent'
   }],
   organizationID: {
     type: String,
@@ -37,7 +36,10 @@ const organizationSchema = mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "Proposal",
   }],
+
+}, {
+  timestamps: true
 });
 
-var Organization = mongoose.model('Organization', organizationSchema);
+const Organization = mongoose.model('Organization', organizationSchema);
 export default Organization;

@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const userSchema = mongoose.Schema({
+const userSchema = Schema({
   email: {
     type: String,
     required: 'true',
@@ -9,7 +9,7 @@ const userSchema = mongoose.Schema({
   },
   confirmed: {
     type: Boolean,
-    defaultsTo: false,
+    default: false,
   },
   confirmCode: {
     type: String,
@@ -38,13 +38,16 @@ const userSchema = mongoose.Schema({
   },
   accessLevel: {
     type: Number,
-    defaultsTo: 1,
+    default: 1,
     // 1-user
     // 2-director
     // 3-president
     // 4-admin(Logan)
   }
-});
+}, {
+  timestamps: true
+}
+);
 
-var User = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 export default User;

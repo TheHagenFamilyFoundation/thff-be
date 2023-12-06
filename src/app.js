@@ -1,7 +1,7 @@
 //packages
 import express from 'express';
 import cors from 'cors';
-
+import bodyParser from 'body-parser';
 //config
 import { Config } from './config/index.js';
 
@@ -13,23 +13,8 @@ const port = Config.appPort;
 
 // app.use(bearerToken());
 app.use(cors());
+app.use(bodyParser.json());
 
-//testing this route
-// console.log('process.env.APP_ENV', process.env.APP_ENV);
-// console.log('Config', Config);
-
-// app.get('/', (req, res) => {
-//   res.status(200).send(`Welcome to ${Config.appEnv} THFF Backend!`)
-// })
-
-// //health route
-// app.get('/health', (req, res) => {
-//   // res.set('Access-Control-Allow-Origin', 'http://localhost:4200');
-//   let response = {
-//     message: 'server is up'
-//   };
-//   res.status(200).send(response);
-// })
 
 routes(app);
 

@@ -2,8 +2,20 @@ import { createLogger, format, transports } from 'winston';
 
 import Config from '../config/config.js';
 
+console.log(`Logger Level set to ${process.env.LOG_LEVEL}`);
+
+/*
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  verbose: 4,
+  debug: 5,
+  silly: 6
+*/
+
 const Logger = createLogger({
-  level: 'info',
+  level: process.env.LOG_LEVEL || 'info',
   format: format.combine(
     format.timestamp({
       format: 'YYYY-MM-DD HH:mm:ss'
