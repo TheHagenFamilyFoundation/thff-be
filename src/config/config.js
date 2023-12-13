@@ -9,6 +9,8 @@ const Config = {
   appVersion: appConfig.version,
   appSecretKey: process.env.SECRET_KEY,
 
+  feURL: process.env.FE_URL || 'http://localhost:4200',
+
   //mongodb
   databaseURI: process.env.DATABASE_URI,
 
