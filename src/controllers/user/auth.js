@@ -62,11 +62,8 @@ export const login = async (req, res) => {
     Logger.verbose(`Logging in user ${email} with accessLevel ${user.accessLevel}`);
 
     const token = await jwt.sign({ accessLevel: user.accessLevel, id: user.id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
-    console.log('token', token);
     //store token in db
-    const createdToken = await Token.create({ userID: user._id, token, token_type: 'verification' });
-
-    console.log('token created', createdToken);
+    await Token.create({ userID: user._id, token, token_type: 'verification' });
 
     //return with user model, token and user settings
     return res.status(200).send({
@@ -154,8 +151,6 @@ export const confirmUser = async (req, res) => {
       confirmCode
     })
 
-    console.log('user', user);
-
     if (!user || user.length > 1) {
       Logger.error('User Not Found');
       return res
@@ -164,7 +159,7 @@ export const confirmUser = async (req, res) => {
     }
 
     const updatedUser = await User.updateOne({ _id: user[0]._id }, { confirmed: true });
-    console.log('updatedUser', updatedUser);
+
     if (!updatedUser) {
       Logger.error(`Error Updating User ${user.email}`);
       return res
