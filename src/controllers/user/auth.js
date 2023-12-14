@@ -243,11 +243,11 @@ export const forgotPassword = async (req, res) => {
     //find user check
     let emailFound = await User.find({ email });
 
+    //Don't tell them an email doesn't exist
     if (!emailFound || emailFound.length < 1) {
-      Logger.error("EMAIL001 - Email not found.");
-      return res
-        .status(400)
-        .json({ code: "EMAIL001", message: "Email not found" });
+      Logger.info("EMAIL001 - Email not found.");
+      let message = `forgot password ${email}`;
+      return res.status(200).json(message);
     }
 
     Logger.debug("email is found");
