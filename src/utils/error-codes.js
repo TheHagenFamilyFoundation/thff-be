@@ -7,7 +7,9 @@ USER003 - Error Confirming User
 USER004 - Error Logging In User
 USER005 - User Not Confirmed
 
-
+Token
+TOK001 - Error Creating Token
+TOK002 - Error Refreshing Token
 
 
 Proposal
