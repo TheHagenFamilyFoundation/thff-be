@@ -1,5 +1,6 @@
 import HealthController from '../controllers/health.js'
 import AuthRouter from './auth.js'
+import UserRouter from './user.js'
 
 export default (app) => {
   //health
@@ -7,4 +8,7 @@ export default (app) => {
 
   //auth
   app.use('/auth', AuthRouter);
+
+  //user
+  app.use('/user', UserRouter);
 }
