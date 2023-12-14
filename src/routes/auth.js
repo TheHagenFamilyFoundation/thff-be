@@ -14,5 +14,11 @@ router.post('/register',
 router.post('/confirm-user',
   validateConfirm,
   AuthController.confirmUser)
+router.post('/refresh-access-token',
+  //TODO: missing validate
+  AuthController.refreshAccessToken)
+router.post('/forgot-password',
+  //TODO: missing validate
+  AuthController.forgotPassword)
 
 export default router;
