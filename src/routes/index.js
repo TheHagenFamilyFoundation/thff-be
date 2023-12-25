@@ -5,6 +5,7 @@ import UserRouter from './user.js'
 export default (app) => {
   //health
   app.get('/health', HealthController.health);
+  app.post('/ping', HealthController.ping);
 
   //auth
   app.use('/auth', AuthRouter);
