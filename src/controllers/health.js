@@ -15,6 +15,15 @@ const HealthService = {
     return res.status(200).json({ data: 'OK' });
   },
 
+  ping: async (req, res) => {
+
+    const { token } = req.body;
+
+    Logger.info(`Ping - ${token}`);
+
+    return res.status(200).json({ data: 'OK' });
+  }
+
 }
 
 export default HealthService
