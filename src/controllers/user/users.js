@@ -13,7 +13,16 @@ export const getUser = async (req, res) => {
 
   const { id } = req.query;
 
-  const user = await User.findOne({ _id: id });
+  try {
+    const user = await User.findOne({ _id: id });
 
-  return res.status(200).send(user);
+    // let message = { data: 'OK' };
+    Logger.debug(`sending back user ${user}`);
+    return res.status(200).send(user);
+  }
+  catch (e) {
+    Logger.error(`Error getting user ${id}`);
+    return res.status(500).json(e.message);
+  }
+  // return res.status(200).send(message);
 }
