@@ -17,3 +17,7 @@ export const validateRegister = [
 export const validateConfirm = [
   check('confirmCode').isString()
 ]
+
+export const validateGetUser = [
+  check('id').notEmpty()
+]

@@ -1,5 +1,5 @@
+import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
-
 import { User } from '../../models/index.js'
 
 export const getUsers = async (req, res) => {
@@ -10,6 +10,12 @@ export const getUsers = async (req, res) => {
 //mongo _id
 export const getUser = async (req, res) => {
   Logger.info('Inside getUser');
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    Logger.error(`We have Errors: ${errors.array()}`)
+    return res.status(422).json({ error: errors.array() });
+  }
 
   const { id } = req.query;
 
