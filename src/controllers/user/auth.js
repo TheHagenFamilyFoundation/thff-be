@@ -63,7 +63,7 @@ export const login = async (req, res) => {
 
     Logger.verbose(`Logging in user ${email} with accessLevel ${user.accessLevel}`);
 
-    const token = await jwt.sign({ accessLevel: user.accessLevel, id: user.id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
+    const token = await jwt.sign({ accessLevel: user.accessLevel, userID: user._id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
     //store token in db
     await Token.create({ userID: user._id, token, token_type: 'verification' });
 
@@ -212,7 +212,7 @@ export const refreshAccessToken = async (req, res) => {
       userSettings = await UserSetting.create(defaultSettings);
     }
 
-    const token = await jwt.sign({ accessLevel: user.accessLevel, id: user.id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
+    const token = await jwt.sign({ accessLevel: user.accessLevel, userID: user._id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
     //store token in db
     await Token.create({ userID: user._id, token, token_type: 'verification' });
 
