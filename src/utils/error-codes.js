@@ -10,7 +10,8 @@ USER005 - User Not Confirmed
 Token
 TOK001 - Error Creating Token
 TOK002 - Error Refreshing Token
-
+TOK003 - Token is not valid
+TOK004 - Not Authorized
 
 Proposal
 PROP001 - Create Proposal Error
@@ -21,4 +22,16 @@ PROP005 - Error Calculating Proposal Score
 PROP006 - Error Updating Proposal
 PROP007
 PROP008
+
+Organization
+ORG001 - Duplicate Organization Error
+ORG002 -
+ORG003 - Error Retrieving Organizations
+
+
+
+
+
 */
+
+
