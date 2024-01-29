@@ -2,6 +2,7 @@ import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
 import { User } from '../../models/index.js'
 
+//TODO
 export const getUsers = async (req, res) => {
   let message = { data: 'OK' };
   return res.status(200).send(message);
@@ -20,7 +21,7 @@ export const getUser = async (req, res) => {
   const { id } = req.query;
 
   try {
-    const user = await User.findOne({ _id: id });
+    const user = await User.findOne({ _id: id }).populate('organizations');
 
     // let message = { data: 'OK' };
     Logger.debug(`sending back user ${user}`);
