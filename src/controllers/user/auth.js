@@ -63,16 +63,25 @@ export const login = async (req, res) => {
 
     Logger.verbose(`Logging in user ${email} with accessLevel ${user.accessLevel}`);
 
-    const token = await jwt.sign({ accessLevel: user.accessLevel, userID: user._id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
+    const token = jwt.sign(
+      {
+        accessLevel: user.accessLevel,
+        userID: user._id
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: process.env.TOKEN_EXPIRATION });
+
     //store token in db
     await Token.create({ userID: user._id, token, token_type: 'verification' });
 
     //return with user model, token and user settings
-    return res.status(200).send({
+    const payload = {
       user,
       token,
       userSettings,
-    });
+    }
+
+    return res.status(200).send(payload);
   } catch (e) {
     Logger.error(`Error Logging In User with email - ${email}`)
     return res
@@ -185,17 +194,27 @@ export const refreshAccessToken = async (req, res) => {
 
   try {
     // Get the access token
-    const { accessToken, user } = req.body;
-    const parsedUser = JSON.parse(user);
+    const { accessToken } = req.body;
 
-    const verifiedToken = await jwt.verify(accessToken, process.env.TOKEN_SECRET);
+    const verifiedToken = jwt.verify(accessToken, process.env.TOKEN_SECRET);
 
     if (!verifiedToken) {
+      Logger.error('Invalid Token');
+      return res.status(401).json({ err: "Invalid Token!" });
+    }
+
+    const { userID } = verifiedToken;
+
+    //find the user
+    const user = await User.findOne({ _id: userID });
+
+    if (!user) {
+      Logger.error(`Could not find user ${userID}`);
       return res.status(401).json({ err: "Invalid Token!" });
     }
 
     let settingsQuery = {
-      userID: parsedUser._id,
+      userID: user._id,
     };
 
     //find the settings
@@ -206,22 +225,33 @@ export const refreshAccessToken = async (req, res) => {
 
       let defaultSettings = {
         scheme: "light",
-        userID: parsedUser._id,
+        userID: user._id,
       };
-      // If user logged in successfuly we return user, token, and settings as response
+      // If user logged in successfully we return user, token, and settings as response
       userSettings = await UserSetting.create(defaultSettings);
     }
 
-    const token = await jwt.sign({ accessLevel: user.accessLevel, userID: user._id }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPRATION });
+    const token = jwt.sign(
+      {
+        accessLevel: user.accessLevel,
+        userID: user._id
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: process.env.TOKEN_EXPIRATION });
+
     //store token in db
     await Token.create({ userID: user._id, token, token_type: 'verification' });
 
+    Logger.info('Refreshed Token Successfully');
+
     //return with user model, token and user settings
-    return res.status(200).send({
+    const payload = {
       user,
       token,
       userSettings,
-    });
+    }
+
+    return res.status(200).send(payload);
   } catch (e) {
     Logger.error('Error Refreshing Token')
     return res
