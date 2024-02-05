@@ -30,7 +30,7 @@ const organizationSchema = Schema({
   },
   doc501c3: { //TODO: rename
     type: Schema.Types.ObjectId,
-    ref: "Org501c3",
+    ref: "Organization501c3",
   },
   proposals: [{
     type: Schema.Types.ObjectId,
