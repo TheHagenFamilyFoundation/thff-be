@@ -15,10 +15,11 @@ const Config = {
   databaseURI: process.env.DATABASE_URI,
 
   //AWS
-  accessKeyId: process.env.ACCESS_KEY_ID,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: process.env.REGION,
-  endpoint: process.env.ENDPOINT,
+  accessKey: process.env.AWS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+  region: process.env.AWS_REGION,
+  bucket: process.env.AWS_S3_BUCKET_NAME,
+  s3Path: process.env.AWS_S3_PATH
 }
 
 export default Config;
