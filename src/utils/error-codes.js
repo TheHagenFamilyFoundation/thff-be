@@ -28,8 +28,11 @@ ORG001 - Duplicate Organization Error
 ORG002 -
 ORG003 - Error Retrieving Organizations
 
-
-
+Organization 501c3 Doc
+ORG501C3001 -
+ORG501C3002 -
+ORG501C3003 - Error Retrieving 501c3
+ORG501C3004 - Error Deleting 501c3
 
 
 */
