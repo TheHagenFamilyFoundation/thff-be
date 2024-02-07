@@ -21,12 +21,14 @@ export const getOrganization = async (req, res) => {
     const organization = await Organization.findOne({ organizationID: organizationID })
       .populate('info')
       .populate('users')
-      .populate('proposals');
+      .populate('proposals')
+      .populate('doc501c3');
 
     Logger.debug(`sending back organization ${organization}`);
     return res.status(200).send(organization);
   }
   catch (e) {
+    console.log('e', e);
     Logger.error(`Error getting organization ${organizationID}`);
     return res.status(500).json(e.message);
   }
