@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import Logger from "./logger.js";
 
 export const saltRounds = 10;
@@ -14,4 +16,8 @@ export const generateCode = () => {
   Logger.verbose(`Code Created ${code}`);
 
   return code;
+}
+
+export const generateUUID = () => {
+  return uuidv4();
 }
