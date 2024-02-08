@@ -42,10 +42,10 @@ const proposalSchema = Schema({
   itemizedBudget: {
     type: String,
   },
-  votes: {
+  votes: [{
     type: Schema.Types.ObjectId,
     ref: 'Vote'
-  },
+  }],
   score: {
     type: 'number',
     default: 0,
