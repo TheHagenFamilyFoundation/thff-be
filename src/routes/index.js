@@ -11,6 +11,10 @@ import OrganizationRouter from './organization.js'
 import OrganizationInfoRouter from './organization-info.js'
 import Organization501c3Router from './organization-501c3.js'
 
+import ProposalRouter from './proposal.js'
+
+import VoteRouter from './vote.js'
+
 export default (app) => {
 
   app.use(fileUpload());
@@ -35,4 +39,11 @@ export default (app) => {
 
   //organization 501c3
   app.use('/organization-501c3', Organization501c3Router);
+
+  //proposals
+  app.use('/proposal', ProposalRouter);
+
+  //votes
+  app.use('/vote', VoteRouter);
+
 }
