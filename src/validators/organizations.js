@@ -1,9 +1,16 @@
 import { check } from 'express-validator'
 
+export const validateGetOrganizations = [
+]
+
 export const validateGetOrganization = [
-  check('organizationID').notEmpty()
+  // param('id').exists()
 ]
 
 export const validateCreateOrganization = [
   check('orgInfo').notEmpty()
 ];
+
+export const validateCountOrganizations = [
+  check('name').optional()
+]
