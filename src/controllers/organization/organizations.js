@@ -7,18 +7,19 @@ import { generateCode } from "../../utils/util.js";
 
 export const getOrganization = async (req, res) => {
   Logger.info('Inside getOrganization');
-  console.log('Inside getOrganization', req.query);
+  console.log('1req.params', req.params);
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
     Logger.error(`We have Errors: ${errors.array()}`)
+    console.log('errors:', errors.array());
     return res.status(422).json({ error: errors.array() });
   }
-
-  const { organizationID } = req.query;
-  console.log('Organization id?', organizationID)
+  console.log('2req.params', req.params);
+  const { id } = req.params;
+  console.log('Organization id?', id)
   try {
-    const organization = await Organization.findOne({ organizationID: organizationID })
+    const organization = await Organization.findOne({ _id: id })
       .populate('info')
       .populate('users')
       .populate('proposals')
@@ -29,7 +30,7 @@ export const getOrganization = async (req, res) => {
   }
   catch (e) {
     console.log('e', e);
-    Logger.error(`Error getting organization ${organizationID}`);
+    Logger.error(`Error getting organization ${id}`);
     return res.status(500).json(e.message);
   }
 };
@@ -94,7 +95,7 @@ export const createOrganization = async (req, res) => {
     console.log('createdOrgInfo', createdOrgInfo);
 
     createdOrg.info = createdOrgInfo._id;
-    createdOrg.save();
+    await createdOrg.save();
 
     let user = await User.findOne({ _id: userID });
     console.log('user', user); //debug
@@ -138,7 +139,7 @@ export const getOrganizations = async (req, res) => {
     let query = {};
 
     if (filter && filter.length !== 0) {
-      query.where = { name: { contains: filter } };
+      query = { name: { $regex: filter } };
     }
 
     let organizations = await Organization.find(query).populate('users').populate('proposals');
@@ -185,3 +186,21 @@ export const getOrganizations = async (req, res) => {
     return res.status(400).send({ code: "ORG003", message: err.message });
   }
 };
+
+export const countOrganizations = async (req, res) => {
+  try {
+    const { filter } = req.query;
+
+    let query = {};
+    if (filter && filter.length !== 0) {
+      query = { name: { $regex: filter } };
+    }
+    const count = await Organization.find(query).count();
+    return res.status(200).json(count);
+  }
+  catch (err) {
+    Logger.error(`Error Retrieving Organization Count: ${err}`);
+    return res.status(400).send({ code: "ORG002", message: err.message });
+  }
+
+}
