@@ -7,7 +7,8 @@ const voteSchema = Schema({
     ref: 'Proposal'
   },
   userID: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "User"
   },
   vote: {
     type: Number,
