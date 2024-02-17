@@ -7,6 +7,7 @@ import SubmissionYear from './submission-year.js';
 import Token from './token.js';
 import UserSetting from './user-setting.js';
 import User from './user.js';
+import Vote from './vote.js';
 
 export {
   Organization,
@@ -17,5 +18,6 @@ export {
   SubmissionYear,
   Token,
   UserSetting,
-  User
+  User,
+  Vote
 }
