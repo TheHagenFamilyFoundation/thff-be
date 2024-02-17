@@ -1,22 +1,28 @@
 import { Router } from "express";
 
 import * as OrganizationController from '../controllers/organization/organizations.js';
-import { validateGetOrganization } from '../validators/organizations.js'
+import { injectOrganization } from "../middlewares/model-injections.js";
+import { validateGetOrganizations, validateGetOrganization, validateCountOrganizations } from '../validators/organizations.js'
 
 const router = new Router();
 
 router.get('/',
+  validateGetOrganizations,
+  OrganizationController.getOrganizations)
+router.get('/count',
+  validateCountOrganizations,
+  OrganizationController.countOrganizations)
+router.get('/orgID/:orgID',
+  validateGetOrganization,
+  injectOrganization,
+  OrganizationController.getOrganization)
+router.get('/:id',
   validateGetOrganization,
   OrganizationController.getOrganization)
 router.post('/',
   //TODO: validate needs to be created
   // validateCreateOrganization,
   OrganizationController.createOrganization)
-// router.post('/register',
-//   validateRegister,
-//   AuthController.register)
-// router.post('/confirm-user',
-//   validateConfirm,
-//   AuthController.confirmUser)
+
 
 export default router;
