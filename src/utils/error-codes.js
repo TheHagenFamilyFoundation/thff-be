@@ -13,16 +13,6 @@ TOK002 - Error Refreshing Token
 TOK003 - Token is not valid
 TOK004 - Not Authorized
 
-Proposal
-PROP001 - Create Proposal Error
-PROP002 - Error Retrieving Proposal Count
-PROP003 - Retrieve Proposals Error
-PROP004 - Error Updating Proposal Score
-PROP005 - Error Calculating Proposal Score
-PROP006 - Error Updating Proposal
-PROP007
-PROP008
-
 Organization
 ORG001 - Duplicate Organization Error
 ORG002 -
@@ -33,6 +23,24 @@ ORG501C3001 -
 ORG501C3002 -
 ORG501C3003 - Error Retrieving 501c3
 ORG501C3004 - Error Deleting 501c3
+
+Proposal
+PROP001 - Create Proposal Error
+PROP002 - Error Retrieving Proposal Count
+PROP003 - Error Retrieving Proposal
+PROP004 - Error Updating Proposal Score
+PROP005 - Error Calculating Proposal Score
+PROP006 - Error Updating Proposal
+PROP007 - Error Sponsoring Proposal
+PROP008
+
+Vote
+VOT001 - Error Creating Vote
+VOT002 - Error Retrieving Vote
+
+
+
+
 
 
 */
