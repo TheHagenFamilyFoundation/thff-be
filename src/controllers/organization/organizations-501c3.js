@@ -83,7 +83,7 @@ export const upload501c3Doc = async (req, res) => {
     console.log('newOrg501c3', newOrg501c3); //debug
 
     org.doc501c3 = newOrg501c3._id;
-    org.save();
+    await org.save();
 
     return res.status(200).json({
       message: "Uploading the 501c3",
