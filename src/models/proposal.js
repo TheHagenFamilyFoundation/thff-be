@@ -8,6 +8,7 @@ const proposalSchema = Schema({
   },
   proposalID: {
     type: String,
+    unique: true
   },
   //   Project Title
   projectTitle: {

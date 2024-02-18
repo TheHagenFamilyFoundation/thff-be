@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const organizationInfoSchema = Schema({
   organizationInfoID: {
     type: String,
+    unique: true
   },
   legalName: {
     //  -Legal Name of Organization Applying:

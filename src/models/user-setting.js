@@ -7,8 +7,8 @@ const userSettingSchema = Schema({
     default: "light",
   },
   userID: {
-    type: String,
-    unique: true,
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   },
 }, {
   timestamps: true

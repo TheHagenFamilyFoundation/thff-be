@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const proposalItemSchema = Schema({
   pItemID: {
     type: String,
+    unique: true
   },
   categoryDescription: {
     type: String,

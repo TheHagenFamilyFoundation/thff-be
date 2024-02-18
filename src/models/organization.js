@@ -23,6 +23,7 @@ const organizationSchema = Schema({
   }],
   organizationID: {
     type: String,
+    unique: true,
   },
   info: {
     type: Schema.Types.ObjectId,
