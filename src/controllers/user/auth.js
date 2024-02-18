@@ -39,13 +39,20 @@ export const login = async (req, res) => {
         .json({ code: "USER005", message: "User Not Confirmed" });
     }
 
+    if (!user.encryptedPassword) {
+      Logger.error('user does not have an encrypted password');
+
+      //redirect
+      // email
+    }
+
     const valid = await bcrypt.compare(password, user.encryptedPassword);
 
     if (!valid) {
       Logger.error('Invalid Password');
       return res
         .status(400)
-        .json({ code: "USER004", message: "Error Logging In User" });
+        .json({ code: "USER004", message: "Error Logging In User" }); // don't reveal wrong password
     }
 
     let userSettings = await UserSetting.findOne({ userID: user._id });
@@ -83,6 +90,7 @@ export const login = async (req, res) => {
 
     return res.status(200).send(payload);
   } catch (e) {
+    console.log(e);
     Logger.error(`Error Logging In User with email - ${email}`)
     return res
       .status(500)
