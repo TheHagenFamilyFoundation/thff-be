@@ -219,7 +219,7 @@ function uploads3(req, orgId) {
     // Set the parameters for the file you want to upload
     const params = {
       Bucket: Config.bucket,
-      Key: `${orgId}/${generateUUID()}_${fileName}`,
+      Key: `${Config.appEnv}${orgId}/${generateUUID()}_${fileName}`,
       Body: req.files.doc501c3.data
     };
 
