@@ -21,12 +21,12 @@ export default (app) => {
 
   //health
   app.get('/health', HealthController.health);
-  app.post('/ping', HealthController.ping);
 
   //auth
   app.use('/auth', AuthRouter);
 
   app.use(AuthnMiddleware.authenticateToken);
+  app.post('/ping', HealthController.ping);
 
   //user
   app.use('/user', UserRouter);

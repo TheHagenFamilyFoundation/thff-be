@@ -7,7 +7,7 @@ const Config = {
   appPort: (process.env.APP_PORT || 1337),
   appURL: process.env.APP_URL || 'http://localhost:1337',
   appVersion: appConfig.version,
-  appSecretKey: process.env.SECRET_KEY,
+  // appSecretKey: process.env.SECRET_KEY,
 
   feURL: process.env.FE_URL || 'http://localhost:4200',
 
