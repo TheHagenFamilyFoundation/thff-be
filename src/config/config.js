@@ -19,7 +19,13 @@ const Config = {
   secretAccessKey: process.env.AWS_SECRET_KEY,
   region: process.env.AWS_REGION,
   bucket: process.env.AWS_S3_BUCKET_NAME,
-  s3Path: process.env.AWS_S3_PATH
+  s3Path: process.env.AWS_S3_PATH,
+
+  //Mailgun
+  mailgunDomain: process.env.MAILGUN_DOMAIN,
+  mailgunKey: process.env.MAILGUN_KEY,
+  interalEmailAddress: process.env.INTERNAL_EMAIL_ADDRESS
+
 }
 
 export default Config;
