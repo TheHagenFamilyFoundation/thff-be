@@ -4,6 +4,8 @@ import { Organization } from '../../models/index.js'
 import { OrganizationInfo } from '../../models/index.js'
 import { User } from "../../models/index.js";
 import { generateCode } from "../../utils/util.js";
+import { registerOrganization } from "../../views/organization.js";
+import { sendEmailWithTemplate } from "../email/email.js";
 
 export const getOrganization = async (req, res) => {
   Logger.info('Inside getOrganization');
@@ -103,13 +105,14 @@ export const createOrganization = async (req, res) => {
     user.organizations.push(createdOrgId);
     await user.save();
 
-    // let payload = {
-    //   orgName: createdOrgInfo.legalName,
-    //   email: user.email,
-    // };
+    const data = {
+      email: user.email,
+    };
 
+    const to = user.email;
+    const subject = 'Thank You For Registering A Organization';
 
-    //send email to emailController
+    sendEmailWithTemplate(to, subject, registerOrganization, data);
 
     return res.status(200).json({
       message: "Org Created",
