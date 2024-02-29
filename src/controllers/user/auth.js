@@ -3,10 +3,13 @@ import { validationResult } from "express-validator";
 import jwt from 'jsonwebtoken';
 
 import Config from '../../config/config.js';
-import { User, UserSetting, Token } from '../../models/index.js'
-
 import Logger from "../../utils/logger.js";
 import { generateCode, saltRounds } from "../../utils/util.js"
+//email
+import { sendEmailWithTemplate } from '../email/email.js';
+import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
+
+import { User, UserSetting, Token } from '../../models/index.js'
 
 export const login = async (req, res) => {
   Logger.verbose('Inside Login');
@@ -42,8 +45,38 @@ export const login = async (req, res) => {
     if (!user.encryptedPassword) {
       Logger.error('user does not have an encrypted password');
 
-      //redirect
-      // email
+      let newCode = generateCode();
+      Logger.info(`newCode ${newCode}`);
+      //get date
+      const now = new Date();
+
+      //can remove
+      Logger.info(`date: ${now}`);
+
+      await User.updateOne(
+        { _id: user._id },
+        {
+          resetCode: newCode,
+          resetPassword: true,
+          resetTime: now,
+        }
+      );
+
+      let resetLink = `${Config.feURL}/reset-password?rc=${newCode}`;
+      Logger.info(`resetLink = ${resetLink}`);
+      const data = {
+        email: user.email,
+        resetLink
+      };
+      console.log('data', data);
+
+      const to = user.email;
+      const subject = 'THFF: Create New Password';
+
+      sendEmailWithTemplate(to, subject, createNewPassword, data);
+
+      return res.status(200).json({ newPassword: true, message: "User Needs New Password" })
+
     }
 
     const valid = await bcrypt.compare(password, user.encryptedPassword);
@@ -142,8 +175,16 @@ export const register = async (req, res) => {
         .json({ code: "USER002", message: "Error Creating User" });
     }
 
-    //send Email
-    //TODO: Registration Email send here
+    const data = {
+      email: createdUser.email,
+      loginLink: `${Config.feURL}/pages/auth/login`,
+      userPageLink: `${Config.feURL}/pages/user`,
+    };
+
+    const to = createdUser.email;
+    const subject = 'Password Update';
+
+    sendEmailWithTemplate(to, subject, registerUser, data);
 
     let message = 'User created';
     return res.status(200).send({ message });
@@ -319,20 +360,18 @@ export const forgotPassword = async (req, res) => {
     Logger.verbose(`user.username =  ${user.username}`);
     Logger.verbose(`user.resetCode = ${newCode}`);
 
-    //TODO: Send Email
-    let resetURL = Config.feURL + `${Config.feURL}/reset-password?rc=${newCode}`;
-    Logger.info(`resetURL = ${resetURL}`);
-    // await sails.helpers.sendTemplateEmail.with({
-    //   to: user.email,
-    //   subject: "THFF: Reset Password Email",
-    //   template: "email-reset-password",
-    //   templateData: {
-    //     Name: user.email,
-    //     resetCode: newCode,
-    //     resetURL: `${resetURL}/reset-password?rc=${newCode}`,
-    //   },
-    //   layout: false,
-    // });
+    let resetLink = `${Config.feURL}/reset-password?rc=${newCode}`;
+    Logger.info(`resetLink = ${resetLink}`);
+    const data = {
+      email: user.email,
+      resetLink
+    };
+    console.log('data', data);
+
+    const to = user.email;
+    const subject = 'THFF: Reset Password';
+
+    sendEmailWithTemplate(to, subject, createNewPassword, data);
 
     let message = `forgot password ${email}`;
 
@@ -345,3 +384,80 @@ export const forgotPassword = async (req, res) => {
       .json({ code: "TOK002", message: "Error Processing Forgot Password" });
   }
 };
+
+export const setNewPassword = async (req, res) => {
+
+  console.log('inside setNewPassword');
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    Logger.error(`We have Errors: ${errors.array()}`)
+    return res.status(422).json({ error: errors.array() });
+  }
+
+  try {
+    const newPassword = req.body.np;
+    const resetCode = req.body.rc; // reset code
+    const users = await User.find({ resetCode });
+
+    if (!users) {
+      Logger.error('User Not Found');
+      return res
+        .status(400)
+        .json({ code: "USER006", message: "Error Resetting User Password" });
+    }
+
+    if (users.length > 1) {
+      Logger.error('Duplicate Reset Codes');
+      //uh oh
+      return res
+        .status(400)
+        .json({ code: "USER009", message: "Duplicate Reset Code" });
+    }
+    const user = users[0]; //should be first
+    console.log('user', user); //may be an array
+
+    Logger.info(`Setting new password for user ${user._id}`);
+
+    const now = new Date();
+    const TWENTYFOUR_HOURS = 60 * 60 * 1000 * 24;
+
+    if (!(now - user.resetTime < TWENTYFOUR_HOURS)) {
+      console.log("reset time is invalid");
+      Logger.error('Reset Time is Invalid');
+      return res
+        .status(400)
+        .json({ code: "USER0008", message: "Reset Time is Invalid" });
+    }
+
+    //hash the password
+    const passwordSalt = await bcrypt.genSalt(saltRounds);
+    const encryptedPassword = await bcrypt.hash(newPassword, passwordSalt);
+
+    await User.updateOne({ _id: user._id }, { encryptedPassword, resetPassword: false });
+
+    Logger.info('Reset Password Successful');
+
+    //send email
+    const data = {
+      email: user.email,
+    };
+    console.log('data', data);
+
+    const to = user.email;
+    const subject = 'THFF: Reset Password Confirm';
+
+    sendEmailWithTemplate(to, subject, resetPasswordConfirm, data);
+
+    return res
+      .status(200)
+      .json({ reset: true, message: "Reset Successful" });
+
+  } catch (e) {
+    Logger.error('Error Creating New Password')
+    return res
+      .status(500)
+      .json({ code: "USER007", message: "Error Creating New Password" });
+  }
+
+}
