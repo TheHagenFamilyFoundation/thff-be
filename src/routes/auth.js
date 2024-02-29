@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import * as AuthController from '../controllers/user/auth.js';
-import { validateAuth, validateRegister, validateConfirm } from "../validators/users.js";
+import { validateAuth, validateRegister, validateConfirm, validateNewPassword } from "../validators/users.js";
 
 const router = new Router();
 
@@ -20,5 +20,8 @@ router.post('/refresh-access-token',
 router.post('/forgot-password',
   //TODO: missing validate
   AuthController.forgotPassword)
+router.put('/reset-password',
+  validateNewPassword,
+  AuthController.setNewPassword)
 
 export default router;
