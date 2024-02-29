@@ -13,4 +13,4 @@ export const submittedProposal = `
 
 Thanks,
 
-<p>THFF TEAM</p>`
+<p>THFF Team</p>`

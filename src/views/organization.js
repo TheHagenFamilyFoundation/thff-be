@@ -19,4 +19,4 @@ export const registerOrganization = `
 
 Thanks,
 
-<p>THFF TEAM</p>`
+<p>THFF Team</p>`

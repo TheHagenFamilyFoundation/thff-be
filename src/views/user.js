@@ -18,7 +18,7 @@ If you have any questions or comments, please <a href="mailto:support@hagen.foun
 
 Thanks,
 
-<p>THFF TEAM</p>`;
+<p>THFF Team</p>`;
 
 export const createNewPassword = `
 <p>Dear {{ email }},</p>
@@ -35,7 +35,7 @@ export const createNewPassword = `
 
 Thanks,
 
-<p>THFF TEAM</p>`;
+<p>THFF Team</p>`;
 
 export const resetPassword = `
 <p>Dear {{ email }},</p>
@@ -56,7 +56,7 @@ export const resetPassword = `
 
 Thanks,
 
-<p>THFF TEAM</p>`;
+<p>THFF Team</p>`;
 
 export const resetPasswordConfirm = `
 <p>Dear

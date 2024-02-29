@@ -1,10 +1,11 @@
 import { validationResult } from "express-validator";
 
-
 import { Proposal } from "../../models/index.js";
-import { Organization } from "../../models/index.js";
+import { Organization, User } from "../../models/index.js";
 import { generateCode } from "../../utils/util.js";
 import Logger from "../../utils/logger.js";
+import { sendEmailWithTemplate } from "../email/email.js";
+import { submittedProposal } from "../../views/proposal.js";
 
 export const createProposal = async (req, res) => {
   Logger.info(`creating proposal`);
@@ -17,9 +18,11 @@ export const createProposal = async (req, res) => {
   }
 
   try {
-
+    const { decoded, body } = req;
+    console.log('decoded', decoded);
     //id is orgId
-    const { proposal, orgID } = req.body;
+    const { proposal, orgID } = body;
+
     console.log('proposal', proposal);
     console.log('orgID', orgID);
     let newID = generateCode();
@@ -43,8 +46,18 @@ export const createProposal = async (req, res) => {
     organization.proposals.push(newProposal._id);
     await organization.save();
 
-    //send email
-    //call emailcontroller
+    const userID = decoded.userID;
+    const user = await User.findOne({ _id: userID });
+
+    const data = {
+      email: user.email,
+      projectTitle: proposal.projectTitle
+    };
+
+    const to = user.email;
+    const subject = 'Thank You For Submitting A Proposal';
+
+    sendEmailWithTemplate(to, subject, submittedProposal, data);
 
     return res.status(200).send(newProposal);
   }
