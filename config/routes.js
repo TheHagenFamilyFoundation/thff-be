@@ -154,4 +154,15 @@ module.exports.routes = {
 
   //SETTINGS
   "PUT /settings": "SettingsController.updateSetting",
+
+  //MIGRATIONS
+  "GET /migrate/organizations": "OrganizationController.migrate",
+  "GET /migrate/users": "UserController.migrate",
+  "GET /migrate/orgInfo": "OrganizationInfoController.migrate",
+  "GET /migrate/org501c3": "Org501c3Controller.migrate",
+  "GET /migrate/proposals": "ProposalController.migrate",
+  "GET /migrate/votes": "VoteController.migrate",
+  "GET /migrate/settings": "SettingController.migrate",
+
+
 };

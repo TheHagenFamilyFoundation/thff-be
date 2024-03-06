@@ -411,6 +411,46 @@ module.exports = {
       });
     });
   }, // end of Delete501c3
+
+  async migrate(req, res) {
+
+    sails.log('migrating organizations');
+
+    let organizations = await Organization.find().populate('users').populate('proposals').populate('info').populate('doc501c3').populate('lois');
+    const length = organizations.length;
+    sails.log('length', length);
+    const newOrgs = [];
+    organizations.forEach((org) => {
+
+      const users = org.users.map(user => user.id);
+      const lois = org.lois.map(loi => loi.id);
+      const infos = org.info.map(info => info.id);
+      const infosLength = infos.length;
+      const doc501c3s = org.doc501c3.map(doc501c3 => doc501c3.id);
+      const doc501c3sLength = doc501c3s.length;
+      const proposals = org.proposals.map(prop => prop.id);
+
+      const newOrg = {
+        _id: org.id,
+        name: org.name,
+        director: org.director,
+        description: org.description,
+        users,
+        lois,
+        organizationID: org.organizationID,
+        info: infos[infosLength - 1],
+        doc501c3: doc501c3s[doc501c3sLength - 1],
+        proposals,
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt
+      }
+      newOrgs.push(newOrg);
+    });
+
+    return res.status(200).json(newOrgs);
+  }
+
+
 };
 
 //pass in the fileName

@@ -82,18 +82,19 @@ module.exports.policies = {
   },
 
   OrganizationController: {
-    "*": ["isAuthorized"],
-    // "*": true,
+    // "*": ["isAuthorized"],
+    "*": true,
   },
 
   // debug
   OrganizationInfoController: {
-    "*": ["isAuthorized"],
-    // "*": true,
+    // "*": ["isAuthorized"],
+    "*": true,
   },
 
   Org501c3Controller: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
+    "*": true,
   },
 
   // debug
@@ -113,8 +114,8 @@ module.exports.policies = {
   },
 
   ProposalController: {
-    "*": ["isAuthorized"],
-    // "*": true,
+    // "*": ["isAuthorized"],
+    "*": true,
   },
 
   // all email routes are ok to access
@@ -123,8 +124,8 @@ module.exports.policies = {
   },
 
   VoteController: {
-    "*": ["isAuthorized"],
-    // "*": true
+    // "*": ["isAuthorized"],
+    "*": true
   },
 
   VoteloiController: {
@@ -137,6 +138,13 @@ module.exports.policies = {
   },
 
   SettingsController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
+    "*": true
   },
+
+  UserController: {
+    // "*": ["isAuthorized"],
+    "*": true
+  },
+
 };

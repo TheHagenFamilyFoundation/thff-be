@@ -251,6 +251,46 @@ module.exports = {
       score += score !== -1 ? vote.vote : 0;
     })
     return score;
+  },
+
+
+  async migrate(req, res) {
+
+    sails.log('migrating proposals ');
+
+    let proposals = await Proposal.find().populate('organization');
+    const length = proposals.length;
+    sails.log('length', length);
+
+    const newProposals = [];
+    proposals.forEach((proposal) => {
+      console.log('proposal', proposal)
+      if (proposal?.organization?.id) {
+        const newProposal = {
+          _id: proposal.id,
+          createdAt: proposal.createdAt,
+          updatedAt: proposal.updatedAt,
+          organization: proposal.organization.id,
+          proposalID: proposal.proposalID,
+          projectTitle: proposal.projectTitle,
+          purpose: proposal.purpose,
+          goals: proposal.goals,
+          narrative: proposal.narrative,
+          timeTable: proposal.timeTable,
+          amountRequested: proposal.amountRequested,
+          totalProjectCost: proposal.totalProjectCost,
+          itemizedBudget: proposal.itemizedBudget,
+          score: proposal.score,
+          sponsor: proposal.sponsor
+        };
+
+        newProposals.push(newProposal);
+      }
+    });
+    const afterLength = newProposals.length;
+    sails.log('afterLength', afterLength);
+    return res.status(200).json(newProposals);
   }
+
 
 };

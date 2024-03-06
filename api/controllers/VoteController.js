@@ -52,7 +52,36 @@ module.exports = {
       return res.status(400).send({ code: "VOT002", message: err.message });
     }
 
+  },
+
+  async migrate(req, res) {
+
+    sails.log('migrating votes ');
+
+    let votes = await Vote.find();
+    const length = votes.length;
+    sails.log('length', length);
+
+    const newVotes = [];
+    votes.forEach((vote) => {
+      console.log('vote', vote)
+      const newVote = {
+        _id: vote.id,
+        createdAt: vote.createdAt,
+        updatedAt: vote.updatedAt,
+        userID: vote.userID,
+        vote: vote.vote,
+        prop: vote.prop
+
+      };
+
+      newVotes.push(newVote);
+    });
+    const afterLength = newVotes.length;
+    sails.log('afterLength', afterLength);
+    return res.status(200).json(newVotes);
   }
+
 
 };
 

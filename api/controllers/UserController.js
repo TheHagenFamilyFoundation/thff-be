@@ -640,4 +640,48 @@ module.exports = {
 
     return res.status(200).json(users);
   },
+
+  async migrate(req, res) {
+
+    sails.log('migrating users');
+
+    let users = await User.find().populate('organizations');
+    const length = users.length;
+    sails.log('length', length);
+
+
+    // "createdAt": "2018-11-09T03:57:59.988Z",
+    // "updatedAt": "2023-08-22T15:17:48.812Z",
+    // "id": "5be505c7e076760015374338",
+    // "email": "lcborn4@gmail.com",
+    // "confirmed": true,
+    // "resetCode": "QKk7S",
+    // "resetTime": "2023-08-22T15:17:48.812Z",
+    // "accessLevel": 4
+
+    const newUsers = [];
+    users.forEach((user) => {
+
+      const organizations = user.organizations.map(org => org.id)
+
+      const newUser = {
+        _id: user.id,
+        email: user.email,
+        confirmed: user.confirmed,
+        resetCode: user.resetCode,
+        resetTime: user.resetTime,
+        accessLevel: user.accessLevel,
+        organizations,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+
+
+      }
+      newUsers.push(newUser);
+    });
+
+    return res.status(200).json(newUsers);
+  }
+
+
 };
