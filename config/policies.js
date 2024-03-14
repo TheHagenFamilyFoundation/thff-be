@@ -99,18 +99,18 @@ module.exports.policies = {
 
   // debug
   LOIController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
   },
   LOIInfoController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
   },
 
   FullProposalController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
   },
 
   FullProposalItemController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
   },
 
   ProposalController: {

@@ -4,7 +4,6 @@
  * @description :: Server-side actions for handling incoming requests.
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
-
 const FullProposalItemController = require('./FullProposalItemController');
 
 module.exports = {
@@ -135,5 +134,55 @@ module.exports = {
       () => res.json({ status: true, result: updatedFP }),
     );
   },
+
+  async migrate(req, res) {
+
+    sails.log('migrating full proposals');
+
+    let fullProposals = await FullProposal.find().populate('fpItems');
+    const length = fullProposals.length;
+    sails.log('length', length);
+    sails.log('fullProposals[0]', fullProposals[0]);
+
+    const newFullProposals = [];
+    fullProposals.forEach((fullProposal) => {
+
+      const fpItems = fullProposal.fpItems.map(fpItem => fpItem.id)
+      const newFullProposal = {
+        _id: fullProposal.id,
+        createdAt: fullProposal.createdAt,
+        updatedAt: fullProposal.updatedAt,
+        organization: fullProposal.organization,
+        status: fullProposal.status,
+        website: fullProposal.website,
+        fullProposalID: fullProposal.fpID,
+        executiveSummary: fullProposal.executiveSummary,
+        targetPopulation: fullProposal.targetPopulation,
+        goals: fullProposal.goals,
+        activity: fullProposal.activity,
+        timeTable: fullProposal.timeTable,
+        partners: fullProposal.partners,
+        differ: fullProposal.differ,
+        involve: fullProposal.involve,
+        staff: fullProposal.staff,
+        strategy: fullProposal.strategy,
+        evaluation: fullProposal.evaluation,
+        dissemination: fullProposal.dissemination,
+        active: fullProposal.active,
+        priority: fullProposal.priority,
+        history: fullProposal.history,
+        letterOfIntent: fullProposal.loi,
+        fullProposalItems: fpItems,
+        submitted: fullProposal.submitted,
+        submittedOn: fullProposal.submittedOn,
+      };
+
+      newFullProposals.push(newFullProposal);
+    });
+    const afterLength = newFullProposals.length;
+    sails.log('afterLength', afterLength);
+    return res.status(200).json(newFullProposals);
+    // return res.status(200).json({ message: 'OK' })
+  }
 
 };

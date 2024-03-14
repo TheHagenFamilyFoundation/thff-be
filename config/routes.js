@@ -164,5 +164,12 @@ module.exports.routes = {
   "GET /migrate/votes": "VoteController.migrate",
   "GET /migrate/settings": "SettingController.migrate",
 
+  //OLD Models
+  "GET /migrate/grants": "GrantController.migrate",
+  "GET /migrate/full-proposals": "FullProposalController.migrate",
+  "GET /migrate/full-proposals-items": "FullProposalItemController.migrate",
+  "GET /migrate/letter-of-intents": "LOIController.migrate",
+  "GET /migrate/letter-of-intent-infos": "LOIInfoController.migrate",
+
 
 };

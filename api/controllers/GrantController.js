@@ -49,4 +49,34 @@ module.exports = {
     return res.status(200).json(message);
   },
 
+  async migrate(req, res) {
+
+    sails.log('migrating grants');
+
+    let grants = await Grant.find();
+    const length = grants.length;
+    sails.log('length', length);
+    sails.log('grants[0]', grants[0]);
+    const newGrants = [];
+    grants.forEach((grant) => {
+      console.log('grant', grant)
+      const newGrant = {
+        _id: grant.id,
+        createdAt: grant.createdAt,
+        updatedAt: grant.updatedAt,
+        year: grant.Year,
+        description: grant.Description,
+        amount: grant.Amount,
+        city: grant.City,
+        state: grant.State
+
+      };
+
+      newGrants.push(newGrant);
+    });
+    const afterLength = newGrants.length;
+    sails.log('afterLength', afterLength);
+    return res.status(200).json(newGrants);
+  }
+
 };

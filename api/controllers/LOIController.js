@@ -544,4 +544,41 @@ module.exports = {
     return res.status(200).json(lois);
   },
 
+  async migrate(req, res) {
+
+    sails.log('migrating letter of intents');
+
+    let letterOfIntents = await LOI.find().populate('organization').populate('votes').populate('info');
+    const length = letterOfIntents.length;
+    sails.log('length', length);
+    sails.log('letterOfIntents[0]', letterOfIntents[0]);
+    const newLetterOfIntents = [];
+    letterOfIntents.forEach((letterOfIntent) => {
+      const votes = letterOfIntent.votes.map(vote => vote.id)
+
+      const newLetterOfIntent = {
+        _id: letterOfIntent.id,
+        createdAt: letterOfIntent.createdAt,
+        updatedAt: letterOfIntent.updatedAt,
+        name: letterOfIntent.name,
+        description: letterOfIntent.description,
+        letterOfIntentID: letterOfIntent.letterOfIntentID,
+        organization: letterOfIntent?.organization?.id,
+        userID: letterOfIntent.userID,
+        submitted: letterOfIntent.submitted,
+        submittedOn: letterOfIntent.submittedOn,
+        info: letterOfIntent?.info[0]?.id,
+        status: letterOfIntent.status,
+        votes,
+        openFp: letterOfIntent.openFp,
+        submissionYear: letterOfIntent.submissionYear
+      };
+
+      newLetterOfIntents.push(newLetterOfIntent);
+    });
+    const afterLength = newLetterOfIntents.length;
+    sails.log('afterLength', afterLength);
+    return res.status(200).json(newLetterOfIntents);
+  }
+
 };
