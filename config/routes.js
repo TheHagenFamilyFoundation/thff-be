@@ -170,6 +170,7 @@ module.exports.routes = {
   "GET /migrate/full-proposals-items": "FullProposalItemController.migrate",
   "GET /migrate/letter-of-intents": "LOIController.migrate",
   "GET /migrate/letter-of-intent-infos": "LOIInfoController.migrate",
+  "GET /migrate/letter-of-intent-votes": "VoteLoiController.migrate",
 
 
 };

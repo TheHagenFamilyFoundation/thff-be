@@ -129,7 +129,7 @@ module.exports.policies = {
   },
 
   VoteloiController: {
-    "*": ["isAuthorized"],
+    // "*": ["isAuthorized"],
     // "*": true
   },
 
