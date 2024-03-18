@@ -15,6 +15,8 @@ import ProposalRouter from './proposal.js'
 
 import VoteRouter from './vote.js'
 
+import SubmissionYearRouter from './submission-year.js'
+
 export default (app) => {
 
   app.use(fileUpload());
@@ -45,5 +47,8 @@ export default (app) => {
 
   //votes
   app.use('/vote', VoteRouter);
+
+  //submission years
+  app.use('/submission-year', SubmissionYearRouter);
 
 }
