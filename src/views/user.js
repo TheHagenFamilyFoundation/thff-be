@@ -13,7 +13,7 @@ export const registerUser =
 <br>
 
 <p>
-If you have any questions or comments, please <a href="mailto:support@hagen.foundation" target="_top">contact us.</a>
+If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact us.</a>
 </p>
 
 Thanks,
@@ -29,7 +29,7 @@ export const createNewPassword = `
 <p>
     This link will work for 24 hours or until your password is reset.</p>
 <p>
-    If you have any questions or comments, please <a href="mailto:support@hagen.foundation" target="_top">contact
+    If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact
         us.</a>
 </p>
 
@@ -50,7 +50,7 @@ export const resetPassword = `
     If you did not ask to change your password, please ignore this email and your account will remain unchanged.
 </p>
 <p>
-    If you have any questions or comments, please <a href="mailto:support@hagen.foundation" target="_top">contact
+    If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact
         us.</a>
 </p>
 
@@ -66,5 +66,5 @@ export const resetPasswordConfirm = `
 </p>
 <p>
     If you didn’t make this request,
-    <a href="mailto:support@hagen.foundation" target="_top">contact Us</a>
+    <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact Us</a>
 </p>`;
