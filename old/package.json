@@ -32,7 +32,7 @@
     "mailgun.js": "^8.0.6",
     "npm": "^8.19.2",
     "rc": "^1.2.7",
-    "sails": "^1.5.4",
+    "sails": "^1.5.7",
     "sails-disk": "^1.1.2",
     "sails-hook-grunt": "^5.0.0",
     "sails-hook-jobs": "^0.1.6",
