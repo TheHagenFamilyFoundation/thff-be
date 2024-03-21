@@ -8,7 +8,7 @@ export const submittedProposal = `
 <br />
 <p>
   If you have any questions or comments, please
-  <a href="mailto:support@hagen.foundation" target="_top">contact us.</a>
+  <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact us.</a>
 </p>
 
 Thanks,
