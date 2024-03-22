@@ -35,12 +35,13 @@ export const login = async (req, res) => {
         .json({ code: "USER004", message: "Error Logging In User" });
     }
 
-    if (!user.confirmed) {
-      Logger.error('User Not Confirmed');
-      return res
-        .status(400)
-        .json({ code: "USER005", message: "User Not Confirmed" });
-    }
+    //not used right now
+    // if (!user.confirmed) {
+    //   Logger.error('User Not Confirmed');
+    //   return res
+    //     .status(400)
+    //     .json({ code: "USER005", message: "User Not Confirmed" });
+    // }
 
     if (!user.encryptedPassword) {
       Logger.error('user does not have an encrypted password');
@@ -182,7 +183,7 @@ export const register = async (req, res) => {
     };
 
     const to = createdUser.email;
-    const subject = 'Password Update';
+    const subject = 'THFF: Thank You For Registering';
 
     sendEmailWithTemplate(to, subject, registerUser, data);
 
