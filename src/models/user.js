@@ -9,7 +9,7 @@ const userSchema = Schema({
   },
   confirmed: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   confirmCode: {
     type: String,
