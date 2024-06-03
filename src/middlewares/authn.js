@@ -5,8 +5,6 @@ const AuthnMiddleware = {
 
   authenticateToken: (req, res, next) => {
 
-    console.log('authenticateToken')
-
     let token = req.headers['authorization']; // Express headers are auto converted to lowercase
     if (token) {
 

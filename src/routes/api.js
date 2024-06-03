@@ -19,10 +19,10 @@ import AuthnMiddleware from '../middlewares/authn.js'
 
 const router = new Router();
 
-router.use(AuthnMiddleware.authenticateToken)
+//auth
+router.use('/auth', AuthRouter)
 
-  //auth
-  .use('/auth', AuthRouter)
+  .use(AuthnMiddleware.authenticateToken)
 
   .use(PingRouter)
 
