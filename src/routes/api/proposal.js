@@ -1,8 +1,8 @@
 import { Router } from "express";
 
-import * as ProposalController from '../controllers/proposal/proposals.js';
-import { validateGetProposal, validateGetProposals, validatePatchProposals } from '../validators/proposals.js'
-import { injectProposal } from "../middlewares/model-injections.js";
+import * as ProposalController from '../../controllers/proposal/proposals.js';
+import { validateGetProposal, validateGetProposals, validatePatchProposals } from '../../validators/proposals.js'
+import { injectProposal } from "../../middlewares/model-injections.js";
 
 const router = new Router();
 

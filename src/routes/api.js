@@ -1,19 +1,19 @@
 
 import { Router } from "express";
 
-import AuthRouter from './auth.js'
+import AuthRouter from './api/auth.js'
 
-import PingRouter from './ping.js'
+import PingRouter from './api/ping.js'
 
-import UserRouter from './user.js'
+import UserRouter from './api/user.js'
 
-import OrganizationRouter from './organization.js'
-import OrganizationInfoRouter from './organization-info.js'
-import Organization501c3Router from './organization-501c3.js'
+import OrganizationRouter from './api/organization.js'
+import OrganizationInfoRouter from './api/organization-info.js'
+import Organization501c3Router from './api/organization-501c3.js'
 
-import ProposalRouter from './proposal.js'
+import ProposalRouter from './api/proposal.js'
 
-import VoteRouter from './vote.js'
+import VoteRouter from './api/vote.js'
 
 import AuthnMiddleware from '../middlewares/authn.js'
 
