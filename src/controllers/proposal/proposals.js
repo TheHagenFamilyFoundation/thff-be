@@ -181,7 +181,10 @@ export const getProposals = async (req, res) => {
         query = { projectTitle: { $regex: filter } };
       }
 
-      let proposals = await Proposal.find(query).populate('organization').populate('votes');
+      let proposals = await Proposal.find(query)
+        .populate('organization')
+        .populate('votes')
+        .populate('sponsor');
 
       //sort
       //for notes
@@ -215,7 +218,7 @@ export const getProposals = async (req, res) => {
             return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
           });
           break;
-        case 'sponsored':
+        case 'sponsor':
           console.log('sorting by sponsors');
           proposals.sort(function (a, b) {
             let aSponsor = ((typeof a.sponsor !== 'undefined') && a.sponsor !== null) ? 1 : 0;
