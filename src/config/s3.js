@@ -1,7 +1,7 @@
 import AWS from "aws-sdk";
 import Config from './config.js';
 
-console.log('setting AWS')
+console.log('setting up AWS')
 console.log('Config.accessKey', Config.accessKey)
 console.log('Config.secretAccessKey', Config.secretAccessKey)
 console.log('Config.region', Config.region)
