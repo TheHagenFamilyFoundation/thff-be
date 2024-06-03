@@ -15,7 +15,6 @@ const port = Config.appPort;
 app.use(cors());
 app.use(bodyParser.json());
 
-
 routes(app);
 
 // eslint-disable-next-line no-unused-vars

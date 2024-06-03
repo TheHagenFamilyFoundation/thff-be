@@ -1,5 +1,6 @@
 import Logger from '../utils/logger.js'
 import mongoose from '../config/mongoose.js'
+import Config from '../config/config.js';
 
 const HealthService = {
 
@@ -15,17 +16,14 @@ const HealthService = {
     return res.status(200).json({ data: 'OK' });
   },
 
-  ping: async (req, res) => {
+  status: async (req, res) => {
+    Logger.info('Status');
 
-    const { token } = req.body;
+    const dbStatus = mongoose && mongoose.connection.readyState === 1 ? 'UP' : 'DOWN';
+    const version = Config.appVersion;
 
-    Logger.info(`Ping - ${token}`);
-
-    //validate the token
-
-
-    return res.status(200).json({ data: 'OK' });
-  }
+    return res.status(200).json({ dbStatus, version });
+  },
 
 }
 
