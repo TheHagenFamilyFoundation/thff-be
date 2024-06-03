@@ -1,7 +1,7 @@
 import { Router } from "express";
 
-import * as OrganizationInfosController from '../controllers/organization/organization-infos.js';
-import { validateGetOrganizationInfos } from '../validators/organization-infos.js'
+import * as OrganizationInfosController from '../../controllers/organization/organization-infos.js';
+import { validateGetOrganizationInfos } from '../../validators/organization-infos.js'
 
 const router = new Router();
 

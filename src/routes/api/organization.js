@@ -1,8 +1,8 @@
 import { Router } from "express";
 
-import * as OrganizationController from '../controllers/organization/organizations.js';
-import { injectOrganization } from "../middlewares/model-injections.js";
-import { validateGetOrganizations, validateGetOrganization, validateCountOrganizations } from '../validators/organizations.js'
+import * as OrganizationController from '../../controllers/organization/organizations.js';
+import { injectOrganization } from "../../middlewares/model-injections.js";
+import { validateGetOrganizations, validateGetOrganization, validateCountOrganizations } from '../../validators/organizations.js'
 
 const router = new Router();
 

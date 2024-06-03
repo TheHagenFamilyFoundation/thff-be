@@ -1,5 +1,6 @@
 //packages
 import express from 'express';
+import helmet from "helmet";
 import cors from 'cors';
 import bodyParser from 'body-parser';
 //config
@@ -15,6 +16,7 @@ const port = Config.appPort;
 app.use(cors());
 app.use(bodyParser.json());
 
+app.use(helmet())
 
 routes(app);
 
