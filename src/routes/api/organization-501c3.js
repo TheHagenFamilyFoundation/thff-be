@@ -1,6 +1,6 @@
 import { Router } from "express";
-import * as Organization501c3Controller from '../controllers/organization/organizations-501c3.js';
-import { validateGet501c3, validateUpload501c3, validateDelete501c3 } from '../validators/organizations501c3.js'
+import * as Organization501c3Controller from '../../controllers/organization/organizations-501c3.js';
+import { validateGet501c3, validateUpload501c3, validateDelete501c3 } from '../../validators/organizations501c3.js'
 
 const router = new Router();
 router.get('/:id',
