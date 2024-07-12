@@ -4,6 +4,7 @@ import * as SubmissionYearController from '../../controllers/admin/submission-ye
 import {
   validateGetSubmissionYears,
   validateGetSubmissionYear,
+  validateGetCurrentSubmissionYear,
   validateCreateSubmissionYear,
   validateToggleSubmissionYear,
   validateCountSubmissionYears
@@ -14,6 +15,9 @@ const router = new Router();
 router.get('/',
   validateGetSubmissionYears,
   SubmissionYearController.getSubmissionYears)
+router.get('/current',
+  validateGetCurrentSubmissionYear,
+  SubmissionYearController.getCurrentSubmissionYear)
 router.get('/count',
   validateCountSubmissionYears,
   SubmissionYearController.countSubmissionYears)

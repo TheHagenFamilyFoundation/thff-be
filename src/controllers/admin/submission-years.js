@@ -15,42 +15,21 @@ export const getSubmissionYears = async (req, res) => {
   }
 
   try {
-    let { limit, skip, filter, sort, dir } = req.query;
+    const { year } = req.query;
+
+    //grab the up to 5 before and 5 after
+    let years = [];
+
+    for (var i = Number(year) - 5; i <= Number(year) + 5; i++) {
+      years.push(i);
+    }
 
     let query = {};
 
-    if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter } };
-    }
-
     //return all submission years
-    let submissionYears = await SubmissionYear.find(query)
+    let submissionYears = await SubmissionYear.find(query).sort({ year: -1 }) //sort by most recent year
 
-    //sort
-    //for notes
-    // ASC  -> a.length - b.length
-    // DESC -> b.length - a.length
-    switch (sort) {
-
-      case 'createdOn':
-        submissionYears.sort(function (a, b) {
-          return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
-        });
-        break;
-      // case 'year': //name
-      //   if (dir === 'asc') {
-      //     submissionYears.sort((a, b) => b.name.localeCompare(a.name));
-      //   }
-      //   else {
-      //     submissionYears.sort((a, b) => a.name.localeCompare(b.name))
-      //   }
-      //   break;
-    }
-
-    //skip and limit
-    let subYears = submissionYears.slice(skip, +skip + +limit);
-
-    return res.status(200).json(subYears);
+    return res.status(200).json(submissionYears);
   }
   catch (err) {
     Logger.error(`Error Retrieving Submission Years ${err.message}`);
@@ -59,6 +38,7 @@ export const getSubmissionYears = async (req, res) => {
 
 }
 
+//by id
 export const getSubmissionYear = async (req, res) => {
   Logger.verbose('Inside getSubmissionYear');
 
@@ -76,6 +56,37 @@ export const getSubmissionYear = async (req, res) => {
   return res.status(200).json(submissionYear);
 }
 
+//get the current years submission year
+export const getCurrentSubmissionYear = async (req, res) => {
+  Logger.verbose('Inside getCurrentSubmissionYear');
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    Logger.error(`We have Errors: ${errors.array()}`)
+    return res.status(422).json({ error: errors.array() });
+  }
+
+  try {
+    const currentYear = new Date().getFullYear();
+    const query = { year: currentYear };
+    const submissionYear = await SubmissionYear.findOne(query);
+
+    if (!submissionYear) {
+      Logger.info('No Submission Year Found');
+      return res
+        .status(400)
+        .send({ code: "SUBY005", message: "No Submission Year Found" });
+    }
+
+    Logger.info(`Returning current year: ${submissionYear}`);
+    return res.status(200).json(submissionYear);
+  } catch (err) {
+    Logger.error(`Error Retrieving Current Submission Year ${err.message}`);
+    return res.status(400).send({ code: "SUBY006", message: err.message });
+  }
+
+}
+
 export const createSubmissionYear = async (req, res) => {
   Logger.verbose('Inside createSubmissionYear');
 
@@ -86,8 +97,7 @@ export const createSubmissionYear = async (req, res) => {
   }
 
   try {
-
-    let year = new Date().getFullYear();
+    let { year } = req.body;
 
     let query = {
       year

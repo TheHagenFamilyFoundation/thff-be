@@ -11,15 +11,7 @@ const submissionYearSchema = Schema({
   active: {
     type: Boolean,
     default: true
-  },
-  lois: [{
-    type: Schema.Types.ObjectId,
-    ref: 'LetterOfIntent'
-  }],
-  proposals: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Proposal'
-  }]
+  }
 }, {
   timestamps: true
 });

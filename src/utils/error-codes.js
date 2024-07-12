@@ -47,6 +47,8 @@ SUBY001 - Error Creating Submission Year
 SUBY002 - Error Retrieving Submission Year Count
 SUBY003 - Error Retrieving Submission Year
 SUBY004 - Duplicate Submission Year
+SUBY005 - No Submission Year Found
+SUBY006 - Error Retrieving Current Submission Year
 
 
 */

@@ -172,13 +172,26 @@ export const getProposals = async (req, res) => {
 
   } else {
 
-    let { limit, skip, filter, sort, dir } = req.query;
+
+    let { year, org, limit, skip, filter, sort, dir } = req.query;
 
     try {
-      let query = {};
-      //just filtering on projectTitle right now
+      // Define start and end dates for the year
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+      let query = {
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate
+        },
+      };
+
+      if (org) {
+        query = { ...query, organization: org };
+      }
+
       if (filter && filter.length !== 0) {
-        query = { projectTitle: { $regex: filter } };
+        query = { ...query, projectTitle: { $regex: filter } };
       }
 
       let proposals = await Proposal.find(query).populate('organization').populate('votes');
@@ -245,7 +258,6 @@ export const getProposals = async (req, res) => {
 
       //skip and limit
       let props = proposals.slice(skip, +skip + +limit);
-
       return res.status(200).json(props);
 
     } catch (e) {
@@ -258,11 +270,24 @@ export const getProposals = async (req, res) => {
 
 export const countProposals = async (req, res) => {
   try {
-    let { filter } = req.query;
+    let { year, org, filter } = req.query;
 
-    let query = {};
+    // Define start and end dates for the year
+    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+    let query = {
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      },
+    };
+
+    if (org) {
+      query = { ...query, organization: org };
+    }
+
     if (filter && filter.length !== 0) {
-      query = { projectTitle: { $regex: filter } };
+      query = { ...query, projectTitle: { $regex: filter } };
     }
     let count = await Proposal.find(query);
     return res.status(200).json(count.length);
