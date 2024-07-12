@@ -24,7 +24,10 @@ export const getOrganization = async (req, res) => {
     const organization = await Organization.findOne({ _id: id })
       .populate('info')
       .populate('users')
-      .populate('proposals')
+      .populate({
+        path: 'proposals',
+        options: { limit: 10 }
+      })
       .populate('doc501c3');
 
     Logger.debug(`sending back organization ${organization}`);
@@ -145,7 +148,12 @@ export const getOrganizations = async (req, res) => {
       query = { name: { $regex: filter } };
     }
 
-    let organizations = await Organization.find(query).populate('users').populate('proposals');
+    let organizations = await Organization.find(query)
+      .populate('users')
+      .populate({
+        path: 'proposals',
+        options: { limit: 10 }
+      })
 
     //sort
     //for notes

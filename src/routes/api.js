@@ -15,6 +15,8 @@ import ProposalRouter from './api/proposal.js'
 
 import VoteRouter from './api/vote.js'
 
+import SubmissionYearRouter from './api/submission-year.js'
+
 import AuthnMiddleware from '../middlewares/authn.js'
 
 const router = new Router();
@@ -43,5 +45,8 @@ router.use('/auth', AuthRouter)
 
   //votes
   .use('/vote', VoteRouter)
+
+  //submission years
+  .use('/submission-year', SubmissionYearRouter)
 
 export default router;

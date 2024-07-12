@@ -42,9 +42,13 @@ Vote
 VOT001 - Error Creating Vote
 VOT002 - Error Retrieving Vote
 
-
-
-
+Submission Years
+SUBY001 - Error Creating Submission Year
+SUBY002 - Error Retrieving Submission Year Count
+SUBY003 - Error Retrieving Submission Year
+SUBY004 - Duplicate Submission Year
+SUBY005 - No Submission Year Found
+SUBY006 - Error Retrieving Current Submission Year
 
 
 */

@@ -8,22 +8,10 @@ const submissionYearSchema = Schema({
   year: {
     type: Number
   },
-  fpPortal: {
-    type: Boolean,
-    default: false
-  },
   active: {
     type: Boolean,
     default: true
-  },
-  lois: [{
-    type: Schema.Types.ObjectId,
-    ref: 'LetterOfIntent'
-  }],
-  proposals: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Proposal'
-  }]
+  }
 }, {
   timestamps: true
 });
