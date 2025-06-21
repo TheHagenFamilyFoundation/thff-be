@@ -1,4 +1,12 @@
-import appConfig from '../../package.json' assert { type: 'json' }
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const packageJsonPath = path.join(__dirname, '../../package.json');
+const appConfig = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 const Config = {
   nodeEnv: (process.env.NODE_ENV || 'development'),
