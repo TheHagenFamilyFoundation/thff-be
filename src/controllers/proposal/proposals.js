@@ -191,7 +191,7 @@ export const getProposals = async (req, res) => {
       }
 
       if (filter && filter.length !== 0) {
-        query = { ...query, projectTitle: { $regex: filter } };
+        query = { ...query, projectTitle: { $regex: filter.toLowerCase(), $options: 'i' } };
       }
 
       let proposals = await Proposal.find(query)
@@ -290,7 +290,7 @@ export const countProposals = async (req, res) => {
     }
 
     if (filter && filter.length !== 0) {
-      query = { ...query, projectTitle: { $regex: filter } };
+      query = { ...query, projectTitle: { $regex: filter.toLowerCase(), $options: 'i' } };
     }
     let count = await Proposal.find(query);
     return res.status(200).json(count.length);
