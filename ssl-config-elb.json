@@ -1,0 +1,32 @@
+[
+  {
+    "Namespace": "aws:elb:loadbalancer",
+    "OptionName": "LoadBalancerHTTPSPort",
+    "Value": "443"
+  },
+  {
+    "Namespace": "aws:elb:loadbalancer",
+    "OptionName": "SSLCertificateId",
+    "Value": "arn:aws:acm:us-east-1:759379104290:certificate/0b81fc4e-573c-40fa-a8dc-65afeab47bbf"
+  },
+  {
+    "Namespace": "aws:elb:listener:443",
+    "OptionName": "InstancePort",
+    "Value": "80"
+  },
+  {
+    "Namespace": "aws:elb:listener:443",
+    "OptionName": "InstanceProtocol",
+    "Value": "HTTP"
+  },
+  {
+    "Namespace": "aws:elb:listener:443",
+    "OptionName": "ListenerProtocol",
+    "Value": "HTTPS"
+  },
+  {
+    "Namespace": "aws:elb:listener:443",
+    "OptionName": "SSLCertificateId",
+    "Value": "arn:aws:acm:us-east-1:759379104290:certificate/0b81fc4e-573c-40fa-a8dc-65afeab47bbf"
+  }
+]

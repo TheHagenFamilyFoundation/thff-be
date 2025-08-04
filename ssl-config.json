@@ -1,0 +1,32 @@
+[
+  {
+    "Namespace": "aws:elbv2:listener:443",
+    "OptionName": "SSLCertificateArns",
+    "Value": "arn:aws:acm:us-east-1:759379104290:certificate/0b81fc4e-573c-40fa-a8dc-65afeab47bbf"
+  },
+  {
+    "Namespace": "aws:elbv2:listener:443",
+    "OptionName": "SSLPolicy",
+    "Value": "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  },
+  {
+    "Namespace": "aws:elbv2:listener:443",
+    "OptionName": "Protocol",
+    "Value": "HTTPS"
+  },
+  {
+    "Namespace": "aws:elbv2:listener:443",
+    "OptionName": "ListenerEnabled",
+    "Value": "true"
+  },
+  {
+    "Namespace": "aws:elbv2:listener:80",
+    "OptionName": "ListenerEnabled",
+    "Value": "true"
+  },
+  {
+    "Namespace": "aws:elbv2:listener:80",
+    "OptionName": "Protocol",
+    "Value": "HTTP"
+  }
+]
