@@ -1,0 +1,34 @@
+{
+  "ServiceName": "thff-be-staging",
+  "SourceConfiguration": {
+    "CodeRepository": {
+      "RepositoryUrl": "https://github.com/TheHagenFamilyFoundation/thff-be",
+      "SourceCodeVersion": {
+        "Type": "BRANCH",
+        "Value": "staging"
+      },
+      "SourceDirectory": "/",
+      "CodeConfiguration": {
+        "ConfigurationSource": "REPOSITORY",
+        "CodeConfigurationValues": {
+          "Runtime": "NODEJS_18",
+          "BuildCommand": "npm install",
+          "StartCommand": "npm run staging",
+          "RuntimeEnvironmentVariables": {
+            "NODE_ENV": "development",
+            "PORT": "8080"
+          }
+        }
+      }
+    },
+    "AutoDeploymentsEnabled": true,
+    "AuthenticationConfiguration": {
+      "ConnectionArn": "arn:aws:apprunner:us-east-1:759379104290:connection/thff-github/6a29e2d837a04986bafc7790cfca1e6c"
+    }
+  },
+  "InstanceConfiguration": {
+    "Cpu": "1024",
+    "Memory": "2048",
+    "InstanceRoleArn": "arn:aws:iam::759379104290:role/AppRunnerInstanceRole"
+  }
+}
