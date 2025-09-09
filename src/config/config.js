@@ -12,7 +12,7 @@ const Config = {
   nodeEnv: (process.env.NODE_ENV || 'development'),
   appEnv: process.env.APP_ENV,
   appName: appConfig.name,
-  appPort: (process.env.APP_PORT || 1337),
+  appPort: (process.env.PORT || process.env.APP_PORT || 1337),
   appURL: process.env.APP_URL || 'http://localhost:1337',
   appVersion: appConfig.version,
   // appSecretKey: process.env.SECRET_KEY,
