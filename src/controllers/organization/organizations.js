@@ -115,7 +115,13 @@ export const createOrganization = async (req, res) => {
     const to = user.email;
     const subject = 'Thank You For Registering A Organization';
 
-    sendEmailWithTemplate(to, subject, registerOrganization, data);
+    try {
+      await sendEmailWithTemplate(to, subject, registerOrganization, data);
+      Logger.info(`Organization registration email sent successfully to ${to}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send organization registration email to ${to}:`, emailError);
+      // Continue even if email fails - organization is still created
+    }
 
     return res.status(200).json({
       message: "Org Created",

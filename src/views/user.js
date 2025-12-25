@@ -25,7 +25,8 @@ export const createNewPassword = `
 <p>
     Please create a new password. Click on the link below or paste this into your browser to complete the process:
 </p>
-<a href="{{ resetLink }}">{{ resetLink }}</a>
+<p><a href="{{ resetLink }}">Reset Password</a></p>
+<p>Or copy and paste this URL into your browser: {{ resetLink }}</p>
 <p>
     This link will work for 24 hours or until your password is reset.</p>
 <p>
@@ -43,7 +44,8 @@ export const resetPassword = `
     We have received a request to reset the password for your account.
     If you made this request, please click on the link below or paste this into your browser to complete the process:
 </p>
-<a href="{{ resetLink }}">{{ resetLink }}</a>
+<p><a href="{{ resetLink }}">Reset Password</a></p>
+<p>Or copy and paste this URL into your browser: {{ resetLink }}</p>
 <p>
     This link will work for 24 hours or until your password is reset.</p>
 <p>
