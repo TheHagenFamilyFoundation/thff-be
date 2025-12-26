@@ -57,7 +57,13 @@ export const createProposal = async (req, res) => {
     const to = user.email;
     const subject = 'Thank You For Submitting A Proposal';
 
-    sendEmailWithTemplate(to, subject, submittedProposal, data);
+    try {
+      await sendEmailWithTemplate(to, subject, submittedProposal, data);
+      Logger.info(`Proposal submission email sent successfully to ${to}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send proposal submission email to ${to}:`, emailError);
+      // Continue even if email fails - proposal is still created
+    }
 
     return res.status(200).send(newProposal);
   }

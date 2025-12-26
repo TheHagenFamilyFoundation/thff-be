@@ -63,7 +63,13 @@ export const login = async (req, res) => {
         }
       );
 
-      let resetLink = `${Config.feURL}/reset-password?rc=${newCode}`;
+      // Ensure URL has protocol for proper email link rendering
+      // Default to https for non-localhost, http for localhost
+      let feURL = Config.feURL;
+      if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+        feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+      }
+      let resetLink = `${feURL}/reset-password?rc=${newCode}`;
       Logger.info(`resetLink = ${resetLink}`);
       const data = {
         email: user.email,
@@ -74,7 +80,13 @@ export const login = async (req, res) => {
       const to = user.email;
       const subject = 'THFF: Create New Password';
 
-      sendEmailWithTemplate(to, subject, createNewPassword, data);
+      try {
+        await sendEmailWithTemplate(to, subject, createNewPassword, data);
+        Logger.info(`Create new password email sent successfully to ${to}`);
+      } catch (emailError) {
+        Logger.error(`Failed to send create new password email to ${to}:`, emailError);
+        // Continue even if email fails - user still needs to set password
+      }
 
       return res.status(200).json({ newPassword: true, message: "User Needs New Password" })
 
@@ -185,7 +197,13 @@ export const register = async (req, res) => {
     const to = createdUser.email;
     const subject = 'THFF: Thank You For Registering';
 
-    sendEmailWithTemplate(to, subject, registerUser, data);
+    try {
+      await sendEmailWithTemplate(to, subject, registerUser, data);
+      Logger.info(`Registration email sent successfully to ${to}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send registration email to ${to}:`, emailError);
+      // Continue even if email fails - user is still created
+    }
 
     let message = 'User created';
     return res.status(200).send({ message });
@@ -320,8 +338,8 @@ export const forgotPassword = async (req, res) => {
   try {
 
     //generate code
-    //find user check
-    let emailFound = await User.find({ email });
+    //find user check (normalize email to lowercase for consistency)
+    let emailFound = await User.find({ email: email.toLowerCase() });
 
     //Don't tell them an email doesn't exist
     if (!emailFound || emailFound.length < 1) {
@@ -361,7 +379,13 @@ export const forgotPassword = async (req, res) => {
     Logger.verbose(`user.username =  ${user.username}`);
     Logger.verbose(`user.resetCode = ${newCode}`);
 
-    let resetLink = `${Config.feURL}/reset-password?rc=${newCode}`;
+    // Ensure URL has protocol for proper email link rendering
+    // Default to https for non-localhost, http for localhost
+    let feURL = Config.feURL;
+    if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+      feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+    }
+    let resetLink = `${feURL}/reset-password?rc=${newCode}`;
     Logger.info(`resetLink = ${resetLink}`);
     const data = {
       email: user.email,
@@ -372,7 +396,14 @@ export const forgotPassword = async (req, res) => {
     const to = user.email;
     const subject = 'THFF: Reset Password';
 
-    sendEmailWithTemplate(to, subject, createNewPassword, data);
+    try {
+      await sendEmailWithTemplate(to, subject, createNewPassword, data);
+      Logger.info(`Password reset email sent successfully to ${to}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send password reset email to ${to}:`, emailError);
+      // Still return success to user for security (don't reveal if email exists)
+      // But log the error for debugging
+    }
 
     let message = `forgot password ${email}`;
 
@@ -448,7 +479,13 @@ export const setNewPassword = async (req, res) => {
     const to = user.email;
     const subject = 'THFF: Reset Password Confirm';
 
-    sendEmailWithTemplate(to, subject, resetPasswordConfirm, data);
+    try {
+      await sendEmailWithTemplate(to, subject, resetPasswordConfirm, data);
+      Logger.info(`Password reset confirmation email sent successfully to ${to}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send password reset confirmation email to ${to}:`, emailError);
+      // Continue even if email fails - password is still reset
+    }
 
     return res
       .status(200)
