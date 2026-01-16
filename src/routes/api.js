@@ -15,6 +15,7 @@ import ProposalRouter from './api/proposal.js'
 
 import VoteRouter from './api/vote.js'
 
+import SubmissionYearPublicRouter from './api/submission-year-public.js'
 import SubmissionYearRouter from './api/submission-year.js'
 
 import AuthnMiddleware from '../middlewares/authn.js'
@@ -23,6 +24,9 @@ const router = new Router();
 
 //auth
 router.use('/auth', AuthRouter)
+
+  // Public submission year GET endpoints (no auth required)
+  .use('/submission-year', SubmissionYearPublicRouter)
 
   .use(AuthnMiddleware.authenticateToken)
 
@@ -46,7 +50,7 @@ router.use('/auth', AuthRouter)
   //votes
   .use('/vote', VoteRouter)
 
-  //submission years
+  // Protected submission year POST/PUT endpoints (auth required)
   .use('/submission-year', SubmissionYearRouter)
 
 export default router;
