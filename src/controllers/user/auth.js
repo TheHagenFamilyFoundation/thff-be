@@ -9,7 +9,7 @@ import { generateCode, saltRounds } from "../../utils/util.js"
 import { sendEmailWithTemplate } from '../email/email.js';
 import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
 
-import { User, UserSetting, Token } from '../../models/index.js'
+import { User, UserSetting, Token, Invite, Organization } from '../../models/index.js'
 
 export const login = async (req, res) => {
   Logger.verbose('Inside Login');
@@ -186,6 +186,33 @@ export const register = async (req, res) => {
       return res
         .status(500)
         .json({ code: "USER002", message: "Error Creating User" });
+    }
+
+    // Auto-fulfill pending organization invites for this email
+    try {
+      const pendingInvites = await Invite.find({ email: email.toLowerCase(), status: 'pending' });
+
+      for (const invite of pendingInvites) {
+        const org = await Organization.findOne({ _id: invite.organization });
+        if (org && !org.users.some(u => u.toString() === createdUser._id.toString())) {
+          org.users.push(createdUser._id);
+          await org.save();
+
+          createdUser.organizations.push(org._id);
+
+          invite.status = 'accepted';
+          await invite.save();
+
+          Logger.info(`Auto-fulfilled invite: added ${email} to organization ${org.name}`);
+        }
+      }
+
+      if (pendingInvites.length > 0) {
+        await createdUser.save();
+      }
+    } catch (inviteError) {
+      Logger.error(`Error fulfilling pending invites for ${email}: ${inviteError.message}`);
+      // Don't fail registration if invite fulfillment fails
     }
 
     const data = {

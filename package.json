@@ -5,7 +5,7 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file .env.development src/app",
+    "dev": "nodemon --env-file .env.development src/app",
     "staging": "node --env-file .env.staging src/app",
     "production": "node --env-file .env.production src/app",
     "start": "node src/app"
@@ -33,6 +33,7 @@
     "@babel/core": "^7.23.3",
     "@babel/eslint-parser": "^7.23.3",
     "@babel/plugin-syntax-import-assertions": "^7.23.3",
-    "eslint": "^8.54.0"
+    "eslint": "^8.54.0",
+    "nodemon": "^3.1.11"
   }
 }

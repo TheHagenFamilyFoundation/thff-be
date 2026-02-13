@@ -6,6 +6,9 @@ const router = new Router();
 router.get('/:id',
   validateGet501c3,
   Organization501c3Controller.get501c3Doc)
+router.get('/:id/view',
+  validateGet501c3,
+  Organization501c3Controller.view501c3Doc)
 router.post('/:orgId',
   validateUpload501c3,
   Organization501c3Controller.upload501c3Doc)

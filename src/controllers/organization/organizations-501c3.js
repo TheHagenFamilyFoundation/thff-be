@@ -112,24 +112,18 @@ export const get501c3Doc = async (req, res) => {
         .status(400)
         .send({ code: "ORG501C3002", message: 'Error Retrieving 501c3' });
     }
-    console.log('docOrg501c3', docOrg501c3);
-    const { fileName } = docOrg501c3;
 
-    console.log("fileName:", fileName);
+    const { fileName } = docOrg501c3;
 
     const params = {
       Bucket: Config.bucket,
       Key: fileName,
       Expires: 3600,
+      ResponseContentDisposition: 'inline',
     };
-
-    console.log(s3.getSignedUrl("getObject", params));
 
     const url = s3.getSignedUrl("getObject", params);
 
-    console.log("url", url);
-
-    // redirect
     return res.status(200).json({
       message: "Yay",
       url,
@@ -140,6 +134,55 @@ export const get501c3Doc = async (req, res) => {
     return res
       .status(400)
       .send({ code: "ORG501C3003", message: 'Error Retrieving 501c3' });
+  }
+}
+
+// Stream the file through the backend with correct headers so the browser displays it inline
+export const view501c3Doc = async (req, res) => {
+  const { id } = req.params;
+  Logger.info(`viewing 501c3 ${id}`);
+
+  try {
+    const docOrg501c3 = await Organization501c3.findOne({ _id: id });
+
+    if (!docOrg501c3) {
+      Logger.error(`501c3 for ${id} is not found`);
+      return res.status(404).send({ code: "ORG501C3002", message: 'Document not found' });
+    }
+
+    const { fileName } = docOrg501c3;
+
+    // Determine content type from file extension
+    let contentType = 'application/pdf';
+    if (fileName) {
+      const ext = fileName.split('.').pop().toLowerCase();
+      if (ext === 'doc') { contentType = 'application/msword'; }
+      else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
+    }
+
+    const params = {
+      Bucket: Config.bucket,
+      Key: fileName,
+    };
+
+    // Set headers so the browser opens inline instead of downloading
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'inline');
+
+    // Stream the S3 object directly to the response
+    const s3Stream = s3.getObject(params).createReadStream();
+    s3Stream.pipe(res);
+
+    s3Stream.on('error', (err) => {
+      Logger.error(`Error streaming 501c3 ${id}: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).send({ code: "ORG501C3003", message: 'Error streaming document' });
+      }
+    });
+  }
+  catch (e) {
+    Logger.error(`Error viewing 501c3 ${id}: ${e.message}`);
+    return res.status(400).send({ code: "ORG501C3003", message: 'Error Retrieving 501c3' });
   }
 }
 
@@ -216,11 +259,18 @@ function uploads3(req, orgId) {
 
     console.log('s3', s3);
 
+    // Determine content type from file extension
+    let contentType = 'application/pdf';
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (ext === 'doc') { contentType = 'application/msword'; }
+    else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
+
     // Set the parameters for the file you want to upload
     const params = {
       Bucket: Config.bucket,
       Key: `${Config.appEnv}${orgId}/${generateUUID()}_${fileName}`,
-      Body: req.files.doc501c3.data
+      Body: req.files.doc501c3.data,
+      ContentType: contentType,
     };
 
     // Upload the file to S3
