@@ -1,72 +1,81 @@
-export const registerUser =
-  `<p>Dear {{ email }},</p>
-<br>
-<p>Thank You for Registering A User Account at THFF</p>
-<br>
-<p>You can login here:
-<a href="{{ loginLink }}">Login</a>
-</p> <br>
-<P>You can view your user dashboard here. <a href={{ userPageLink }}>User
-    Dashboard</a></p>
-<br>
-<p>If you haven't created an organization, you can create one on the user page.</p>
-<br>
-
-<p>
-If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact us.</a>
+export const registerUser = `
+<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Welcome to THFF!</h2>
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    Thank you for creating your account. You're all set to get started.
 </p>
-
-Thanks,
-
-<p>THFF Team</p>`;
+<p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    From your dashboard, you can create an organization, manage proposals, and upload documents.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+    <tr>
+        <td style="background-color: #008083; border-radius: 8px;">
+            <a href="{{ loginLink }}" style="display: inline-block; padding: 12px 28px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                Sign In to Your Account
+            </a>
+        </td>
+    </tr>
+</table>
+<p style="margin: 0 0 8px 0; font-size: 14px; color: #94a3b8;">
+    You can also go directly to your <a href="{{ userPageLink }}" style="color: #008083; text-decoration: none;">User Dashboard</a>.
+</p>`;
 
 export const createNewPassword = `
-<p>Dear {{ email }},</p>
-<p>
-    Please create a new password. Click on the link below or paste this into your browser to complete the process:
+<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Create a New Password</h2>
+<p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    Please create a new password for your account. Click the button below to get started:
 </p>
-<p><a href="{{ resetLink }}">Reset Password</a></p>
-<p>Or copy and paste this URL into your browser: {{ resetLink }}</p>
-<p>
-    This link will work for 24 hours or until your password is reset.</p>
-<p>
-    If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact
-        us.</a>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+    <tr>
+        <td style="background-color: #008083; border-radius: 8px;">
+            <a href="{{ resetLink }}" style="display: inline-block; padding: 12px 28px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                Create Password
+            </a>
+        </td>
+    </tr>
+</table>
+<p style="margin: 0 0 8px 0; font-size: 13px; line-height: 1.5; color: #94a3b8;">
+    Or copy and paste this URL into your browser:
 </p>
-
-Thanks,
-
-<p>THFF Team</p>`;
+<p style="margin: 0 0 24px 0; font-size: 13px; color: #94a3b8; word-break: break-all;">
+    {{ resetLink }}
+</p>
+<p style="margin: 0; font-size: 13px; color: #94a3b8;">
+    This link will expire in 24 hours.
+</p>`;
 
 export const resetPassword = `
-<p>Dear {{ email }},</p>
-<p>
-    We have received a request to reset the password for your account.
-    If you made this request, please click on the link below or paste this into your browser to complete the process:
+<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Reset Your Password</h2>
+<p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    We received a request to reset the password for your account. Click the button below to choose a new password:
 </p>
-<p><a href="{{ resetLink }}">Reset Password</a></p>
-<p>Or copy and paste this URL into your browser: {{ resetLink }}</p>
-<p>
-    This link will work for 24 hours or until your password is reset.</p>
-<p>
-    If you did not ask to change your password, please ignore this email and your account will remain unchanged.
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+    <tr>
+        <td style="background-color: #008083; border-radius: 8px;">
+            <a href="{{ resetLink }}" style="display: inline-block; padding: 12px 28px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                Reset Password
+            </a>
+        </td>
+    </tr>
+</table>
+<p style="margin: 0 0 8px 0; font-size: 13px; line-height: 1.5; color: #94a3b8;">
+    Or copy and paste this URL into your browser:
 </p>
-<p>
-    If you have any questions or comments, please <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact
-        us.</a>
+<p style="margin: 0 0 24px 0; font-size: 13px; color: #94a3b8; word-break: break-all;">
+    {{ resetLink }}
 </p>
-
-Thanks,
-
-<p>THFF Team</p>`;
+<p style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8;">
+    This link will expire in 24 hours.
+</p>
+<p style="margin: 0; font-size: 13px; color: #94a3b8;">
+    If you didn't request a password reset, you can safely ignore this email.
+</p>`;
 
 export const resetPasswordConfirm = `
-<p>Dear
-    {{ email }},</p>
-<p>
-    Your Password was successfully changed.
+<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Password Updated</h2>
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    Your password has been successfully changed.
 </p>
-<p>
-    If you didn’t make this request,
-    <a href="mailto:support@hagenfamilyfoundation.org" target="_top">contact Us</a>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
+    If you didn't make this change, please
+    <a href="mailto:support@hagenfamilyfoundation.org" style="color: #008083; text-decoration: none;">contact us immediately</a>.
 </p>`;
