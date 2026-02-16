@@ -33,6 +33,8 @@ router.delete('/:orgID/users/:userID',
 // Invites
 router.get('/:orgID/invites',
   OrganizationController.getOrganizationInvites)
+router.post('/invites/:inviteID/resend',
+  OrganizationController.resendInvite)
 router.delete('/invites/:inviteID',
   OrganizationController.cancelInvite)
 

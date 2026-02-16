@@ -1,6 +1,6 @@
 import { validationResult } from "express-validator";
 
-import { Proposal } from "../../models/index.js";
+import { Proposal, ReferralCode } from "../../models/index.js";
 import { Organization, User } from "../../models/index.js";
 import { generateCode } from "../../utils/util.js";
 import Logger from "../../utils/logger.js";
@@ -21,13 +21,23 @@ export const createProposal = async (req, res) => {
     const { decoded, body } = req;
     console.log('decoded', decoded);
     //id is orgId
-    const { proposal, orgID } = body;
+    const { proposal, orgID, referralCode } = body;
 
     console.log('proposal', proposal);
     console.log('orgID', orgID);
     let newID = generateCode();
     proposal.proposalID = newID;
     proposal.organization = orgID;
+
+    // If a referral code is provided, validate it and auto-link the director as sponsor
+    if (referralCode) {
+      const refCode = await ReferralCode.findOne({ code: referralCode, active: true });
+      if (refCode) {
+        proposal.sponsor = refCode.director;
+        Logger.info(`Proposal auto-sponsored by director ${refCode.director} via referral code ${referralCode}`);
+      }
+    }
+
     console.log('after code proposal', proposal);
     const newProposal = await Proposal.create(proposal);
     if (!newProposal) {
@@ -179,7 +189,7 @@ export const getProposals = async (req, res) => {
   } else {
 
 
-    let { year, org, limit, skip, filter, sort, dir } = req.query;
+    let { year, org, limit, skip, filter, sort, dir, showArchived } = req.query;
 
     try {
       // Define start and end dates for the year
@@ -191,6 +201,14 @@ export const getProposals = async (req, res) => {
           $lte: endDate
         },
       };
+
+      // Filter by archived status
+      if (showArchived === 'only') {
+        query = { ...query, archived: true };
+      } else if (showArchived !== 'true') {
+        // By default, exclude archived proposals
+        query = { ...query, $or: [{ archived: false }, { archived: { $exists: false } }] };
+      }
 
       if (org) {
         query = { ...query, organization: org };
@@ -279,7 +297,7 @@ export const getProposals = async (req, res) => {
 
 export const countProposals = async (req, res) => {
   try {
-    let { year, org, filter } = req.query;
+    let { year, org, filter, showArchived } = req.query;
 
     // Define start and end dates for the year
     const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
@@ -290,6 +308,13 @@ export const countProposals = async (req, res) => {
         $lte: endDate
       },
     };
+
+    // Filter by archived status
+    if (showArchived === 'only') {
+      query = { ...query, archived: true };
+    } else if (showArchived !== 'true') {
+      query = { ...query, $or: [{ archived: false }, { archived: { $exists: false } }] };
+    }
 
     if (org) {
       query = { ...query, organization: org };
@@ -306,6 +331,87 @@ export const countProposals = async (req, res) => {
     return res.status(400).send({ code: "PROP002", message: err.message });
   }
 }
+
+// GET /proposal/my-proposals?year=2026
+// Returns all proposals for the current user's organizations for the given year
+export const getMyProposals = async (req, res) => {
+  Logger.info('Inside getMyProposals');
+
+  try {
+    const { decoded } = req;
+    const { year } = req.query;
+
+    if (!year) {
+      return res.status(400).json({ message: 'year query parameter is required' });
+    }
+
+    // Get user with their organizations
+    const user = await User.findOne({ _id: decoded.userID }).populate('organizations');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    Logger.info(`getMyProposals - user ${user.email} has ${user.organizations.length} org(s)`);
+
+    // Get org IDs
+    const orgIds = user.organizations.map(org => org._id);
+
+    if (orgIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Query proposals directly
+    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+    const proposals = await Proposal.find({
+      organization: { $in: orgIds },
+      createdAt: { $gte: startDate, $lte: endDate }
+    })
+      .populate('organization', 'name organizationID')
+      .populate('sponsor', 'email firstName lastName')
+      .sort({ createdAt: -1 });
+
+    Logger.info(`getMyProposals - found ${proposals.length} proposal(s) for year ${year}`);
+
+    return res.status(200).json(proposals);
+  } catch (e) {
+    Logger.error(`Error getting my proposals: ${e.message}`);
+    return res.status(500).json({ message: 'Error getting proposals' });
+  }
+};
+
+export const archiveProposal = async (req, res) => {
+  Logger.info('Inside archiveProposal');
+
+  try {
+    const { decoded } = req;
+
+    // Only president (3) or admin (4) can archive
+    if (decoded.accessLevel < 3) {
+      return res.status(403).json({ message: 'Only the president can archive proposals' });
+    }
+
+    const { id } = req.params;
+    const { archived } = req.body;
+
+    const proposal = await Proposal.findOne({ _id: id });
+
+    if (!proposal) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    proposal.archived = archived;
+    await proposal.save();
+
+    Logger.info(`Proposal ${id} archived: ${archived}`);
+    return res.status(200).json(proposal);
+  } catch (e) {
+    Logger.error(`Error archiving proposal: ${e.message}`);
+    return res.status(500).json({ message: 'Error archiving proposal' });
+  }
+};
 
 export const sponsorProposal = async (req, res) => {
   try {

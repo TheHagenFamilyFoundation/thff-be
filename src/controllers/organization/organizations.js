@@ -1,6 +1,6 @@
 import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
-import { Organization, OrganizationInfo, User, Invite } from '../../models/index.js';
+import { Organization, OrganizationInfo, User, Invite, Proposal } from '../../models/index.js';
 import { generateCode } from "../../utils/util.js";
 import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
@@ -146,12 +146,25 @@ export const createOrganization = async (req, res) => {
 
 export const getOrganizations = async (req, res) => {
   try {
-    let { limit, skip, filter, sort, dir } = req.query;
+    let { limit, skip, filter, sort, dir, year } = req.query;
 
     let query = {};
 
     if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter } };
+      query = { name: { $regex: filter, $options: 'i' } };
+    }
+
+    // If year is provided, only return organizations that have proposals in that year
+    if (year) {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      const proposals = await Proposal.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+        $or: [{ archived: false }, { archived: { $exists: false } }]
+      }).distinct('organization');
+
+      query = { ...query, _id: { $in: proposals } };
     }
 
     let organizations = await Organization.find(query)
@@ -353,6 +366,45 @@ export const getOrganizationInvites = async (req, res) => {
   }
 };
 
+export const resendInvite = async (req, res) => {
+  Logger.info('Inside resendInvite');
+
+  try {
+    const { inviteID } = req.params;
+
+    const invite = await Invite.findOne({ _id: inviteID, status: 'pending' }).populate('organization', 'name');
+    if (!invite) {
+      return res.status(404).json({ code: 'ORG014', message: 'Invite not found' });
+    }
+
+    let feURL = Config.feURL;
+    if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+      feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+    }
+
+    const orgName = invite.organization?.name || 'an organization';
+
+    const data = {
+      email: invite.email,
+      organizationName: orgName,
+      registerLink: `${feURL}/sign-up`
+    };
+
+    await sendEmailWithTemplate(
+      invite.email,
+      `Reminder: You've been invited to join ${orgName} on THFF`,
+      inviteUser,
+      data
+    );
+
+    Logger.info(`Invite email resent to ${invite.email} for organization ${orgName}`);
+    return res.status(200).json({ message: 'Invite resent', invite });
+  } catch (e) {
+    Logger.error(`Error resending invite: ${e.message}`);
+    return res.status(500).json({ code: 'ORG015', message: e.message });
+  }
+};
+
 export const cancelInvite = async (req, res) => {
   Logger.info('Inside cancelInvite');
 
@@ -377,12 +429,26 @@ export const cancelInvite = async (req, res) => {
 
 export const countOrganizations = async (req, res) => {
   try {
-    const { filter } = req.query;
+    const { filter, year } = req.query;
 
     let query = {};
     if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter } };
+      query = { name: { $regex: filter, $options: 'i' } };
     }
+
+    // If year is provided, only count organizations that have proposals in that year
+    if (year) {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      const proposals = await Proposal.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+        $or: [{ archived: false }, { archived: { $exists: false } }]
+      }).distinct('organization');
+
+      query = { ...query, _id: { $in: proposals } };
+    }
+
     const count = await Organization.find(query).count();
     return res.status(200).json(count);
   }
