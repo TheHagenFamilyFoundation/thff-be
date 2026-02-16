@@ -6,6 +6,8 @@ import { injectProposal } from "../../middlewares/model-injections.js";
 
 const router = new Router();
 
+router.get('/my-proposals',
+  ProposalController.getMyProposals)
 router.get('/',
   validateGetProposals,
   ProposalController.getProposals)
@@ -16,6 +18,8 @@ router.get('/propID/:propID',
   validateGetProposal,
   injectProposal,
   ProposalController.getProposal)
+router.put('/archive/:id',
+  ProposalController.archiveProposal)
 router.put('/sponsor/:id',
   validatePatchProposals,
   ProposalController.sponsorProposal)

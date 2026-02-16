@@ -9,7 +9,7 @@ import { generateCode, saltRounds } from "../../utils/util.js"
 import { sendEmailWithTemplate } from '../email/email.js';
 import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
 
-import { User, UserSetting, Token } from '../../models/index.js'
+import { User, UserSetting, Token, Invite, Organization } from '../../models/index.js'
 
 export const login = async (req, res) => {
   Logger.verbose('Inside Login');
@@ -188,6 +188,34 @@ export const register = async (req, res) => {
         .json({ code: "USER002", message: "Error Creating User" });
     }
 
+    // Auto-fulfill pending organization invites for this email
+    try {
+      const pendingInvites = await Invite.find({ email: email.toLowerCase(), status: 'pending' });
+
+      for (const invite of pendingInvites) {
+        const org = await Organization.findOne({ _id: invite.organization });
+        if (org && !org.users.some(u => u.toString() === createdUser._id.toString())) {
+          org.users.push(createdUser._id);
+          await org.save();
+
+          createdUser.organizations.push(org._id);
+
+          invite.status = 'accepted';
+          await invite.save();
+
+          Logger.info(`Auto-fulfilled invite: added ${email} to organization ${org.name}`);
+        }
+      }
+
+      if (pendingInvites.length > 0) {
+        await createdUser.save();
+      }
+    } catch (inviteError) {
+      Logger.error(`Error fulfilling pending invites for ${email}: ${inviteError.message}`);
+      // Don't fail registration if invite fulfillment fails
+    }
+
+    // Send welcome email (non-blocking)
     const data = {
       email: createdUser.email,
       loginLink: `${Config.feURL}/pages/auth/login`,
@@ -205,8 +233,35 @@ export const register = async (req, res) => {
       // Continue even if email fails - user is still created
     }
 
-    let message = 'User created';
-    return res.status(200).send({ message });
+    // Create default user settings
+    let userSettings = await UserSetting.create({
+      scheme: 'light',
+      userID: createdUser._id,
+    });
+
+    // Generate JWT token (same as login)
+    const token = jwt.sign(
+      {
+        accessLevel: createdUser.accessLevel,
+        userID: createdUser._id
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: process.env.TOKEN_EXPIRATION }
+    );
+
+    // Store token in db
+    await Token.create({ userID: createdUser._id, token, token_type: 'verification' });
+
+    Logger.info(`User registered and auto-logged in: ${email}`);
+
+    // Return same payload shape as login
+    const payload = {
+      user: createdUser,
+      token,
+      userSettings,
+    };
+
+    return res.status(200).send(payload);
   } catch (e) {
     Logger.error(`Error Registering user with email - ${email}`)
     return res
@@ -255,23 +310,46 @@ export const confirmUser = async (req, res) => {
       .json({ code: "USER003", message: "Error Confirming User" });
   }
 }
-//TODO:
 //refreshAccessToken
+// Accepts tokens that are still valid OR expired within a grace window (24 hours).
+// This enables sliding sessions — active users stay logged in indefinitely,
+// while inactive sessions expire after the grace period.
 export const refreshAccessToken = async (req, res) => {
   Logger.info('Inside - refreshAccessToken');
+
+  const REFRESH_GRACE_PERIOD_HOURS = 24;
 
   try {
     // Get the access token
     const { accessToken } = req.body;
 
-    const verifiedToken = jwt.verify(accessToken, process.env.TOKEN_SECRET);
+    // Verify token but allow expired tokens (we'll check the grace window manually)
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(accessToken, process.env.TOKEN_SECRET, { ignoreExpiration: true });
+    } catch (err) {
+      Logger.error('Token verification failed (invalid signature or malformed)');
+      return res.status(401).json({ err: "Invalid Token!" });
+    }
 
-    if (!verifiedToken) {
+    if (!decodedToken) {
       Logger.error('Invalid Token');
       return res.status(401).json({ err: "Invalid Token!" });
     }
 
-    const { userID } = verifiedToken;
+    // Check if the token expired beyond the grace window
+    if (decodedToken.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      const expiredAgoSeconds = now - decodedToken.exp;
+      const graceSeconds = REFRESH_GRACE_PERIOD_HOURS * 60 * 60;
+
+      if (expiredAgoSeconds > graceSeconds) {
+        Logger.error(`Token expired ${expiredAgoSeconds}s ago, beyond ${REFRESH_GRACE_PERIOD_HOURS}h grace period`);
+        return res.status(401).json({ err: "Token expired beyond refresh window. Please sign in again." });
+      }
+    }
+
+    const { userID } = decodedToken;
 
     //find the user
     const user = await User.findOne({ _id: userID });

@@ -15,6 +15,9 @@ import ProposalRouter from './api/proposal.js'
 
 import VoteRouter from './api/vote.js'
 
+import SettingsRouter from './api/settings.js'
+import ReferralCodeRouter from './api/referral-code.js'
+
 import SubmissionYearPublicRouter from './api/submission-year-public.js'
 import SubmissionYearRouter from './api/submission-year.js'
 
@@ -49,6 +52,12 @@ router.use('/auth', AuthRouter)
 
   //votes
   .use('/vote', VoteRouter)
+
+  //settings
+  .use('/settings', SettingsRouter)
+
+  //referral codes
+  .use('/referral-code', ReferralCodeRouter)
 
   // Protected submission year POST/PUT endpoints (auth required)
   .use('/submission-year', SubmissionYearRouter)

@@ -1,10 +1,10 @@
 import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
-import { Organization } from '../../models/index.js'
-import { OrganizationInfo } from '../../models/index.js'
-import { User } from "../../models/index.js";
+import { Organization, OrganizationInfo, User, Invite, Proposal } from '../../models/index.js';
 import { generateCode } from "../../utils/util.js";
+import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
+import { inviteUser } from "../../views/invite.js";
 import { sendEmailWithTemplate } from "../email/email.js";
 
 export const getOrganization = async (req, res) => {
@@ -146,12 +146,25 @@ export const createOrganization = async (req, res) => {
 
 export const getOrganizations = async (req, res) => {
   try {
-    let { limit, skip, filter, sort, dir } = req.query;
+    let { limit, skip, filter, sort, dir, year } = req.query;
 
     let query = {};
 
     if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter } };
+      query = { name: { $regex: filter, $options: 'i' } };
+    }
+
+    // If year is provided, only return organizations that have proposals in that year
+    if (year) {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      const proposals = await Proposal.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+        $or: [{ archived: false }, { archived: { $exists: false } }]
+      }).distinct('organization');
+
+      query = { ...query, _id: { $in: proposals } };
     }
 
     let organizations = await Organization.find(query)
@@ -204,14 +217,238 @@ export const getOrganizations = async (req, res) => {
   }
 };
 
+export const addUserToOrganization = async (req, res) => {
+  Logger.info('Inside addUserToOrganization');
+
+  try {
+    const { orgID } = req.params;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ code: 'ORG004', message: 'Email is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find the organization
+    const organization = await Organization.findOne({ _id: orgID });
+    if (!organization) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+
+    // Find the user by email
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      // User doesn't exist — create an invite and send email
+      const existingInvite = await Invite.findOne({
+        email: normalizedEmail,
+        organization: orgID,
+        status: 'pending'
+      });
+
+      if (existingInvite) {
+        return res.status(400).json({ code: 'ORG010', message: 'An invite has already been sent to this email' });
+      }
+
+      // Get the inviter's ID from the decoded token
+      const invitedBy = req.decoded?.userID || null;
+
+      const invite = await Invite.create({
+        email: normalizedEmail,
+        organization: orgID,
+        invitedBy,
+        status: 'pending'
+      });
+
+      // Send invite email
+      let feURL = Config.feURL;
+      if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+        feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+      }
+
+      const data = {
+        email: normalizedEmail,
+        organizationName: organization.name,
+        registerLink: `${feURL}/sign-up`
+      };
+
+      try {
+        await sendEmailWithTemplate(normalizedEmail, `You've been invited to join ${organization.name} on THFF`, inviteUser, data);
+        Logger.info(`Invite email sent to ${normalizedEmail} for organization ${organization.name}`);
+      } catch (emailError) {
+        Logger.error(`Failed to send invite email to ${normalizedEmail}:`, emailError);
+        // Invite is still created even if email fails
+      }
+
+      return res.status(200).json({
+        message: 'Invite sent! They will be added automatically when they create an account.',
+        invited: true,
+        invite
+      });
+    }
+
+    // User exists — add them directly
+    if (organization.users.some(u => u.toString() === user._id.toString())) {
+      return res.status(400).json({ code: 'ORG007', message: 'User is already a member of this organization' });
+    }
+
+    // Add user to organization's users array
+    organization.users.push(user._id);
+    await organization.save();
+
+    // Add organization to user's organizations array
+    user.organizations.push(organization._id);
+    await user.save();
+
+    // Return updated organization with populated users
+    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
+
+    Logger.info(`User ${user.email} added to organization ${organization.name}`);
+    return res.status(200).json({ message: 'User added to organization', invited: false, organization: updatedOrg });
+  } catch (e) {
+    Logger.error(`Error adding user to organization: ${e.message}`);
+    return res.status(500).json({ code: 'ORG008', message: e.message });
+  }
+};
+
+export const removeUserFromOrganization = async (req, res) => {
+  Logger.info('Inside removeUserFromOrganization');
+
+  try {
+    const { orgID, userID } = req.params;
+
+    // Find the organization
+    const organization = await Organization.findOne({ _id: orgID });
+    if (!organization) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+
+    // Find the user
+    const user = await User.findOne({ _id: userID });
+    if (!user) {
+      return res.status(404).json({ code: 'ORG006', message: 'User not found' });
+    }
+
+    // Remove user from organization's users array
+    organization.users = organization.users.filter(u => u.toString() !== userID);
+    await organization.save();
+
+    // Remove organization from user's organizations array
+    user.organizations = user.organizations.filter(o => o.toString() !== orgID);
+    await user.save();
+
+    // Return updated organization with populated users
+    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
+
+    Logger.info(`User ${user.email} removed from organization ${organization.name}`);
+    return res.status(200).json({ message: 'User removed from organization', organization: updatedOrg });
+  } catch (e) {
+    Logger.error(`Error removing user from organization: ${e.message}`);
+    return res.status(500).json({ code: 'ORG009', message: e.message });
+  }
+};
+
+export const getOrganizationInvites = async (req, res) => {
+  Logger.info('Inside getOrganizationInvites');
+
+  try {
+    const { orgID } = req.params;
+
+    const invites = await Invite.find({ organization: orgID, status: 'pending' })
+      .populate('invitedBy', 'email firstName lastName')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(invites);
+  } catch (e) {
+    Logger.error(`Error getting invites: ${e.message}`);
+    return res.status(500).json({ code: 'ORG011', message: e.message });
+  }
+};
+
+export const resendInvite = async (req, res) => {
+  Logger.info('Inside resendInvite');
+
+  try {
+    const { inviteID } = req.params;
+
+    const invite = await Invite.findOne({ _id: inviteID, status: 'pending' }).populate('organization', 'name');
+    if (!invite) {
+      return res.status(404).json({ code: 'ORG014', message: 'Invite not found' });
+    }
+
+    let feURL = Config.feURL;
+    if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+      feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+    }
+
+    const orgName = invite.organization?.name || 'an organization';
+
+    const data = {
+      email: invite.email,
+      organizationName: orgName,
+      registerLink: `${feURL}/sign-up`
+    };
+
+    await sendEmailWithTemplate(
+      invite.email,
+      `Reminder: You've been invited to join ${orgName} on THFF`,
+      inviteUser,
+      data
+    );
+
+    Logger.info(`Invite email resent to ${invite.email} for organization ${orgName}`);
+    return res.status(200).json({ message: 'Invite resent', invite });
+  } catch (e) {
+    Logger.error(`Error resending invite: ${e.message}`);
+    return res.status(500).json({ code: 'ORG015', message: e.message });
+  }
+};
+
+export const cancelInvite = async (req, res) => {
+  Logger.info('Inside cancelInvite');
+
+  try {
+    const { inviteID } = req.params;
+
+    const invite = await Invite.findOne({ _id: inviteID, status: 'pending' });
+    if (!invite) {
+      return res.status(404).json({ code: 'ORG012', message: 'Invite not found' });
+    }
+
+    invite.status = 'cancelled';
+    await invite.save();
+
+    Logger.info(`Invite ${inviteID} cancelled`);
+    return res.status(200).json({ message: 'Invite cancelled', invite });
+  } catch (e) {
+    Logger.error(`Error cancelling invite: ${e.message}`);
+    return res.status(500).json({ code: 'ORG013', message: e.message });
+  }
+};
+
 export const countOrganizations = async (req, res) => {
   try {
-    const { filter } = req.query;
+    const { filter, year } = req.query;
 
     let query = {};
     if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter } };
+      query = { name: { $regex: filter, $options: 'i' } };
     }
+
+    // If year is provided, only count organizations that have proposals in that year
+    if (year) {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      const proposals = await Proposal.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+        $or: [{ archived: false }, { archived: { $exists: false } }]
+      }).distinct('organization');
+
+      query = { ...query, _id: { $in: proposals } };
+    }
+
     const count = await Organization.find(query).count();
     return res.status(200).json(count);
   }
