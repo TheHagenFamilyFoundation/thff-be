@@ -21,6 +21,8 @@ import ReferralCodeRouter from './api/referral-code.js'
 import SubmissionYearPublicRouter from './api/submission-year-public.js'
 import SubmissionYearRouter from './api/submission-year.js'
 
+import MeetingRouter from './api/meeting.js'
+
 import AuthnMiddleware from '../middlewares/authn.js'
 
 const router = new Router();
@@ -61,5 +63,8 @@ router.use('/auth', AuthRouter)
 
   // Protected submission year POST/PUT endpoints (auth required)
   .use('/submission-year', SubmissionYearRouter)
+
+  //meetings
+  .use('/meeting', MeetingRouter)
 
 export default router;

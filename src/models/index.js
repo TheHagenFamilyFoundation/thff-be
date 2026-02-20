@@ -1,5 +1,6 @@
 import Grant from './grant.js';
 import Invite from './invite.js';
+import Meeting from './meeting.js';
 import Organization501c3 from './organization-501c3.js';
 import OrganizationInfo from './organization-info.js';
 import Organization from './organization.js';
@@ -22,6 +23,7 @@ import VoteLetterOfIntent from './old/vote-letter-of-intent.js';
 export {
   Grant,
   Invite,
+  Meeting,
   Organization,
   OrganizationInfo,
   Organization501c3,
