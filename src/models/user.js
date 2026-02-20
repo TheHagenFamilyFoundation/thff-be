@@ -43,7 +43,10 @@ const userSchema = Schema({
     // 2-director
     // 3-president
     // 4-admin(Logan)
-  }
+  },
+  referralCode: {
+    type: String,
+  },
 }, {
   timestamps: true
 }

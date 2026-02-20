@@ -9,7 +9,7 @@ import { generateCode, saltRounds } from "../../utils/util.js"
 import { sendEmailWithTemplate } from '../email/email.js';
 import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
 
-import { User, UserSetting, Token, Invite, Organization } from '../../models/index.js'
+import { User, UserSetting, Token, Invite, Organization, ReferralCode } from '../../models/index.js'
 
 export const login = async (req, res) => {
   Logger.verbose('Inside Login');
@@ -149,7 +149,8 @@ export const register = async (req, res) => {
 
   const {
     email,
-    password
+    password,
+    referralCode
   } = req.body;
 
   const errors = validationResult(req);
@@ -177,6 +178,15 @@ export const register = async (req, res) => {
       encryptedPassword,
       confirmCode: generateCode()
     };
+
+    // Persist referral code on the user record if provided and valid
+    if (referralCode) {
+      const validRef = await ReferralCode.findOne({ code: referralCode, active: true });
+      if (validRef) {
+        newUser.referralCode = referralCode;
+        Logger.info(`User ${email} registered with referral code ${referralCode}`);
+      }
+    }
 
     Logger.verbose(`Creating User with ${email}`)
     //create new user

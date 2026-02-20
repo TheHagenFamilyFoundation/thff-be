@@ -29,12 +29,22 @@ export const createProposal = async (req, res) => {
     proposal.proposalID = newID;
     proposal.organization = orgID;
 
-    // If a referral code is provided, validate it and auto-link the director as sponsor
-    if (referralCode) {
-      const refCode = await ReferralCode.findOne({ code: referralCode, active: true });
+    // Resolve referral code: use the one passed in the request body,
+    // or fall back to the code stored on the user's account from sign-up
+    let effectiveReferralCode = referralCode;
+    if (!effectiveReferralCode) {
+      const user = await User.findOne({ _id: decoded.userID });
+      if (user?.referralCode) {
+        effectiveReferralCode = user.referralCode;
+        Logger.info(`Using stored referral code ${effectiveReferralCode} from user ${decoded.userID}`);
+      }
+    }
+
+    if (effectiveReferralCode) {
+      const refCode = await ReferralCode.findOne({ code: effectiveReferralCode, active: true });
       if (refCode) {
         proposal.sponsor = refCode.director;
-        Logger.info(`Proposal auto-sponsored by director ${refCode.director} via referral code ${referralCode}`);
+        Logger.info(`Proposal auto-sponsored by director ${refCode.director} via referral code ${effectiveReferralCode}`);
       }
     }
 

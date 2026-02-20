@@ -1,5 +1,5 @@
 import Logger from '../../utils/logger.js';
-import { ReferralCode } from '../../models/index.js';
+import { ReferralCode, User } from '../../models/index.js';
 import { generateCode } from '../../utils/util.js';
 
 export const createReferralCode = async (req, res) => {
@@ -72,6 +72,75 @@ export const deactivateReferralCode = async (req, res) => {
   } catch (e) {
     Logger.error(`Error toggling referral code: ${e.message}`);
     return res.status(500).json({ message: 'Error toggling referral code' });
+  }
+};
+
+export const getMySponsor = async (req, res) => {
+  Logger.info('Inside getMySponsor');
+
+  try {
+    const { decoded } = req;
+    const user = await User.findOne({ _id: decoded.userID });
+
+    if (!user || !user.referralCode) {
+      return res.status(200).json({ hasSponsor: false });
+    }
+
+    const referralCode = await ReferralCode.findOne({ code: user.referralCode })
+      .populate('director', 'email firstName lastName');
+
+    if (!referralCode) {
+      return res.status(200).json({ hasSponsor: false });
+    }
+
+    return res.status(200).json({
+      hasSponsor: true,
+      code: referralCode.code,
+      sponsor: {
+        name: `${referralCode.director.firstName} ${referralCode.director.lastName}`,
+        email: referralCode.director.email,
+      },
+    });
+  } catch (e) {
+    Logger.error(`Error getting user sponsor: ${e.message}`);
+    return res.status(500).json({ message: 'Error getting sponsor info' });
+  }
+};
+
+export const setMyReferralCode = async (req, res) => {
+  Logger.info('Inside setMyReferralCode');
+
+  try {
+    const { decoded } = req;
+    const { code } = req.body;
+
+    if (!code) {
+      // Clear referral code
+      await User.updateOne({ _id: decoded.userID }, { $unset: { referralCode: 1 } });
+      return res.status(200).json({ cleared: true });
+    }
+
+    const refCode = await ReferralCode.findOne({ code, active: true })
+      .populate('director', 'email firstName lastName');
+
+    if (!refCode) {
+      return res.status(404).json({ message: 'Invalid or expired referral code' });
+    }
+
+    await User.updateOne({ _id: decoded.userID }, { referralCode: code });
+
+    Logger.info(`User ${decoded.userID} set referral code to ${code}`);
+
+    return res.status(200).json({
+      code: refCode.code,
+      sponsor: {
+        name: `${refCode.director.firstName} ${refCode.director.lastName}`,
+        email: refCode.director.email,
+      },
+    });
+  } catch (e) {
+    Logger.error(`Error setting referral code: ${e.message}`);
+    return res.status(500).json({ message: 'Error setting referral code' });
   }
 };
 
