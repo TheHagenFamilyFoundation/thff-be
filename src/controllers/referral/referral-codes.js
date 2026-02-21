@@ -2,6 +2,13 @@ import Logger from '../../utils/logger.js';
 import { ReferralCode, User } from '../../models/index.js';
 import { generateCode } from '../../utils/util.js';
 
+const buildDirectorName = (director) => {
+  const first = director?.firstName || '';
+  const last = director?.lastName || '';
+  const full = `${first} ${last}`.trim();
+  return full || director?.email || 'Unknown';
+};
+
 export const createReferralCode = async (req, res) => {
   Logger.info('Inside createReferralCode');
 
@@ -97,7 +104,7 @@ export const getMySponsor = async (req, res) => {
       hasSponsor: true,
       code: referralCode.code,
       sponsor: {
-        name: `${referralCode.director.firstName} ${referralCode.director.lastName}`,
+        name: buildDirectorName(referralCode.director),
         email: referralCode.director.email,
       },
     });
@@ -134,7 +141,7 @@ export const setMyReferralCode = async (req, res) => {
     return res.status(200).json({
       code: refCode.code,
       sponsor: {
-        name: `${refCode.director.firstName} ${refCode.director.lastName}`,
+        name: buildDirectorName(refCode.director),
         email: refCode.director.email,
       },
     });
@@ -159,7 +166,7 @@ export const validateReferralCode = async (req, res) => {
 
     return res.status(200).json({
       valid: true,
-      directorName: `${referralCode.director.firstName} ${referralCode.director.lastName}`,
+      directorName: buildDirectorName(referralCode.director),
     });
   } catch (e) {
     Logger.error(`Error validating referral code: ${e.message}`);
