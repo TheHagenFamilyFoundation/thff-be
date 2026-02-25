@@ -35,6 +35,14 @@ const meetingSchema = Schema({
     type: Number,
     default: 0
   },
+  originalBudget: {
+    type: Number,
+    default: 0
+  },
+  totalAllocated: {
+    type: Number,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['setup', 'in_progress', 'completed'],

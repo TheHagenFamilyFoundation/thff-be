@@ -4,7 +4,7 @@ import { Organization, OrganizationInfo, User, Invite, Proposal } from '../../mo
 import { generateCode } from "../../utils/util.js";
 import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
-import { inviteUser } from "../../views/invite.js";
+import { inviteUser, organizationAddedUser } from "../../views/invite.js";
 import { sendEmailWithTemplate } from "../email/email.js";
 
 export const getOrganization = async (req, res) => {
@@ -300,6 +300,30 @@ export const addUserToOrganization = async (req, res) => {
     // Add organization to user's organizations array
     user.organizations.push(organization._id);
     await user.save();
+
+    // Notify existing user that they were added to an organization.
+    let feURL = Config.feURL;
+    if (!feURL.startsWith('http://') && !feURL.startsWith('https://')) {
+      feURL = feURL.includes('localhost') ? `http://${feURL}` : `https://${feURL}`;
+    }
+
+    const existingUserEmailData = {
+      organizationName: organization.name,
+      signInLink: `${feURL}/sign-in`
+    };
+
+    try {
+      await sendEmailWithTemplate(
+        normalizedEmail,
+        `You've been added to ${organization.name} on THFF`,
+        organizationAddedUser,
+        existingUserEmailData
+      );
+      Logger.info(`Organization-added email sent to ${normalizedEmail} for organization ${organization.name}`);
+    } catch (emailError) {
+      Logger.error(`Failed to send organization-added email to ${normalizedEmail}:`, emailError);
+      // Membership updates should still succeed if email fails.
+    }
 
     // Return updated organization with populated users
     const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');

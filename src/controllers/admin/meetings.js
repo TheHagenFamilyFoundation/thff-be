@@ -11,6 +11,28 @@ function isPresidentOrAdmin(decoded) {
   return decoded.accessLevel >= ACCESS_LEVEL_PRESIDENT;
 }
 
+const MEETING_POPULATE = [
+  { path: 'submissionYear' },
+  { path: 'startedBy', select: 'firstName lastName email' },
+  { path: 'completedBy', select: 'firstName lastName email' },
+  {
+    path: 'allocations.proposal',
+    select: 'projectTitle proposalID amountRequested totalProjectCost score votes sponsor',
+  },
+  { path: 'allocations.organization', select: 'name organizationID' }
+];
+
+async function populateMeeting(meetingId) {
+  const meeting = await Meeting.findById(meetingId).populate(MEETING_POPULATE);
+  if (meeting) {
+    const proposals = meeting.allocations
+      .map(a => a.proposal)
+      .filter(Boolean);
+    await Proposal.populate(proposals, { path: 'sponsor', select: 'firstName lastName email' });
+  }
+  return meeting;
+}
+
 export const createMeeting = async (req, res) => {
   Logger.verbose('Inside createMeeting');
 
@@ -60,11 +82,7 @@ export const createMeeting = async (req, res) => {
       notes: notes || ''
     });
 
-    const populated = await Meeting.findById(meeting._id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested score')
-      .populate('allocations.organization', 'name organizationID');
+    const populated = await populateMeeting(meeting._id);
 
     Logger.info(`Meeting created: ${meeting._id}`);
     return res.status(200).json(populated);
@@ -93,6 +111,7 @@ export const getMeetings = async (req, res) => {
     const meetings = await Meeting.find(query)
       .populate('submissionYear')
       .populate('startedBy', 'firstName lastName email')
+      .populate('completedBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
 
     return res.status(200).json(meetings);
@@ -108,12 +127,7 @@ export const getMeeting = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const meeting = await Meeting.findById(id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('completedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested totalProjectCost score votes')
-      .populate('allocations.organization', 'name organizationID');
+    const meeting = await populateMeeting(id);
 
     if (!meeting) {
       return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
@@ -153,6 +167,7 @@ export const updateMeeting = async (req, res) => {
 
     if (status && status !== meeting.status) {
       if (status === 'in_progress' && meeting.status === 'setup') {
+        meeting.originalBudget = meeting.totalBudget;
         meeting.status = 'in_progress';
       } else if (status === 'setup' && meeting.status === 'in_progress') {
         meeting.status = 'setup';
@@ -161,11 +176,7 @@ export const updateMeeting = async (req, res) => {
 
     await meeting.save();
 
-    const populated = await Meeting.findById(id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested totalProjectCost score votes')
-      .populate('allocations.organization', 'name organizationID');
+    const populated = await populateMeeting(id);
 
     Logger.info(`Meeting updated: ${id}`);
     return res.status(200).json(populated);
@@ -207,11 +218,7 @@ export const updateAllocations = async (req, res) => {
 
     await meeting.save();
 
-    const populated = await Meeting.findById(id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested totalProjectCost score votes')
-      .populate('allocations.organization', 'name organizationID');
+    const populated = await populateMeeting(id);
 
     Logger.info(`Meeting allocations updated: ${id}`);
     return res.status(200).json(populated);
@@ -242,23 +249,56 @@ export const completeMeeting = async (req, res) => {
       return res.status(400).json({ code: "MTG013", message: "Meeting is already completed" });
     }
 
+    meeting.totalAllocated = meeting.allocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0);
     meeting.status = 'completed';
     meeting.completedBy = decoded.userID;
     meeting.completedAt = new Date();
     await meeting.save();
 
-    const populated = await Meeting.findById(id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('completedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested totalProjectCost score')
-      .populate('allocations.organization', 'name organizationID');
+    const populated = await populateMeeting(id);
 
     Logger.info(`Meeting completed: ${id}`);
     return res.status(200).json(populated);
   } catch (err) {
     Logger.error(`Error completing meeting: ${err.message}`);
     return res.status(500).json({ code: "MTG014", message: err.message });
+  }
+};
+
+export const reopenMeeting = async (req, res) => {
+  Logger.verbose('Inside reopenMeeting');
+
+  try {
+    const { decoded } = req;
+
+    if (!isPresidentOrAdmin(decoded)) {
+      return res.status(403).json({ code: "MTG021", message: "Only the president or admin can reopen meetings" });
+    }
+
+    const { id } = req.params;
+
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    if (meeting.status !== 'completed') {
+      return res.status(400).json({ code: "MTG022", message: "Only completed meetings can be reopened" });
+    }
+
+    meeting.status = 'in_progress';
+    meeting.completedBy = undefined;
+    meeting.completedAt = undefined;
+    meeting.totalAllocated = 0;
+    await meeting.save();
+
+    const populated = await populateMeeting(id);
+
+    Logger.info(`Meeting reopened: ${id}`);
+    return res.status(200).json(populated);
+  } catch (err) {
+    Logger.error(`Error reopening meeting: ${err.message}`);
+    return res.status(500).json({ code: "MTG023", message: err.message });
   }
 };
 
@@ -291,18 +331,49 @@ export const archiveMeeting = async (req, res) => {
   }
 };
 
+export const removeAllocation = async (req, res) => {
+  Logger.verbose('Inside removeAllocation');
+
+  try {
+    const { decoded } = req;
+
+    if (!isPresidentOrAdmin(decoded)) {
+      return res.status(403).json({ code: "MTG018", message: "Only the president or admin can remove allocations" });
+    }
+
+    const { id, allocationId } = req.params;
+
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    if (meeting.status !== 'setup') {
+      return res.status(400).json({ code: "MTG019", message: "Allocations can only be removed during setup" });
+    }
+
+    meeting.allocations = meeting.allocations.filter(
+      a => a._id.toString() !== allocationId
+    );
+    await meeting.save();
+
+    const updated = await populateMeeting(id);
+
+    Logger.info(`Allocation ${allocationId} removed from meeting ${id}`);
+    return res.status(200).json(updated);
+  } catch (err) {
+    Logger.error(`Error removing allocation: ${err.message}`);
+    return res.status(500).json({ code: "MTG020", message: err.message });
+  }
+};
+
 export const getMeetingSummary = async (req, res) => {
   Logger.verbose('Inside getMeetingSummary');
 
   try {
     const { id } = req.params;
 
-    const meeting = await Meeting.findById(id)
-      .populate('submissionYear')
-      .populate('startedBy', 'firstName lastName email')
-      .populate('completedBy', 'firstName lastName email')
-      .populate('allocations.proposal', 'projectTitle proposalID amountRequested totalProjectCost score')
-      .populate('allocations.organization', 'name organizationID');
+    const meeting = await populateMeeting(id);
 
     if (!meeting) {
       return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
