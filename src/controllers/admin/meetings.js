@@ -1,6 +1,7 @@
 import { validationResult } from "express-validator";
 
 import Meeting from "../../models/meeting.js";
+import Organization from "../../models/organization.js";
 import { Proposal } from "../../models/index.js";
 import Logger from "../../utils/logger.js";
 import { generateCode } from "../../utils/util.js";
@@ -158,10 +159,6 @@ export const updateMeeting = async (req, res) => {
       return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
     }
 
-    if (meeting.status === 'completed') {
-      return res.status(400).json({ code: "MTG008", message: "Cannot update a completed meeting" });
-    }
-
     if (totalBudget !== undefined) meeting.totalBudget = totalBudget;
     if (notes !== undefined) meeting.notes = notes;
 
@@ -172,6 +169,10 @@ export const updateMeeting = async (req, res) => {
       } else if (status === 'setup' && meeting.status === 'in_progress') {
         meeting.status = 'setup';
       }
+    }
+
+    if (meeting.status === 'completed') {
+      meeting.totalAllocated = meeting.allocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0);
     }
 
     await meeting.save();
@@ -204,10 +205,6 @@ export const updateAllocations = async (req, res) => {
       return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
     }
 
-    if (meeting.status === 'completed') {
-      return res.status(400).json({ code: "MTG008", message: "Cannot update a completed meeting" });
-    }
-
     // Update each allocation's amountGranted
     for (const update of allocations) {
       const alloc = meeting.allocations.id(update._id);
@@ -216,6 +213,7 @@ export const updateAllocations = async (req, res) => {
       }
     }
 
+    meeting.totalAllocated = meeting.allocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0);
     await meeting.save();
 
     const populated = await populateMeeting(id);
@@ -262,43 +260,6 @@ export const completeMeeting = async (req, res) => {
   } catch (err) {
     Logger.error(`Error completing meeting: ${err.message}`);
     return res.status(500).json({ code: "MTG014", message: err.message });
-  }
-};
-
-export const reopenMeeting = async (req, res) => {
-  Logger.verbose('Inside reopenMeeting');
-
-  try {
-    const { decoded } = req;
-
-    if (!isPresidentOrAdmin(decoded)) {
-      return res.status(403).json({ code: "MTG021", message: "Only the president or admin can reopen meetings" });
-    }
-
-    const { id } = req.params;
-
-    const meeting = await Meeting.findById(id);
-    if (!meeting) {
-      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
-    }
-
-    if (meeting.status !== 'completed') {
-      return res.status(400).json({ code: "MTG022", message: "Only completed meetings can be reopened" });
-    }
-
-    meeting.status = 'in_progress';
-    meeting.completedBy = undefined;
-    meeting.completedAt = undefined;
-    meeting.totalAllocated = 0;
-    await meeting.save();
-
-    const populated = await populateMeeting(id);
-
-    Logger.info(`Meeting reopened: ${id}`);
-    return res.status(200).json(populated);
-  } catch (err) {
-    Logger.error(`Error reopening meeting: ${err.message}`);
-    return res.status(500).json({ code: "MTG023", message: err.message });
   }
 };
 
@@ -364,6 +325,200 @@ export const removeAllocation = async (req, res) => {
   } catch (err) {
     Logger.error(`Error removing allocation: ${err.message}`);
     return res.status(500).json({ code: "MTG020", message: err.message });
+  }
+};
+
+export const getAddableProposals = async (req, res) => {
+  Logger.verbose('Inside getAddableProposals');
+
+  try {
+    const { id } = req.params;
+    const meeting = await Meeting.findById(id).populate('allocations.proposal');
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    const startDate = new Date(`${meeting.year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${meeting.year}-12-31T23:59:59.999Z`);
+    const existingIds = meeting.allocations
+      .map(a => a.proposal?._id)
+      .filter(Boolean);
+
+    const proposals = await Proposal.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+      _id: { $nin: existingIds }
+    })
+      .populate('organization', 'name organizationID')
+      .populate('sponsor', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(proposals);
+  } catch (err) {
+    Logger.error(`Error retrieving addable proposals: ${err.message}`);
+    return res.status(500).json({ code: "MTG024", message: err.message });
+  }
+};
+
+export const addAllocation = async (req, res) => {
+  Logger.verbose('Inside addAllocation');
+
+  try {
+    const { decoded } = req;
+    if (!isPresidentOrAdmin(decoded)) {
+      return res.status(403).json({ code: "MTG025", message: "Only the president or admin can add proposals to a meeting" });
+    }
+
+    const { id } = req.params;
+    const { proposalId } = req.body;
+    if (!proposalId) {
+      return res.status(400).json({ code: "MTG026", message: "proposalId is required" });
+    }
+
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    const exists = meeting.allocations.some(a => a.proposal?.toString() === proposalId);
+    if (exists) {
+      return res.status(400).json({ code: "MTG027", message: "Proposal already in this meeting" });
+    }
+
+    const proposal = await Proposal.findById(proposalId).populate('organization', 'name organizationID');
+    if (!proposal) {
+      return res.status(404).json({ code: "MTG028", message: "Proposal not found" });
+    }
+    if (!proposal.organization?._id) {
+      return res.status(400).json({ code: "MTG029", message: "Proposal organization not found" });
+    }
+
+    const startDate = new Date(`${meeting.year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${meeting.year}-12-31T23:59:59.999Z`);
+    if (proposal.createdAt < startDate || proposal.createdAt > endDate) {
+      return res.status(400).json({ code: "MTG030", message: "Proposal is not in this meeting year" });
+    }
+
+    meeting.allocations.push({
+      proposal: proposal._id,
+      organization: proposal.organization._id,
+      amountRequested: proposal.amountRequested || 0,
+      amountGranted: 0
+    });
+
+    // Adding back to the meeting re-activates the proposal.
+    proposal.archived = false;
+    await proposal.save();
+
+    if (meeting.status === 'completed') {
+      meeting.totalAllocated = meeting.allocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0);
+    }
+    await meeting.save();
+
+    const populated = await populateMeeting(id);
+    return res.status(200).json(populated);
+  } catch (err) {
+    Logger.error(`Error adding allocation: ${err.message}`);
+    return res.status(500).json({ code: "MTG031", message: err.message });
+  }
+};
+
+export const getFundedContacts = async (req, res) => {
+  Logger.verbose('Inside getFundedContacts');
+
+  try {
+    const { id } = req.params;
+    const meeting = await Meeting.findById(id)
+      .select('_id meetingID year status totalBudget totalAllocated allocations')
+      .populate({
+        path: 'allocations.organization',
+        select: 'name organizationID info',
+        populate: { path: 'info', select: 'contactPerson contactPersonTitle contactPersonPhoneNumber email phone address city state zip website' }
+      })
+      .populate('allocations.proposal', 'organization');
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    const fundedAllocations = meeting.allocations.filter(a => (a.amountGranted || 0) > 0);
+    const orgIds = [
+      ...new Set(
+        fundedAllocations
+          .map(a => {
+            if (a.organization?._id) return a.organization._id.toString();
+            if (a.organization) return a.organization.toString();
+            if (a.proposal?.organization) return a.proposal.organization.toString();
+            return null;
+          })
+          .filter(Boolean)
+      )
+    ];
+
+    const byOrgId = new Map();
+    for (const a of fundedAllocations) {
+      if (a.organization?._id) {
+        byOrgId.set(a.organization._id.toString(), a.organization);
+      }
+    }
+
+    const missingOrgIds = orgIds.filter(orgId => !byOrgId.has(orgId));
+    if (missingOrgIds.length > 0) {
+      const organizations = await Organization
+        .find({ _id: { $in: missingOrgIds } })
+        .select('name organizationID info')
+        .populate('info', 'contactPerson contactPersonTitle contactPersonPhoneNumber email phone address city state zip website')
+        .lean();
+
+      organizations.forEach(org => {
+        byOrgId.set(org._id.toString(), org);
+      });
+    }
+
+    const contacts = orgIds.map(orgId => {
+      const orgAllocations = fundedAllocations.filter(a => {
+        const allocOrgId = a.organization?._id?.toString() || a.organization?.toString() || a.proposal?.organization?.toString();
+        return allocOrgId === orgId;
+      });
+      const totalGranted = orgAllocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0);
+      const totalRequested = orgAllocations.reduce((sum, a) => sum + (a.amountRequested || 0), 0);
+      const org = byOrgId.get(orgId);
+      const info = org?.info || {};
+
+      return {
+        organizationId: org?.organizationID || null,
+        organizationName: org?.name || 'Unknown Organization',
+        totals: {
+          requested: totalRequested,
+          granted: totalGranted,
+          proposalCount: orgAllocations.length
+        },
+        contact: {
+          contactPerson: info.contactPerson || null,
+          contactPersonTitle: info.contactPersonTitle || null,
+          email: info.email || null,
+          phone: info.phone || info.contactPersonPhoneNumber || null,
+          address: info.address || null,
+          city: info.city || null,
+          state: info.state || null,
+          zip: info.zip || null,
+          website: info.website || null
+        }
+      };
+    }).sort((a, b) => (b.totals.granted || 0) - (a.totals.granted || 0));
+
+    return res.status(200).json({
+      meeting: {
+        _id: meeting._id,
+        meetingID: meeting.meetingID,
+        year: meeting.year,
+        status: meeting.status,
+        totalBudget: meeting.totalBudget,
+        totalAllocated: meeting.totalAllocated || fundedAllocations.reduce((sum, a) => sum + (a.amountGranted || 0), 0)
+      },
+      contacts
+    });
+  } catch (err) {
+    Logger.error(`Error getting funded contacts: ${err.message}`);
+    return res.status(500).json({ code: "MTG032", message: err.message });
   }
 };
 
