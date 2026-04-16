@@ -12,15 +12,17 @@ function compileTemplate(template, data) {
   return wrapInLayout(body);
 }
 
-// Function to send an email with a templated HTML body
-export function sendEmailWithTemplate(to, subject, template, data) {
-  // Validate Mailgun configuration
+/** Full HTML email body (layout + template), same as sent via Mailgun */
+export function renderEmailWithTemplate(template, data) {
+  return compileTemplate(template, data);
+}
+
+/** Send a pre-rendered HTML body via Mailgun */
+export function sendHtmlEmail(to, subject, html) {
   if (!Config.mailgunKey || !Config.mailgunDomain) {
     Logger.error('Mailgun not configured: MAILGUN_KEY or MAILGUN_DOMAIN missing');
     return Promise.reject(new Error('Email service not configured'));
   }
-
-  const html = compileTemplate(template, data);
 
   const emailData = {
     from: 'The Hagen Family Foundation <admin@hagenfoundation.org>',
@@ -49,4 +51,10 @@ export function sendEmailWithTemplate(to, subject, template, data) {
       }
     });
   });
+}
+
+// Function to send an email with a templated HTML body
+export function sendEmailWithTemplate(to, subject, template, data) {
+  const html = compileTemplate(template, data);
+  return sendHtmlEmail(to, subject, html);
 }

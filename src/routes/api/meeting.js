@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import * as MeetingController from '../../controllers/admin/meetings.js';
+import * as OutboundEmailController from '../../controllers/email/outbound-emails.js';
 import {
   validateCreateMeeting,
   validateUpdateMeeting,
@@ -13,6 +14,8 @@ router.get('/', MeetingController.getMeetings);
 router.get('/:id', MeetingController.getMeeting);
 router.get('/:id/summary', MeetingController.getMeetingSummary);
 router.get('/:id/funded-contacts', MeetingController.getFundedContacts);
+router.get('/:id/outbound-emails', OutboundEmailController.listMeetingOutboundEmails);
+router.post('/:id/send-grant-notifications', OutboundEmailController.sendGrantMeetingNotifications);
 router.get('/:id/addable-proposals', MeetingController.getAddableProposals);
 router.post('/', validateCreateMeeting, MeetingController.createMeeting);
 router.post('/:id/allocations/add', MeetingController.addAllocation);
