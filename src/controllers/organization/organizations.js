@@ -7,6 +7,46 @@ import { registerOrganization } from "../../views/organization.js";
 import { inviteUser, organizationAddedUser } from "../../views/invite.js";
 import { sendEmailWithTemplate } from "../email/email.js";
 
+/**
+ * Org ids that have at least one qualifying proposal with createdAt in calendar year.
+ * @returns {Promise<undefined|Array>} undefined = no year filter; [] = none match
+ */
+async function distinctOrganizationIdsForProposalYear(yearRaw) {
+  const y = parseInt(String(yearRaw), 10);
+  if (Number.isNaN(y) || y < 1990 || y > 2100) {
+    return [];
+  }
+  const startDate = new Date(`${y}-01-01T00:00:00.000Z`);
+  const endDate = new Date(`${y}-12-31T23:59:59.999Z`);
+  return Proposal.find({
+    createdAt: { $gte: startDate, $lte: endDate },
+    $or: [{ archived: false }, { archived: { $exists: false } }],
+  }).distinct('organization');
+}
+
+/**
+ * @param {string|undefined} filter
+ * @param {undefined|Array} yearOrgIds — undefined = ignore year; [] = impossible match
+ */
+function buildOrganizationListMatchQuery(filter, yearOrgIds) {
+  let query = {};
+  if (filter && String(filter).length !== 0) {
+    query = { name: { $regex: filter, $options: 'i' } };
+  }
+  if (yearOrgIds !== undefined) {
+    query = { ...query, _id: { $in: yearOrgIds.length ? yearOrgIds : [] } };
+  }
+  return query;
+}
+
+/** @returns {Promise<undefined|Array>} */
+async function resolveYearOrgIds(yearParam) {
+  if (yearParam === undefined || yearParam === null || String(yearParam).trim() === '') {
+    return undefined;
+  }
+  return distinctOrganizationIdsForProposalYear(yearParam);
+}
+
 export const getOrganization = async (req, res) => {
   Logger.info('Inside getOrganization');
   console.log('1req.params', req.params);
@@ -146,72 +186,67 @@ export const createOrganization = async (req, res) => {
 
 export const getOrganizations = async (req, res) => {
   try {
-    let { limit, skip, filter, sort, dir, year } = req.query;
+    const { limit, skip, filter, sort, dir, year, includeTotal } = req.query;
 
-    let query = {};
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 500);
+    const skipNum = Math.max(parseInt(skip, 10) || 0, 0);
 
-    if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter, $options: 'i' } };
+    const yearOrgIds = await resolveYearOrgIds(year);
+    const matchQuery = buildOrganizationListMatchQuery(filter, yearOrgIds);
+
+    const wantTotal = includeTotal === '1' || includeTotal === 'true';
+    let total;
+    if (wantTotal) {
+      total = await Organization.countDocuments(matchQuery);
     }
 
-    // If year is provided, only return organizations that have proposals in that year
-    if (year) {
-      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+    const sortKey = sort || 'createdOn';
+    const direction = dir === 'asc' ? 1 : -1;
 
-      const proposals = await Proposal.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-        $or: [{ archived: false }, { archived: { $exists: false } }]
-      }).distinct('organization');
-
-      query = { ...query, _id: { $in: proposals } };
+    let sortField;
+    if (sortKey === 'name') {
+      sortField = 'name';
+    } else if (sortKey === 'createdOn') {
+      sortField = 'createdAt';
+    } else if (sortKey === 'users') {
+      sortField = 'userCount';
+    } else if (sortKey === 'proposals') {
+      sortField = 'proposalCount';
+    } else {
+      sortField = 'createdAt';
     }
 
-    let organizations = await Organization.find(query)
-      .populate('users')
-      .populate({
-        path: 'proposals',
-        options: { limit: 10 }
-      })
+    const pipeline = [
+      { $match: matchQuery },
+      {
+        $addFields: {
+          userCount: { $size: { $ifNull: ['$users', []] } },
+          proposalCount: { $size: { $ifNull: ['$proposals', []] } },
+        },
+      },
+      { $sort: { [sortField]: direction } },
+      { $skip: skipNum },
+      { $limit: limitNum },
+    ];
 
-    //sort
-    //for notes
-    // ASC  -> a.length - b.length
-    // DESC -> b.length - a.length
-    switch (sort) {
+    const rows = await Organization.aggregate(pipeline);
 
-      case 'users':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (a.users.length - b.users.length) : (b.users.length - a.users.length);
-        });
-        break;
-      case 'proposals':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (a.proposals.length - b.proposals.length) : (b.proposals.length - a.proposals.length);
-        });
-        break;
-      case 'createdOn':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
-        });
-        break;
-      case 'name':
-        if (dir === 'asc') {
-          organizations.sort((a, b) => b.name.localeCompare(a.name));
-        }
-        else {
-          organizations.sort((a, b) => a.name.localeCompare(b.name))
-        }
+    const orgs = rows.map((doc) => {
+      const uc = doc.userCount || 0;
+      const pc = doc.proposalCount || 0;
+      const { users, proposals, userCount, proposalCount, ...rest } = doc;
+      return {
+        ...rest,
+        users: Array(uc).fill(null),
+        proposals: Array(pc).fill(null),
+      };
+    });
 
-        break;
+    if (wantTotal) {
+      return res.status(200).json({ items: orgs, total });
     }
-
-    //skip and limit
-    let orgs = organizations.slice(skip, +skip + +limit);
-
     return res.status(200).json(orgs);
-  }
-  catch (err) {
+  } catch (err) {
     Logger.error(`Error Retrieving Organizations ${err.message}`);
     return res.status(400).send({ code: "ORG003", message: err.message });
   }
@@ -455,30 +490,14 @@ export const countOrganizations = async (req, res) => {
   try {
     const { filter, year } = req.query;
 
-    let query = {};
-    if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter, $options: 'i' } };
-    }
+    const yearOrgIds = await resolveYearOrgIds(year);
+    const query = buildOrganizationListMatchQuery(filter, yearOrgIds);
 
-    // If year is provided, only count organizations that have proposals in that year
-    if (year) {
-      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
-
-      const proposals = await Proposal.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-        $or: [{ archived: false }, { archived: { $exists: false } }]
-      }).distinct('organization');
-
-      query = { ...query, _id: { $in: proposals } };
-    }
-
-    const count = await Organization.find(query).count();
+    const count = await Organization.countDocuments(query);
     return res.status(200).json(count);
-  }
-  catch (err) {
+  } catch (err) {
     Logger.error(`Error Retrieving Organization Count: ${err}`);
     return res.status(400).send({ code: "ORG002", message: err.message });
   }
 
-}
+};

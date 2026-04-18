@@ -104,12 +104,34 @@ function collapseSponsoringDirectorDuplicateEmail(text) {
   );
 }
 
-function formatUsd(amount) {
-  if (amount == null || Number.isNaN(Number(amount))) return '$0';
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(amount));
+const MAX_SOLICITATION_PLAIN = 50000;
+/** Max HTML size for a customized grant notification body (legacy htmlBody override). */
+const MAX_GRANT_CUSTOM_HTML = 600000;
+/** Max plain-text length for the editable grant message paragraph. */
+const MAX_GRANT_MESSAGE_PLAIN = 50000;
+
+function defaultGrantMessagePlain() {
+  return (
+    'We are grateful for the work your organization does in the community. ' +
+    'This award reflects our confidence in your program and our mission to serve as a catalyst for change.'
+  );
 }
 
-const MAX_SOLICITATION_PLAIN = 50000;
+/**
+ * Build Handlebars data for grantNotificationEmail from a funded row and optional plain message.
+ */
+function buildGrantNotificationTemplateData(row, meetingYear, messagePlain) {
+  const recipientName = row.contactPerson ? row.contactPerson.split(',')[0].trim() : 'Friend';
+  const mp = messagePlain !== undefined && messagePlain !== null ? String(messagePlain) : defaultGrantMessagePlain();
+  const messageBodyHtml = plainTextToSafeEmailHtml(mp);
+  return {
+    recipientName,
+    organizationName: row.organizationName,
+    meetingYear,
+    proposalTitle: row.proposalTitle || '',
+    messageBodyHtml,
+  };
+}
 
 function escapeHtmlForEmail(text) {
   return String(text)
@@ -367,6 +389,7 @@ export const listMySolicitationEmails = async (req, res) => {
 
     const [items, total] = await Promise.all([
       OutboundEmail.find(q)
+        .select('-htmlBody')
         .populate('referralCode', 'code label createdAt')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -537,17 +560,177 @@ export const listMeetingOutboundEmails = async (req, res) => {
     }
 
     const { id } = req.params;
-    const emails = await OutboundEmail.find({ meeting: id, type: 'grant_notification' })
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? '10'), 10) || 10));
+    const skip = (page - 1) * pageSize;
+
+    const query = { meeting: id, type: 'grant_notification' };
+    const total = await OutboundEmail.countDocuments(query);
+
+    const emails = await OutboundEmail.find(query)
       .select('-htmlBody')
       .populate('sentBy', 'firstName lastName email')
       .populate('organization', 'name organizationID')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
       .lean();
 
-    return res.status(200).json(emails);
+    return res.status(200).json({
+      items: emails,
+      total,
+      page,
+      pageSize,
+    });
   } catch (e) {
     Logger.error(`listMeetingOutboundEmails: ${e.message}`);
     return res.status(500).json({ message: 'Error loading meeting emails' });
+  }
+};
+
+/** Full grant notification record including htmlBody (for viewing sent mail in the app). */
+export const getMeetingGrantOutboundEmailById = async (req, res) => {
+  try {
+    const { decoded } = req;
+    if (decoded.accessLevel < ACCESS_DIRECTOR) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id: meetingId, emailId } = req.params;
+    if (!mongoose.isValidObjectId(meetingId) || !mongoose.isValidObjectId(emailId)) {
+      return res.status(400).json({ message: 'Invalid id' });
+    }
+
+    const doc = await OutboundEmail.findOne({
+      _id: emailId,
+      meeting: meetingId,
+      type: 'grant_notification',
+    })
+      .select('subject to htmlBody createdAt organizationName proposalTitle')
+      .lean();
+
+    if (!doc) {
+      return res.status(404).json({ message: 'Email not found' });
+    }
+
+    return res.status(200).json(doc);
+  } catch (e) {
+    Logger.error(`getMeetingGrantOutboundEmailById: ${e.message}`);
+    return res.status(500).json({ message: 'Error loading email' });
+  }
+};
+
+/** Same recipient list as send, without sending — for UI preview before POST send-grant-notifications. */
+export const previewGrantMeetingNotifications = async (req, res) => {
+  try {
+    const { decoded } = req;
+    if (decoded.accessLevel < ACCESS_DIRECTOR) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id } = req.params;
+    const meeting = await Meeting.findById(id).select('_id status year').lean();
+    if (!meeting) {
+      return res.status(404).json({ code: 'MTG005', message: 'Meeting not found' });
+    }
+
+    if (meeting.status !== 'completed') {
+      return res.status(400).json({ message: 'Meeting must be completed before previewing grant emails' });
+    }
+
+    const loaded = await loadFundedOrgContacts(id);
+    if (!loaded) {
+      return res.status(404).json({ message: 'Meeting not found' });
+    }
+
+    const { meeting: m, rows } = loaded;
+    const previewRows = rows.map((row) => {
+      const hasEmail = !!(row.email && String(row.email).trim());
+      return {
+        organizationName: row.organizationName,
+        email: hasEmail ? normalizeEmail(row.email) : null,
+        amountGranted: row.amountGranted,
+        proposalTitle: row.proposalTitle || '',
+        willSend: hasEmail,
+        skipReason: hasEmail ? null : 'No organization email on file',
+      };
+    });
+
+    const ready = previewRows.filter((r) => r.willSend).length;
+    const skipped = previewRows.filter((r) => !r.willSend).length;
+
+    const defaultMsg = defaultGrantMessagePlain();
+    const emailPreviews = rows
+      .filter((r) => r.email && String(r.email).trim())
+      .map((row) => {
+        const subject = `Grant award — ${row.organizationName} (${m.year})`;
+        const html = renderEmailWithTemplate(
+          grantNotificationEmail,
+          buildGrantNotificationTemplateData(row, m.year, defaultMsg),
+        );
+        return {
+          organizationId: row.organizationId ? String(row.organizationId) : null,
+          organizationName: row.organizationName,
+          subject,
+          messagePlain: defaultMsg,
+          html,
+        };
+      });
+
+    return res.status(200).json({
+      meeting: { _id: m._id, year: m.year },
+      rows: previewRows,
+      counts: { ready, skipped },
+      emailPreviews,
+    });
+  } catch (e) {
+    Logger.error(`previewGrantMeetingNotifications: ${e.message}`);
+    return res.status(500).json({ message: e.message || 'Error loading grant email preview' });
+  }
+};
+
+/** POST body: { organizationId, messagePlain } — re-render full HTML for preview dialog after plain-text edits. */
+export const renderGrantNotificationPreview = async (req, res) => {
+  try {
+    const { decoded } = req;
+    if (decoded.accessLevel < ACCESS_DIRECTOR) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id } = req.params;
+    const { organizationId, messagePlain: messagePlainRaw } = req.body || {};
+
+    if (!organizationId || !mongoose.isValidObjectId(String(organizationId))) {
+      return res.status(400).json({ message: 'Invalid organizationId' });
+    }
+
+    const mp = typeof messagePlainRaw === 'string' ? messagePlainRaw : defaultGrantMessagePlain();
+    if (mp.length > MAX_GRANT_MESSAGE_PLAIN) {
+      return res.status(400).json({ message: 'Message too long' });
+    }
+
+    const meeting = await Meeting.findById(id).select('_id status year').lean();
+    if (!meeting || meeting.status !== 'completed') {
+      return res.status(400).json({ message: 'Meeting must be completed' });
+    }
+
+    const loaded = await loadFundedOrgContacts(id);
+    if (!loaded) {
+      return res.status(404).json({ message: 'Meeting not found' });
+    }
+
+    const { meeting: m, rows } = loaded;
+    const row = rows.find((r) => r.organizationId && String(r.organizationId) === String(organizationId));
+    if (!row || !row.email || !String(row.email).trim()) {
+      return res.status(404).json({ message: 'Organization not in send list for this meeting' });
+    }
+
+    const data = buildGrantNotificationTemplateData(row, m.year, mp);
+    const html = renderEmailWithTemplate(grantNotificationEmail, data);
+    return res.status(200).json({ html });
+  } catch (e) {
+    Logger.error(`renderGrantNotificationPreview: ${e.message}`);
+    return res.status(500).json({ message: 'Error rendering preview' });
   }
 };
 
@@ -577,26 +760,66 @@ export const sendGrantMeetingNotifications = async (req, res) => {
     const results = [];
     const errors = [];
 
+    /** Optional map org Mongo id → { subject?, htmlBody } from JSON body (president-edited previews). */
+    let customizationByOrgId = null;
+    const rawBody = req.body;
+    if (rawBody && typeof rawBody === 'object' && Array.isArray(rawBody.customizations)) {
+      customizationByOrgId = new Map();
+      for (const c of rawBody.customizations) {
+        const oid = c?.organizationId;
+        if (!oid || !mongoose.isValidObjectId(String(oid))) {
+          continue;
+        }
+        const htmlBodyLegacy = typeof c.htmlBody === 'string' ? c.htmlBody.trim() : '';
+        if (htmlBodyLegacy.length > MAX_GRANT_CUSTOM_HTML) {
+          return res.status(400).json({ message: 'Email body exceeds maximum length' });
+        }
+        const messagePlain = typeof c.messagePlain === 'string' ? c.messagePlain : undefined;
+        if (messagePlain !== undefined && messagePlain.length > MAX_GRANT_MESSAGE_PLAIN) {
+          return res.status(400).json({ message: 'Message too long' });
+        }
+        const subj = typeof c.subject === 'string' ? c.subject.trim() : '';
+        customizationByOrgId.set(String(oid), {
+          subject: subj || undefined,
+          htmlBody: htmlBodyLegacy || undefined,
+          messagePlain,
+        });
+      }
+    }
+
     for (const row of rows) {
       if (!row.email) {
         errors.push({ organizationName: row.organizationName, error: 'No organization email on file' });
         continue;
       }
 
-      const recipientName = row.contactPerson ? row.contactPerson.split(',')[0].trim() : 'Friend';
-      const amountGranted = formatUsd(row.amountGranted);
-      const data = {
-        recipientName,
-        organizationName: row.organizationName,
-        amountGranted,
-        meetingYear: m.year,
-        proposalTitle: row.proposalTitle || '',
-      };
+      const defaultSubject = `Grant award — ${row.organizationName} (${m.year})`;
 
-      const subject = `Grant award — ${row.organizationName} (${m.year})`;
+      const orgKey = row.organizationId ? String(row.organizationId) : null;
+      const custom = orgKey && customizationByOrgId ? customizationByOrgId.get(orgKey) : null;
+
+      let subject = defaultSubject;
+      let htmlBody;
+      if (custom?.htmlBody) {
+        htmlBody = custom.htmlBody;
+        if (custom.subject) {
+          subject = custom.subject;
+        }
+      } else {
+        const mp =
+          custom && typeof custom.messagePlain === 'string'
+            ? custom.messagePlain
+            : defaultGrantMessagePlain();
+        htmlBody = renderEmailWithTemplate(
+          grantNotificationEmail,
+          buildGrantNotificationTemplateData(row, m.year, mp),
+        );
+        if (custom?.subject) {
+          subject = custom.subject;
+        }
+      }
 
       try {
-        const htmlBody = renderEmailWithTemplate(grantNotificationEmail, data);
         const mailgunBody = await sendHtmlEmail(row.email, subject, htmlBody);
         const saved = await persistOutbound({
           type: 'grant_notification',

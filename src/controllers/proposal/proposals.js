@@ -7,6 +7,52 @@ import Logger from "../../utils/logger.js";
 import { sendEmailWithTemplate } from "../email/email.js";
 import { submittedProposal } from "../../views/proposal.js";
 
+/** Shared filter for director/org proposal lists (year window + archived + org + title). */
+function buildProposalListQuery({ year, org, filter, showArchived }) {
+  const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+  const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+  let query = {
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  };
+  if (showArchived === 'only') {
+    query = { ...query, archived: true };
+  } else if (showArchived !== 'true') {
+    query = { ...query, $or: [{ archived: false }, { archived: { $exists: false } }] };
+  }
+  if (org) {
+    query = { ...query, organization: org };
+  }
+  if (filter && filter.length !== 0) {
+    query = { ...query, projectTitle: { $regex: filter.toLowerCase(), $options: 'i' } };
+  }
+  return query;
+}
+
+/** Sort fields that exist on Proposal (indexed query path). */
+function getMongoSortForProposalList(sort, dir) {
+  const d = dir === 'asc' ? 1 : -1;
+  switch (sort) {
+    case 'projectTitle':
+      return { projectTitle: d };
+    case 'amountRequested':
+      return { amountRequested: d };
+    case 'totalProjectCost':
+      return { totalProjectCost: d };
+    case 'score':
+      return { score: d };
+    case 'createdOn':
+    default:
+      return { createdAt: d };
+  }
+}
+
+function usesInMemoryProposalSort(sort) {
+  return sort === 'organization' || sort === 'sponsor' || sort === 'votes';
+}
+
 export const createProposal = async (req, res) => {
   Logger.info(`creating proposal`);
 
@@ -198,103 +244,71 @@ export const getProposals = async (req, res) => {
 
   } else {
 
-
-    let { year, org, limit, skip, filter, sort, dir, showArchived } = req.query;
+    let { year, org, limit, skip, filter, sort, dir, showArchived, includeTotal } = req.query;
 
     try {
-      // Define start and end dates for the year
-      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
-      let query = {
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate
-        },
-      };
+      const query = buildProposalListQuery({ year, org, filter, showArchived });
 
-      // Filter by archived status
-      if (showArchived === 'only') {
-        query = { ...query, archived: true };
-      } else if (showArchived !== 'true') {
-        // By default, exclude archived proposals
-        query = { ...query, $or: [{ archived: false }, { archived: { $exists: false } }] };
+      const wantTotal =
+        includeTotal === '1' || includeTotal === 'true' || includeTotal === true;
+
+      let total = 0;
+      if (wantTotal) {
+        total = await Proposal.countDocuments(query);
       }
 
-      if (org) {
-        query = { ...query, organization: org };
+      const skipNum = Math.max(parseInt(String(skip ?? '0'), 10) || 0, 0);
+      const limitNum = Math.min(Math.max(parseInt(String(limit ?? '10'), 10) || 10, 1), 500);
+
+      const effectiveSort = sort || 'createdOn';
+
+      const populateProps = (q) =>
+        q.populate('organization').populate('votes').populate('sponsor');
+
+      let props;
+
+      if (usesInMemoryProposalSort(effectiveSort)) {
+        let proposals = await populateProps(Proposal.find(query));
+
+        switch (effectiveSort) {
+          case 'organization':
+            if (dir === 'asc') {
+              proposals.sort((a, b) => b.organization?.name.localeCompare(a.organization?.name));
+            } else {
+              proposals.sort((a, b) => a.organization?.name.localeCompare(b.organization?.name));
+            }
+            break;
+          case 'sponsor':
+            proposals.sort(function (a, b) {
+              let aSponsor = (typeof a.sponsor !== 'undefined' && a.sponsor !== null) ? 1 : 0;
+              let bSponsor = (typeof b.sponsor !== 'undefined' && b.sponsor !== null) ? 1 : 0;
+              return dir === 'asc' ? (aSponsor - bSponsor) : (bSponsor - aSponsor);
+            });
+            break;
+          case 'votes':
+            proposals.sort(function (a, b) {
+              return dir === 'asc'
+                ? (a?.votes.length - b?.votes.length)
+                : (b?.votes.length - a?.votes.length);
+            });
+            break;
+          default:
+            break;
+        }
+
+        props = proposals.slice(skipNum, skipNum + limitNum);
+      } else {
+        props = await populateProps(
+          Proposal.find(query)
+            .sort(getMongoSortForProposalList(effectiveSort, dir))
+            .skip(skipNum)
+            .limit(limitNum)
+        );
       }
 
-      if (filter && filter.length !== 0) {
-        query = { ...query, projectTitle: { $regex: filter.toLowerCase(), $options: 'i' } };
+      if (wantTotal) {
+        return res.status(200).json({ items: props, total });
       }
-
-      let proposals = await Proposal.find(query)
-        .populate('organization')
-        .populate('votes')
-        .populate('sponsor');
-
-      //sort
-      //for notes
-      // ASC  -> a.length - b.length
-      // DESC -> b.length - a.length
-      switch (sort) {
-
-        case 'projectTitle':
-          if (dir === 'asc') {
-            proposals.sort((a, b) => b.projectTitle.localeCompare(a.projectTitle));
-          }
-          else {
-            proposals.sort((a, b) => a.projectTitle.localeCompare(b.projectTitle))
-          }
-          break;
-        case 'organization': //sort by organization name
-          if (dir === 'asc') {
-            proposals.sort((a, b) => b.organization?.name.localeCompare(a.organization?.name));
-          }
-          else {
-            proposals.sort((a, b) => a.organization?.name.localeCompare(b.organization?.name))
-          }
-          break;
-        case 'amountRequested':
-          proposals.sort(function (a, b) {
-            return dir === 'asc' ? (a.amountRequested - b.amountRequested) : (b.amountRequested - a.amountRequested);
-          });
-          break;
-        case 'totalProjectCost':
-          proposals.sort(function (a, b) {
-            return dir === 'asc' ? (a.totalProjectCost - b.totalProjectCost) : (b.totalProjectCost - a.totalProjectCost);
-          });
-          break;
-        case 'sponsor':
-          console.log('sorting by sponsors');
-          proposals.sort(function (a, b) {
-            let aSponsor = ((typeof a.sponsor !== 'undefined') && a.sponsor !== null) ? 1 : 0;
-            let bSponsor = ((typeof b.sponsor !== 'undefined') && b.sponsor !== null) ? 1 : 0;
-            return dir === 'asc' ? (aSponsor - bSponsor) : (bSponsor - aSponsor);
-          });
-          break;
-        case 'votes':
-          proposals.sort(function (a, b) {
-            return dir === 'asc' ? (a?.votes.length - b?.votes.length) : (b?.votes.length - a?.votes.length);
-          });
-          break;
-        case 'score':
-          console.log('sorting by score');
-          proposals.sort(function (a, b) {
-            let aScore = (typeof a.score !== 'undefined') ? a.score : 0;
-            let bScore = (typeof b.score !== 'undefined') ? b.score : 0;
-            return dir === 'asc' ? (aScore - bScore) : (bScore - aScore);
-          });
-          break;
-        case 'createdOn':
-          proposals.sort(function (a, b) {
-            return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
-          });
-          break;
-      }
-
-      //skip and limit
-      let props = proposals.slice(skip, +skip + +limit);
       return res.status(200).json(props);
 
     } catch (e) {
@@ -307,34 +321,10 @@ export const getProposals = async (req, res) => {
 
 export const countProposals = async (req, res) => {
   try {
-    let { year, org, filter, showArchived } = req.query;
-
-    // Define start and end dates for the year
-    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
-    let query = {
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate
-      },
-    };
-
-    // Filter by archived status
-    if (showArchived === 'only') {
-      query = { ...query, archived: true };
-    } else if (showArchived !== 'true') {
-      query = { ...query, $or: [{ archived: false }, { archived: { $exists: false } }] };
-    }
-
-    if (org) {
-      query = { ...query, organization: org };
-    }
-
-    if (filter && filter.length !== 0) {
-      query = { ...query, projectTitle: { $regex: filter.toLowerCase(), $options: 'i' } };
-    }
-    let count = await Proposal.find(query);
-    return res.status(200).json(count.length);
+    const { year, org, filter, showArchived } = req.query;
+    const query = buildProposalListQuery({ year, org, filter, showArchived });
+    const count = await Proposal.countDocuments(query);
+    return res.status(200).json(count);
   }
   catch (err) {
     Logger.error(`Error Retrieving Proposal Count: ${err}`);

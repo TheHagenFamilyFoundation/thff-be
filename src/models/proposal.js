@@ -63,5 +63,8 @@ const proposalSchema = Schema({
   timestamps: true
 });
 
+/** Speeds director org list year filter: distinct(organization) with createdAt range. */
+proposalSchema.index({ createdAt: 1, organization: 1 });
+
 const Proposal = mongoose.model('Proposal', proposalSchema);
 export default Proposal;
