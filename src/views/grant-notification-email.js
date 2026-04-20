@@ -1,6 +1,6 @@
 /**
  * Grant award notification after board meeting.
- * Placeholders: recipientName, organizationName, meetingYear, proposalTitle (optional), messageBodyHtml (from plain text)
+ * Placeholders: recipientName, organizationName, meetingYear, proposalTitle (optional label "Proposal:"), messageBodyHtml (from plain text)
  */
 export const grantNotificationEmail = `
 <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #1e293b;">
@@ -11,7 +11,7 @@ export const grantNotificationEmail = `
 </p>
 {{#if proposalTitle}}
 <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #334155;">
-  <strong>Project:</strong> {{proposalTitle}}
+  <strong>Proposal:</strong> {{proposalTitle}}
 </p>
 {{/if}}
 <div style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #334155;">
