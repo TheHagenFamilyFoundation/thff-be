@@ -9,7 +9,13 @@ import { generateCode, saltRounds } from "../../utils/util.js"
 import { sendEmailWithTemplate } from '../email/email.js';
 import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
 
-import { User, UserSetting, Token, Invite, Organization, ReferralCode } from '../../models/index.js'
+import { User, UserSetting, Token, Invite, Organization, ReferralCode } from '../../models/index.js';
+import { migrateOrganizationUsersToMemberships } from '../../utils/organization-membership.js';
+import {
+  organizationHasMember,
+  addMemberToOrganization,
+  ensureMembershipsBackfilledForOrganization,
+} from '../../utils/organization-membership-store.js';
 
 export const login = async (req, res) => {
   Logger.verbose('Inside Login');
@@ -204,11 +210,17 @@ export const register = async (req, res) => {
 
       for (const invite of pendingInvites) {
         const org = await Organization.findOne({ _id: invite.organization });
-        if (org && !org.users.some(u => u.toString() === createdUser._id.toString())) {
-          org.users.push(createdUser._id);
-          await org.save();
-
-          createdUser.organizations.push(org._id);
+        await migrateOrganizationUsersToMemberships(org);
+        if (org) {
+          await ensureMembershipsBackfilledForOrganization(org._id);
+        }
+        if (org && !(await organizationHasMember(org._id, createdUser._id))) {
+          await addMemberToOrganization(org._id, createdUser._id, new Date());
+          if (
+            !createdUser.organizations.some((o) => String(o) === String(org._id))
+          ) {
+            createdUser.organizations.push(org._id);
+          }
 
           invite.status = 'accepted';
           await invite.save();

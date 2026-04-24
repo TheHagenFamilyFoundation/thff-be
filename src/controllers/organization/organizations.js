@@ -2,6 +2,18 @@ import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
 import { Organization, OrganizationInfo, User, Invite, Proposal } from '../../models/index.js';
 import { generateCode } from "../../utils/util.js";
+import {
+  migrateOrganizationUsersToMemberships,
+  membershipUserId,
+  logOrganizationUserFetchDiagnostics,
+} from '../../utils/organization-membership.js';
+import {
+  ensureMembershipsBackfilledForOrganization,
+  addMemberToOrganization,
+  removeMemberFromOrganization,
+  organizationHasMember,
+  loadOrganizationApiPayload,
+} from '../../utils/organization-membership-store.js';
 import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
 import { inviteUser, organizationAddedUser } from "../../views/invite.js";
@@ -61,17 +73,26 @@ export const getOrganization = async (req, res) => {
   const { id } = req.params;
   console.log('Organization id?', id)
   try {
-    const organization = await Organization.findOne({ _id: id })
-      .populate('info')
-      .populate('users')
-      .populate({
-        path: 'proposals',
-        options: { limit: 10 }
-      })
-      .populate('doc501c3');
+    let organization = await Organization.findOne({ _id: id });
+    if (!organization) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    await migrateOrganizationUsersToMemberships(organization);
 
-    Logger.debug(`sending back organization ${organization}`);
-    return res.status(200).send(organization);
+    const loaded = await loadOrganizationApiPayload(id);
+    if (!loaded) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    const { payload, rawMembershipRows, memberships } = loaded;
+
+    Logger.debug(`sending back organization ${id}`);
+    await logOrganizationUserFetchDiagnostics(
+      id,
+      rawMembershipRows,
+      { users: memberships },
+      payload,
+    );
+    return res.status(200).send(payload);
   }
   catch (e) {
     console.log('e', e);
@@ -119,7 +140,7 @@ export const createOrganization = async (req, res) => {
       description: req.body.description,
       name: req.body.orgInfo.legalName,
       organizationID: generateCode(),
-      users: [userID]
+      users: [],
     };
 
     //get id for organization to add the org info
@@ -145,8 +166,7 @@ export const createOrganization = async (req, res) => {
     let user = await User.findOne({ _id: userID });
     console.log('user', user); //debug
 
-    user.organizations.push(createdOrgId);
-    await user.save();
+    await addMemberToOrganization(createdOrgId, userID, new Date());
 
     const data = {
       email: user.email,
@@ -219,11 +239,31 @@ export const getOrganizations = async (req, res) => {
     const pipeline = [
       { $match: matchQuery },
       {
+        $lookup: {
+          from: 'organizationmemberships',
+          localField: '_id',
+          foreignField: 'organization',
+          as: '_membershipDocs',
+        },
+      },
+      {
         $addFields: {
-          userCount: { $size: { $ifNull: ['$users', []] } },
+          _membershipCount: { $size: { $ifNull: ['$_membershipDocs', []] } },
+        },
+      },
+      {
+        $addFields: {
+          userCount: {
+            $cond: {
+              if: { $gt: ['$_membershipCount', 0] },
+              then: '$_membershipCount',
+              else: { $size: { $ifNull: ['$users', []] } },
+            },
+          },
           proposalCount: { $size: { $ifNull: ['$proposals', []] } },
         },
       },
+      { $project: { _membershipDocs: 0, _membershipCount: 0 } },
       { $sort: { [sortField]: direction } },
       { $skip: skipNum },
       { $limit: limitNum },
@@ -323,18 +363,14 @@ export const addUserToOrganization = async (req, res) => {
       });
     }
 
-    // User exists — add them directly
-    if (organization.users.some(u => u.toString() === user._id.toString())) {
+    await migrateOrganizationUsersToMemberships(organization);
+    await ensureMembershipsBackfilledForOrganization(orgID);
+
+    if (await organizationHasMember(orgID, user._id)) {
       return res.status(400).json({ code: 'ORG007', message: 'User is already a member of this organization' });
     }
 
-    // Add user to organization's users array
-    organization.users.push(user._id);
-    await organization.save();
-
-    // Add organization to user's organizations array
-    user.organizations.push(organization._id);
-    await user.save();
+    await addMemberToOrganization(orgID, user._id, new Date());
 
     // Notify existing user that they were added to an organization.
     let feURL = Config.feURL;
@@ -360,11 +396,16 @@ export const addUserToOrganization = async (req, res) => {
       // Membership updates should still succeed if email fails.
     }
 
-    // Return updated organization with populated users
-    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
-
     Logger.info(`User ${user.email} added to organization ${organization.name}`);
-    return res.status(200).json({ message: 'User added to organization', invited: false, organization: updatedOrg });
+    const loaded = await loadOrganizationApiPayload(orgID);
+    if (!loaded) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    return res.status(200).json({
+      message: 'User added to organization',
+      invited: false,
+      organization: loaded.payload,
+    });
   } catch (e) {
     Logger.error(`Error adding user to organization: ${e.message}`);
     return res.status(500).json({ code: 'ORG008', message: e.message });
@@ -383,25 +424,32 @@ export const removeUserFromOrganization = async (req, res) => {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
     }
 
-    // Find the user
     const user = await User.findOne({ _id: userID });
-    if (!user) {
-      return res.status(404).json({ code: 'ORG006', message: 'User not found' });
+
+    await migrateOrganizationUsersToMemberships(organization);
+    await ensureMembershipsBackfilledForOrganization(orgID);
+
+    const wasMember =
+      (await organizationHasMember(orgID, userID)) ||
+      (organization.users || []).some((m) => membershipUserId(m) === userID);
+    if (!wasMember) {
+      return res.status(404).json({ code: 'ORG011', message: 'User is not a member of this organization' });
     }
 
-    // Remove user from organization's users array
-    organization.users = organization.users.filter(u => u.toString() !== userID);
-    await organization.save();
+    await removeMemberFromOrganization(orgID, userID);
 
-    // Remove organization from user's organizations array
-    user.organizations = user.organizations.filter(o => o.toString() !== orgID);
-    await user.save();
-
-    // Return updated organization with populated users
-    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
-
-    Logger.info(`User ${user.email} removed from organization ${organization.name}`);
-    return res.status(200).json({ message: 'User removed from organization', organization: updatedOrg });
+    Logger.info(
+      `Membership ${userID} removed from organization ${organization.name}` +
+        (user ? ` (user ${user.email})` : ' (no User document; dangling ref cleared)')
+    );
+    const loadedRm = await loadOrganizationApiPayload(orgID);
+    if (!loadedRm) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    return res.status(200).json({
+      message: 'User removed from organization',
+      organization: loadedRm.payload,
+    });
   } catch (e) {
     Logger.error(`Error removing user from organization: ${e.message}`);
     return res.status(500).json({ code: 'ORG009', message: e.message });

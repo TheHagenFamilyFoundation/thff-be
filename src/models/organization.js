@@ -1,6 +1,21 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
+const organizationUserMembershipSchema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
 const organizationSchema = Schema({
   name: {
     type: String,
@@ -13,10 +28,7 @@ const organizationSchema = Schema({
   description: {
     type: String,
   },
-  users: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+  users: [organizationUserMembershipSchema],
   lois: [{
     type: Schema.Types.ObjectId,
     ref: 'LetterOfIntent'

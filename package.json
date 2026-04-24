@@ -8,7 +8,9 @@
     "dev": "nodemon --env-file .env.development src/app",
     "staging": "node --env-file .env.staging src/app",
     "production": "node --env-file .env.production src/app",
-    "start": "node src/app"
+    "start": "node src/app",
+    "audit-org-members": "node src/scripts/audit-org-members.js",
+    "reconcile-org-memberships": "node src/scripts/reconcile-org-memberships.js"
   },
   "author": "Logan Born",
   "license": "MIT",

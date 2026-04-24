@@ -4,6 +4,7 @@ import Meeting from './meeting.js';
 import Organization501c3 from './organization-501c3.js';
 import OrganizationInfo from './organization-info.js';
 import Organization from './organization.js';
+import OrganizationMembership from './organization-membership.js';
 import OutboundEmail from './outbound-email.js';
 import Proposal from './proposal.js';
 import ReferralCode from './referral-code.js';
@@ -26,6 +27,7 @@ export {
   Invite,
   Meeting,
   Organization,
+  OrganizationMembership,
   OutboundEmail,
   OrganizationInfo,
   Organization501c3,
