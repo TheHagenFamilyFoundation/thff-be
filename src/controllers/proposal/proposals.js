@@ -6,6 +6,7 @@ import { generateCode } from "../../utils/util.js";
 import Logger from "../../utils/logger.js";
 import { sendEmailWithTemplate } from "../email/email.js";
 import { submittedProposal } from "../../views/proposal.js";
+import { dedupePopulatedUserOrganizations } from "../../utils/dedupe-user-organizations-response.js";
 
 /** Shared filter for director/org proposal lists (year window + archived + org + title). */
 function buildProposalListQuery({ year, org, filter, showArchived }) {
@@ -351,6 +352,8 @@ export const getMyProposals = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    await dedupePopulatedUserOrganizations(user, { persist: true });
 
     Logger.info(`getMyProposals - user ${user.email} has ${user.organizations.length} org(s)`);
 

@@ -3,6 +3,7 @@ import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
 import { User } from '../../models/index.js'
 import { saltRounds } from "../../utils/util.js"
+import { dedupePopulatedUserOrganizations } from '../../utils/dedupe-user-organizations-response.js';
 
 //TODO
 export const getUsers = async (req, res) => {
@@ -24,6 +25,7 @@ export const getUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ _id: id }).populate('organizations');
+    await dedupePopulatedUserOrganizations(user, { persist: true });
 
     Logger.debug(`sending back user ${user}`);
     return res.status(200).send(user);
@@ -63,6 +65,8 @@ export const updateProfile = async (req, res) => {
       Logger.error(`User not found: ${userID}`);
       return res.status(404).json({ message: 'User not found' });
     }
+
+    await dedupePopulatedUserOrganizations(user, { persist: true });
 
     Logger.info(`Profile updated for user ${userID}`);
     return res.status(200).json({ message: 'Profile updated', user });
