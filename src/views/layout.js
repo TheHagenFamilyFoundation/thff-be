@@ -58,3 +58,21 @@ export function wrapInLayout(body) {
 </body>
 </html>`;
 }
+
+/**
+ * Minimal HTML document for solicitation: only the letter body (no logo, no site footer).
+ * innerBodyHtml is already escaped content with <br /> etc.
+ */
+export function wrapSolicitationPlainHtml(innerBodyHtml) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hagen Family Foundation</title>
+</head>
+<body style="margin: 0; padding: 24px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #334155;">
+${innerBodyHtml}
+</body>
+</html>`;
+}

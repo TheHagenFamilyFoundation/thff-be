@@ -28,36 +28,57 @@ export const getOrganizationInfo = async (req, res) => {
 };
 
 export const updateOrganizationInfo = async (req, res) => {
+  try {
+    Logger.info('updating', req.query);
+    Logger.info('updated field', req.body); // check for full update now
 
-  Logger.info('updating', req.query);
-  Logger.info('updated field', req.body) // check for full update now
-  let updatedInfo = await OrganizationInfo.updateOne({ organizationInfoID: req.query.organizationInfoID }, req.body)
-
-  Logger.info('updatedInfo', updatedInfo);
-
-  //if legal name changed then change the organization object name to legal name
-  if (req.body.legalName) {
-    //update org object
-    Logger.info('updating org object');
-    let orgId = updatedInfo.organization
-    let orgToUpdate = await Organization.findOne(orgId)
-    Logger.info('before - orgToUpdate', orgToUpdate)
-    if (orgToUpdate) {
-      let updatedOrg = await Organization.updateOne(orgId, { name: req.body.legalName })
-      Logger.info('updatedOrg', updatedOrg)
+    const existingInfo = await OrganizationInfo.findOne({
+      organizationInfoID: req.query.organizationInfoID,
+    });
+    if (!existingInfo) {
+      return res.status(404).json({ message: 'Organization info not found' });
     }
-    else {
-      Logger.error('organization not found - detached', orgId)
-      //error
-      return res.status(500).json({
-        message: 'Org Not Found'
+
+    const updatedInfo = await OrganizationInfo.updateOne(
+      { organizationInfoID: req.query.organizationInfoID },
+      req.body
+    );
+
+    Logger.info('updatedInfo', updatedInfo);
+
+    // if legal name changed then change the organization object name to legal name
+    if (req.body.legalName) {
+      Logger.info('updating org object');
+      const orgId = existingInfo.organization;
+      const orgToUpdate = await Organization.findOne({ _id: orgId });
+      Logger.info('before - orgToUpdate', orgToUpdate);
+      if (orgToUpdate) {
+        const updatedOrg = await Organization.updateOne(
+          { _id: orgId },
+          { name: req.body.legalName }
+        );
+        Logger.info('updatedOrg', updatedOrg);
+      } else {
+        Logger.error('organization not found - detached', orgId);
+        return res.status(500).json({
+          message: 'Org Not Found',
+        });
+      }
+      Logger.info('found org', orgToUpdate);
+    }
+
+    return res.status(200).json({
+      message: 'Org Info Updated',
+      info: updatedInfo,
+    });
+  } catch (e) {
+    if (e?.code === 11000) {
+      return res.status(400).json({
+        code: 'ORG001',
+        message: 'Duplicate Organization',
       });
     }
-    Logger.info('found org', orgToUpdate)
-    // let updatedOrg = await
+    Logger.error(`Error updating organization info: ${e.message}`);
+    return res.status(500).json({ message: 'Error updating organization info' });
   }
-
-  return res.status(200).json({
-    message: 'Org Info Updated', info: updatedInfo
-  });
-}
+};

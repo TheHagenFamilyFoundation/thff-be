@@ -22,6 +22,7 @@ import SubmissionYearPublicRouter from './api/submission-year-public.js'
 import SubmissionYearRouter from './api/submission-year.js'
 
 import MeetingRouter from './api/meeting.js'
+import OutboundEmailRouter from './api/outbound-email.js'
 
 import AuthnMiddleware from '../middlewares/authn.js'
 
@@ -66,5 +67,8 @@ router.use('/auth', AuthRouter)
 
   //meetings
   .use('/meeting', MeetingRouter)
+
+  // outbound email log / solicitation / grant notifications
+  .use('/outbound-email', OutboundEmailRouter)
 
 export default router;

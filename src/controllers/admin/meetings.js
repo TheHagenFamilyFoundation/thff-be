@@ -346,7 +346,8 @@ export const getAddableProposals = async (req, res) => {
 
     const proposals = await Proposal.find({
       createdAt: { $gte: startDate, $lte: endDate },
-      _id: { $nin: existingIds }
+      _id: { $nin: existingIds },
+      $or: [{ archived: false }, { archived: { $exists: false } }],
     })
       .populate('organization', 'name organizationID')
       .populate('sponsor', 'firstName lastName email')

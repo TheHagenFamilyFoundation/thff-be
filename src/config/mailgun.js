@@ -1,6 +1,22 @@
-import mailgun from 'mailgun-js';
+import Mailgun from 'mailgun.js';
+import formData from 'form-data';
 
 import Config from './config.js';
 
-// Initialize Mailgun with your API key and domain
-export const mg = mailgun({ apiKey: Config.mailgunKey, domain: Config.mailgunDomain });
+const mailgun = new Mailgun(formData);
+
+let cachedClient = null;
+
+/** Official Mailgun SDK client (replaces deprecated mailgun-js / vulnerable proxy chain). */
+export function getMailgunClient() {
+  if (!Config.mailgunKey) {
+    return null;
+  }
+  if (!cachedClient) {
+    cachedClient = mailgun.client({
+      username: 'api',
+      key: Config.mailgunKey,
+    });
+  }
+  return cachedClient;
+}
