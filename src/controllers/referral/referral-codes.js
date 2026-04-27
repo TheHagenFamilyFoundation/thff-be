@@ -1,5 +1,7 @@
+import mongoose from 'mongoose';
+
 import Logger from '../../utils/logger.js';
-import { ReferralCode, User } from '../../models/index.js';
+import { OutboundEmail, ReferralCode, User } from '../../models/index.js';
 import { generateCode } from '../../utils/util.js';
 
 const buildDirectorName = (director) => {
@@ -46,12 +48,71 @@ export const getMyReferralCodes = async (req, res) => {
 
   try {
     const { decoded } = req;
+    const directorId = decoded.userID;
 
-    const codes = await ReferralCode.find({ director: decoded.userID })
+    const codes = await ReferralCode.find({ director: directorId })
       .populate('director', 'email firstName lastName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return res.status(200).json(codes);
+    if (codes.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const codeIds = codes.map((c) => c._id);
+
+    const solicitationAgg = await OutboundEmail.aggregate([
+      {
+        $match: {
+          type: 'solicitation',
+          sentBy: new mongoose.Types.ObjectId(String(directorId)),
+          referralCode: { $in: codeIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$referralCode',
+          solicitationEmailsSent: { $sum: 1 },
+          lastSolicitationSentAt: { $max: '$createdAt' },
+        },
+      },
+    ]);
+
+    const solByRefId = new Map(
+      solicitationAgg.map((row) => [
+        String(row._id),
+        {
+          solicitationEmailsSent: row.solicitationEmailsSent,
+          lastSolicitationSentAt: row.lastSolicitationSentAt,
+        },
+      ]),
+    );
+
+    const codeStrings = codes.map((c) => c.code).filter(Boolean);
+    const linkedAgg =
+      codeStrings.length > 0
+        ? await User.aggregate([
+            { $match: { referralCode: { $in: codeStrings } } },
+            { $group: { _id: '$referralCode', linkedAccountsUsingCode: { $sum: 1 } } },
+          ])
+        : [];
+
+    const linkedByCodeStr = new Map(linkedAgg.map((r) => [r._id, r.linkedAccountsUsingCode]));
+
+    const enriched = codes.map((c) => {
+      const sol = solByRefId.get(String(c._id)) || {
+        solicitationEmailsSent: 0,
+        lastSolicitationSentAt: null,
+      };
+      return {
+        ...c,
+        solicitationEmailsSent: sol.solicitationEmailsSent,
+        lastSolicitationSentAt: sol.lastSolicitationSentAt,
+        linkedAccountsUsingCode: linkedByCodeStr.get(c.code) || 0,
+      };
+    });
+
+    return res.status(200).json(enriched);
   } catch (e) {
     Logger.error(`Error getting referral codes: ${e.message}`);
     return res.status(500).json({ message: 'Error getting referral codes' });

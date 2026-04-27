@@ -2,10 +2,62 @@ import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
 import { Organization, OrganizationInfo, User, Invite, Proposal } from '../../models/index.js';
 import { generateCode } from "../../utils/util.js";
+import {
+  migrateOrganizationUsersToMemberships,
+  membershipUserId,
+  logOrganizationUserFetchDiagnostics,
+} from '../../utils/organization-membership.js';
+import {
+  ensureMembershipsBackfilledForOrganization,
+  addMemberToOrganization,
+  removeMemberFromOrganization,
+  organizationHasMember,
+  loadOrganizationApiPayload,
+} from '../../utils/organization-membership-store.js';
 import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
 import { inviteUser, organizationAddedUser } from "../../views/invite.js";
 import { sendEmailWithTemplate } from "../email/email.js";
+
+/**
+ * Org ids that have at least one qualifying proposal with createdAt in calendar year.
+ * @returns {Promise<undefined|Array>} undefined = no year filter; [] = none match
+ */
+async function distinctOrganizationIdsForProposalYear(yearRaw) {
+  const y = parseInt(String(yearRaw), 10);
+  if (Number.isNaN(y) || y < 1990 || y > 2100) {
+    return [];
+  }
+  const startDate = new Date(`${y}-01-01T00:00:00.000Z`);
+  const endDate = new Date(`${y}-12-31T23:59:59.999Z`);
+  return Proposal.find({
+    createdAt: { $gte: startDate, $lte: endDate },
+    $or: [{ archived: false }, { archived: { $exists: false } }],
+  }).distinct('organization');
+}
+
+/**
+ * @param {string|undefined} filter
+ * @param {undefined|Array} yearOrgIds — undefined = ignore year; [] = impossible match
+ */
+function buildOrganizationListMatchQuery(filter, yearOrgIds) {
+  let query = {};
+  if (filter && String(filter).length !== 0) {
+    query = { name: { $regex: filter, $options: 'i' } };
+  }
+  if (yearOrgIds !== undefined) {
+    query = { ...query, _id: { $in: yearOrgIds.length ? yearOrgIds : [] } };
+  }
+  return query;
+}
+
+/** @returns {Promise<undefined|Array>} */
+async function resolveYearOrgIds(yearParam) {
+  if (yearParam === undefined || yearParam === null || String(yearParam).trim() === '') {
+    return undefined;
+  }
+  return distinctOrganizationIdsForProposalYear(yearParam);
+}
 
 export const getOrganization = async (req, res) => {
   Logger.info('Inside getOrganization');
@@ -21,17 +73,26 @@ export const getOrganization = async (req, res) => {
   const { id } = req.params;
   console.log('Organization id?', id)
   try {
-    const organization = await Organization.findOne({ _id: id })
-      .populate('info')
-      .populate('users')
-      .populate({
-        path: 'proposals',
-        options: { limit: 10 }
-      })
-      .populate('doc501c3');
+    let organization = await Organization.findOne({ _id: id });
+    if (!organization) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    await migrateOrganizationUsersToMemberships(organization);
 
-    Logger.debug(`sending back organization ${organization}`);
-    return res.status(200).send(organization);
+    const loaded = await loadOrganizationApiPayload(id);
+    if (!loaded) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    const { payload, rawMembershipRows, memberships } = loaded;
+
+    Logger.debug(`sending back organization ${id}`);
+    await logOrganizationUserFetchDiagnostics(
+      id,
+      rawMembershipRows,
+      { users: memberships },
+      payload,
+    );
+    return res.status(200).send(payload);
   }
   catch (e) {
     console.log('e', e);
@@ -79,7 +140,7 @@ export const createOrganization = async (req, res) => {
       description: req.body.description,
       name: req.body.orgInfo.legalName,
       organizationID: generateCode(),
-      users: [userID]
+      users: [],
     };
 
     //get id for organization to add the org info
@@ -105,8 +166,7 @@ export const createOrganization = async (req, res) => {
     let user = await User.findOne({ _id: userID });
     console.log('user', user); //debug
 
-    user.organizations.push(createdOrgId);
-    await user.save();
+    await addMemberToOrganization(createdOrgId, userID, new Date());
 
     const data = {
       email: user.email,
@@ -146,72 +206,87 @@ export const createOrganization = async (req, res) => {
 
 export const getOrganizations = async (req, res) => {
   try {
-    let { limit, skip, filter, sort, dir, year } = req.query;
+    const { limit, skip, filter, sort, dir, year, includeTotal } = req.query;
 
-    let query = {};
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 500);
+    const skipNum = Math.max(parseInt(skip, 10) || 0, 0);
 
-    if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter, $options: 'i' } };
+    const yearOrgIds = await resolveYearOrgIds(year);
+    const matchQuery = buildOrganizationListMatchQuery(filter, yearOrgIds);
+
+    const wantTotal = includeTotal === '1' || includeTotal === 'true';
+    let total;
+    if (wantTotal) {
+      total = await Organization.countDocuments(matchQuery);
     }
 
-    // If year is provided, only return organizations that have proposals in that year
-    if (year) {
-      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+    const sortKey = sort || 'createdOn';
+    const direction = dir === 'asc' ? 1 : -1;
 
-      const proposals = await Proposal.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-        $or: [{ archived: false }, { archived: { $exists: false } }]
-      }).distinct('organization');
-
-      query = { ...query, _id: { $in: proposals } };
+    let sortField;
+    if (sortKey === 'name') {
+      sortField = 'name';
+    } else if (sortKey === 'createdOn') {
+      sortField = 'createdAt';
+    } else if (sortKey === 'users') {
+      sortField = 'userCount';
+    } else if (sortKey === 'proposals') {
+      sortField = 'proposalCount';
+    } else {
+      sortField = 'createdAt';
     }
 
-    let organizations = await Organization.find(query)
-      .populate('users')
-      .populate({
-        path: 'proposals',
-        options: { limit: 10 }
-      })
+    const pipeline = [
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: 'organizationmemberships',
+          localField: '_id',
+          foreignField: 'organization',
+          as: '_membershipDocs',
+        },
+      },
+      {
+        $addFields: {
+          _membershipCount: { $size: { $ifNull: ['$_membershipDocs', []] } },
+        },
+      },
+      {
+        $addFields: {
+          userCount: {
+            $cond: {
+              if: { $gt: ['$_membershipCount', 0] },
+              then: '$_membershipCount',
+              else: { $size: { $ifNull: ['$users', []] } },
+            },
+          },
+          proposalCount: { $size: { $ifNull: ['$proposals', []] } },
+        },
+      },
+      { $project: { _membershipDocs: 0, _membershipCount: 0 } },
+      { $sort: { [sortField]: direction } },
+      { $skip: skipNum },
+      { $limit: limitNum },
+    ];
 
-    //sort
-    //for notes
-    // ASC  -> a.length - b.length
-    // DESC -> b.length - a.length
-    switch (sort) {
+    const rows = await Organization.aggregate(pipeline);
 
-      case 'users':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (a.users.length - b.users.length) : (b.users.length - a.users.length);
-        });
-        break;
-      case 'proposals':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (a.proposals.length - b.proposals.length) : (b.proposals.length - a.proposals.length);
-        });
-        break;
-      case 'createdOn':
-        organizations.sort(function (a, b) {
-          return dir === 'asc' ? (new Date(a.createdAt) - new Date(b.createdAt)) : (new Date(b.createdAt) - new Date(a.createdAt));
-        });
-        break;
-      case 'name':
-        if (dir === 'asc') {
-          organizations.sort((a, b) => b.name.localeCompare(a.name));
-        }
-        else {
-          organizations.sort((a, b) => a.name.localeCompare(b.name))
-        }
+    const orgs = rows.map((doc) => {
+      const uc = doc.userCount || 0;
+      const pc = doc.proposalCount || 0;
+      const { users, proposals, userCount, proposalCount, ...rest } = doc;
+      return {
+        ...rest,
+        users: Array(uc).fill(null),
+        proposals: Array(pc).fill(null),
+      };
+    });
 
-        break;
+    if (wantTotal) {
+      return res.status(200).json({ items: orgs, total });
     }
-
-    //skip and limit
-    let orgs = organizations.slice(skip, +skip + +limit);
-
     return res.status(200).json(orgs);
-  }
-  catch (err) {
+  } catch (err) {
     Logger.error(`Error Retrieving Organizations ${err.message}`);
     return res.status(400).send({ code: "ORG003", message: err.message });
   }
@@ -288,18 +363,14 @@ export const addUserToOrganization = async (req, res) => {
       });
     }
 
-    // User exists — add them directly
-    if (organization.users.some(u => u.toString() === user._id.toString())) {
+    await migrateOrganizationUsersToMemberships(organization);
+    await ensureMembershipsBackfilledForOrganization(orgID);
+
+    if (await organizationHasMember(orgID, user._id)) {
       return res.status(400).json({ code: 'ORG007', message: 'User is already a member of this organization' });
     }
 
-    // Add user to organization's users array
-    organization.users.push(user._id);
-    await organization.save();
-
-    // Add organization to user's organizations array
-    user.organizations.push(organization._id);
-    await user.save();
+    await addMemberToOrganization(orgID, user._id, new Date());
 
     // Notify existing user that they were added to an organization.
     let feURL = Config.feURL;
@@ -325,11 +396,16 @@ export const addUserToOrganization = async (req, res) => {
       // Membership updates should still succeed if email fails.
     }
 
-    // Return updated organization with populated users
-    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
-
     Logger.info(`User ${user.email} added to organization ${organization.name}`);
-    return res.status(200).json({ message: 'User added to organization', invited: false, organization: updatedOrg });
+    const loaded = await loadOrganizationApiPayload(orgID);
+    if (!loaded) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    return res.status(200).json({
+      message: 'User added to organization',
+      invited: false,
+      organization: loaded.payload,
+    });
   } catch (e) {
     Logger.error(`Error adding user to organization: ${e.message}`);
     return res.status(500).json({ code: 'ORG008', message: e.message });
@@ -348,25 +424,32 @@ export const removeUserFromOrganization = async (req, res) => {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
     }
 
-    // Find the user
     const user = await User.findOne({ _id: userID });
-    if (!user) {
-      return res.status(404).json({ code: 'ORG006', message: 'User not found' });
+
+    await migrateOrganizationUsersToMemberships(organization);
+    await ensureMembershipsBackfilledForOrganization(orgID);
+
+    const wasMember =
+      (await organizationHasMember(orgID, userID)) ||
+      (organization.users || []).some((m) => membershipUserId(m) === userID);
+    if (!wasMember) {
+      return res.status(404).json({ code: 'ORG011', message: 'User is not a member of this organization' });
     }
 
-    // Remove user from organization's users array
-    organization.users = organization.users.filter(u => u.toString() !== userID);
-    await organization.save();
+    await removeMemberFromOrganization(orgID, userID);
 
-    // Remove organization from user's organizations array
-    user.organizations = user.organizations.filter(o => o.toString() !== orgID);
-    await user.save();
-
-    // Return updated organization with populated users
-    const updatedOrg = await Organization.findOne({ _id: orgID }).populate('users');
-
-    Logger.info(`User ${user.email} removed from organization ${organization.name}`);
-    return res.status(200).json({ message: 'User removed from organization', organization: updatedOrg });
+    Logger.info(
+      `Membership ${userID} removed from organization ${organization.name}` +
+        (user ? ` (user ${user.email})` : ' (no User document; dangling ref cleared)')
+    );
+    const loadedRm = await loadOrganizationApiPayload(orgID);
+    if (!loadedRm) {
+      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
+    }
+    return res.status(200).json({
+      message: 'User removed from organization',
+      organization: loadedRm.payload,
+    });
   } catch (e) {
     Logger.error(`Error removing user from organization: ${e.message}`);
     return res.status(500).json({ code: 'ORG009', message: e.message });
@@ -455,30 +538,14 @@ export const countOrganizations = async (req, res) => {
   try {
     const { filter, year } = req.query;
 
-    let query = {};
-    if (filter && filter.length !== 0) {
-      query = { name: { $regex: filter, $options: 'i' } };
-    }
+    const yearOrgIds = await resolveYearOrgIds(year);
+    const query = buildOrganizationListMatchQuery(filter, yearOrgIds);
 
-    // If year is provided, only count organizations that have proposals in that year
-    if (year) {
-      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
-
-      const proposals = await Proposal.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-        $or: [{ archived: false }, { archived: { $exists: false } }]
-      }).distinct('organization');
-
-      query = { ...query, _id: { $in: proposals } };
-    }
-
-    const count = await Organization.find(query).count();
+    const count = await Organization.countDocuments(query);
     return res.status(200).json(count);
-  }
-  catch (err) {
+  } catch (err) {
     Logger.error(`Error Retrieving Organization Count: ${err}`);
     return res.status(400).send({ code: "ORG002", message: err.message });
   }
 
-}
+};

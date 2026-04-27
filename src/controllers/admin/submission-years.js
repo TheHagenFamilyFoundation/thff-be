@@ -163,7 +163,7 @@ export const countSubmissionYears = async (req, res) => {
     // if (filter && filter.length !== 0) {
     //   query = { name: { $regex: filter } };
     // }
-    const count = await SubmissionYear.find(query).count();
+    const count = await SubmissionYear.countDocuments(query);
     return res.status(200).json(count);
   }
   catch (err) {
