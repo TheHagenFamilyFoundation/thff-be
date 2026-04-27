@@ -193,7 +193,6 @@ export const updateProposal = async (req, res) => {
 
 export const getProposal = async (req, res) => {
 
-  Logger.info('inside getProposal');
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -209,13 +208,19 @@ export const getProposal = async (req, res) => {
       .populate('organization')
       .populate('sponsor');
 
-    Logger.info(`Returning proposal ${proposal}`);
+    if (!proposal) {
+      Logger.warn(`getProposal: not found id=${id}`);
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    Logger.info(
+      `getProposal ok id=${proposal._id} proposalID=${proposal.proposalID} title=${String(proposal.projectTitle || '').slice(0, 80)}`
+    );
     return res.status(200).json(proposal);
 
   }
   catch (e) {
-    console.log('e', e);
-    Logger.error(`Error getting proposal ${id}`);
+    Logger.error(`Error getting proposal ${id}: ${e.message}`);
     return res.status(500).json(e.message);
   }
 

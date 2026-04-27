@@ -18,10 +18,8 @@ export const injectOrganization = async (req, res, next) => {
 
     //set req.params to orgId
     req.params = { id: organization._id.toString() };
-    console.log('req.params.id', req.params.id);
     next();
   } catch (e) {
-    console.log('e', e);
     Logger.error(`Error retrieving organization with orgID: ${orgID}`);
     return res.status(500).json(e.message);
   }
@@ -30,7 +28,6 @@ export const injectOrganization = async (req, res, next) => {
 export const injectProposal = async (req, res, next) => {
 
   const { propID } = req.params;
-  console.log('injectProposal', propID);
 
   try {
     const proposal = await Proposal.findOne({ proposalID: propID })
@@ -44,10 +41,8 @@ export const injectProposal = async (req, res, next) => {
 
     //set req.params to propId
     req.params = { id: proposal._id.toString() };
-    console.log('req.params.id', req.params.id);
     next();
   } catch (e) {
-    console.log('e', e);
     Logger.error(`Error retrieving proposal with propID: ${propID}`);
     return res.status(500).json(e.message);
   }
