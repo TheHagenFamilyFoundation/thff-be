@@ -55,8 +55,16 @@ const organizationInfoSchema = Schema({
     type: String,
   },
   zip: {
-    // -zip
-    type: Number,
+    // US ZIP as string so leading zeros (e.g. 02139) are preserved; supports optional ZIP+4.
+    // Setter accepts legacy numeric JSON / BSON int and stores as string.
+    type: String,
+    trim: true,
+    set(v) {
+      if (v === null || v === undefined) {
+        return v;
+      }
+      return String(v).trim();
+    },
   },
   fax: {
     // -fax number
@@ -74,7 +82,23 @@ const organizationInfoSchema = Schema({
     default: false,
   },
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform(_doc, ret) {
+      if (ret != null && Object.prototype.hasOwnProperty.call(ret, 'zip') && ret.zip != null) {
+        ret.zip = String(ret.zip);
+      }
+      return ret;
+    },
+  },
+  toObject: {
+    transform(_doc, ret) {
+      if (ret != null && Object.prototype.hasOwnProperty.call(ret, 'zip') && ret.zip != null) {
+        ret.zip = String(ret.zip);
+      }
+      return ret;
+    },
+  },
 });
 
 const OrganizationInfo = mongoose.model('OrganizationInfo', organizationInfoSchema);

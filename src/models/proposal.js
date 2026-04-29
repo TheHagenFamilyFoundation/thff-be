@@ -59,12 +59,32 @@ const proposalSchema = Schema({
     type: Boolean,
     default: false,
   },
+  /**
+   * `draft` / `ready_to_submit` = composer (hidden from director lists until submitted).
+   * `ready_to_submit` = all required fields filled; user must still click submit.
+   */
+  status: {
+    type: String,
+    enum: ['draft', 'ready_to_submit', 'submitted'],
+    default: 'submitted',
+  },
+  /** User who created the row (for draft reminder emails). */
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  /** When the 24h “still a draft” reminder was sent (only for status `draft`). */
+  draftReminderSentAt: {
+    type: Date,
+  },
 }, {
   timestamps: true
 });
 
 /** Speeds director org list year filter: distinct(organization) with createdAt range. */
 proposalSchema.index({ createdAt: 1, organization: 1 });
+/** Look up in-progress drafts per organization. */
+proposalSchema.index({ organization: 1, status: 1 });
 
 const Proposal = mongoose.model('Proposal', proposalSchema);
 export default Proposal;
