@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import OrganizationMembership from '../models/organization-membership.js';
 import { Organization, User } from '../models/index.js';
+import { COMPOSER_PROPOSAL_STATUSES } from '../utils/proposal-composer-status.js';
 import {
   resolveMembershipUserObjectId,
   formatOrganizationUsersForApi,
@@ -191,9 +192,11 @@ export function formatMembershipRowsForApi(memberships) {
  * Caller should run `migrateOrganizationUsersToMemberships` on the org doc first when loading legacy embeds.
  *
  * @param {string|import('mongoose').Types.ObjectId} organizationId
+ * @param {{ viewerUserId?: string|import('mongoose').Types.ObjectId }} [options]
  * @returns {Promise<null|{ payload: Record<string, unknown>, rawMembershipRows: unknown[], memberships: unknown[] }>}
  */
-export async function loadOrganizationApiPayload(organizationId) {
+export async function loadOrganizationApiPayload(organizationId, options = {}) {
+  const { viewerUserId } = options;
   await ensureMembershipsBackfilledForOrganization(organizationId);
 
   const rawMembershipRows = await OrganizationMembership.find({ organization: organizationId })
@@ -219,6 +222,22 @@ export async function loadOrganizationApiPayload(organizationId) {
   }
 
   const payload = formatOrganizationUsersForApi(org);
+  if (Array.isArray(payload.proposals)) {
+    const viewerStr = viewerUserId != null ? String(viewerUserId) : '';
+    payload.proposals = payload.proposals.filter((p) => {
+      if (p == null) {
+        return false;
+      }
+      if (p.status === 'submitted') {
+        return true;
+      }
+      if (viewerStr && COMPOSER_PROPOSAL_STATUSES.includes(p.status)) {
+        const creator = p.createdBy?._id ?? p.createdBy;
+        return creator != null && String(creator) === viewerStr;
+      }
+      return false;
+    });
+  }
   payload.users = formatMembershipRowsForApi(memberships);
   await recoverOrgUsersFromRawMemberships(payload, rawMembershipRows);
   await mergeUserProfilesOntoOrgUsersPayload(payload);

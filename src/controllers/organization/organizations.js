@@ -18,6 +18,7 @@ import Config from '../../config/config.js';
 import { registerOrganization } from "../../views/organization.js";
 import { inviteUser, organizationAddedUser } from "../../views/invite.js";
 import { sendEmailWithTemplate } from "../email/email.js";
+import { coerceOrgInfoZipForStorage } from '../../utils/org-info-zip.js';
 
 /**
  * Org ids that have at least one qualifying proposal with createdAt in calendar year.
@@ -79,7 +80,7 @@ export const getOrganization = async (req, res) => {
     }
     await migrateOrganizationUsersToMemberships(organization);
 
-    const loaded = await loadOrganizationApiPayload(id);
+    const loaded = await loadOrganizationApiPayload(id, { viewerUserId: req.decoded?.userID });
     if (!loaded) {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
     }
@@ -156,6 +157,10 @@ export const createOrganization = async (req, res) => {
 
     //validate done in the route
     newOrgInfo.organization = createdOrgId;
+
+    if (Object.prototype.hasOwnProperty.call(newOrgInfo, 'zip')) {
+      newOrgInfo.zip = coerceOrgInfoZipForStorage(newOrgInfo.zip);
+    }
 
     const createdOrgInfo = await OrganizationInfo.create(newOrgInfo);
     console.log('createdOrgInfo', createdOrgInfo);
@@ -397,7 +402,7 @@ export const addUserToOrganization = async (req, res) => {
     }
 
     Logger.info(`User ${user.email} added to organization ${organization.name}`);
-    const loaded = await loadOrganizationApiPayload(orgID);
+    const loaded = await loadOrganizationApiPayload(orgID, { viewerUserId: req.decoded?.userID });
     if (!loaded) {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
     }
@@ -442,7 +447,7 @@ export const removeUserFromOrganization = async (req, res) => {
       `Membership ${userID} removed from organization ${organization.name}` +
         (user ? ` (user ${user.email})` : ' (no User document; dangling ref cleared)')
     );
-    const loadedRm = await loadOrganizationApiPayload(orgID);
+    const loadedRm = await loadOrganizationApiPayload(orgID, { viewerUserId: req.decoded?.userID });
     if (!loadedRm) {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
     }
