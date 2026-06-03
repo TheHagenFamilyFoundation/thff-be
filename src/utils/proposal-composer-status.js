@@ -3,7 +3,10 @@
  * Final `submitted` is set when the applicant submits for review.
  */
 
-/** Status values that must not appear in director / grant-year proposal lists. */
+/**
+ * Status values that must not appear in director / grant-year proposal lists.
+ * New grant meetings also exclude these when building initial allocations (`createMeeting` in meetings.js).
+ */
 export const COMPOSER_PROPOSAL_STATUSES = ['draft', 'ready_to_submit'];
 
 export function isProposalBodyComplete(p) {

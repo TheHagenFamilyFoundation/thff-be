@@ -91,20 +91,74 @@ function buildProposalListQuery({ year, org, filter, showArchived, viewerUserId 
 }
 
 /** Sort fields that exist on Proposal (indexed query path). */
-function getMongoSortForProposalList(sort, dir) {
+function getMongoSortForProposalList(sort, dir, { org } = {}) {
   const d = dir === 'asc' ? 1 : -1;
+  let secondary;
   switch (sort) {
     case 'projectTitle':
-      return { projectTitle: d };
+      secondary = { projectTitle: d };
+      break;
     case 'amountRequested':
-      return { amountRequested: d };
+      secondary = { amountRequested: d };
+      break;
     case 'totalProjectCost':
-      return { totalProjectCost: d };
+      secondary = { totalProjectCost: d };
+      break;
     case 'score':
-      return { score: d };
+      secondary = { score: d };
+      break;
     case 'createdOn':
     default:
-      return { createdAt: d };
+      secondary = { createdAt: d };
+      break;
+  }
+  // Org lists: viewer composer drafts first, then submitted — each group by chosen column.
+  if (org) {
+    return { status: 1, ...secondary };
+  }
+  return secondary;
+}
+
+function composerSortRank(status) {
+  return COMPOSER_PROPOSAL_STATUSES.includes(status) ? 0 : 1;
+}
+
+function compareProposalsForList(a, b, sort, dir, { org } = {}) {
+  if (org) {
+    const rankDiff = composerSortRank(a.status) - composerSortRank(b.status);
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+  }
+
+  const d = dir === 'asc' ? 1 : -1;
+  switch (sort) {
+    case 'organization': {
+      const an = a.organization?.name ?? '';
+      const bn = b.organization?.name ?? '';
+      return d * an.localeCompare(bn);
+    }
+    case 'sponsor': {
+      const aSponsor = a.sponsor != null ? 1 : 0;
+      const bSponsor = b.sponsor != null ? 1 : 0;
+      return d * (aSponsor - bSponsor);
+    }
+    case 'votes':
+      return d * ((a?.votes?.length ?? 0) - (b?.votes?.length ?? 0));
+    case 'projectTitle': {
+      const an = a.projectTitle ?? '';
+      const bn = b.projectTitle ?? '';
+      return d * an.localeCompare(bn);
+    }
+    case 'amountRequested':
+      return d * ((a.amountRequested ?? 0) - (b.amountRequested ?? 0));
+    case 'totalProjectCost':
+      return d * ((a.totalProjectCost ?? 0) - (b.totalProjectCost ?? 0));
+    case 'score':
+      return d * ((a.score ?? 0) - (b.score ?? 0));
+    case 'createdOn':
+    default:
+      return d * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 }
 
@@ -263,6 +317,7 @@ export const createProposal = async (req, res) => {
       const existingDraft = await Proposal.findOne({
         organization: orgID,
         status: { $in: COMPOSER_PROPOSAL_STATUSES },
+        createdBy: decoded.userID,
       });
       if (existingDraft) {
         Logger.info(`Reusing existing composer proposal ${existingDraft._id} for org ${orgID}`);
@@ -467,7 +522,17 @@ export const getProposals = async (req, res) => {
 
   } else {
 
-    let { year, org, limit, skip, filter, sort, dir, showArchived, includeTotal } = req.query;
+    let {
+      year,
+      org,
+      limit,
+      skip,
+      filter,
+      sort,
+      dir,
+      showArchived,
+      includeTotal,
+    } = req.query;
 
     try {
       const query = buildProposalListQuery({
@@ -498,38 +563,14 @@ export const getProposals = async (req, res) => {
 
       if (usesInMemoryProposalSort(effectiveSort)) {
         let proposals = await populateProps(Proposal.find(query));
-
-        switch (effectiveSort) {
-          case 'organization':
-            if (dir === 'asc') {
-              proposals.sort((a, b) => b.organization?.name.localeCompare(a.organization?.name));
-            } else {
-              proposals.sort((a, b) => a.organization?.name.localeCompare(b.organization?.name));
-            }
-            break;
-          case 'sponsor':
-            proposals.sort(function (a, b) {
-              let aSponsor = (typeof a.sponsor !== 'undefined' && a.sponsor !== null) ? 1 : 0;
-              let bSponsor = (typeof b.sponsor !== 'undefined' && b.sponsor !== null) ? 1 : 0;
-              return dir === 'asc' ? (aSponsor - bSponsor) : (bSponsor - aSponsor);
-            });
-            break;
-          case 'votes':
-            proposals.sort(function (a, b) {
-              return dir === 'asc'
-                ? (a?.votes.length - b?.votes.length)
-                : (b?.votes.length - a?.votes.length);
-            });
-            break;
-          default:
-            break;
-        }
-
+        proposals.sort((a, b) =>
+          compareProposalsForList(a, b, effectiveSort, dir, { org: !!org })
+        );
         props = proposals.slice(skipNum, skipNum + limitNum);
       } else {
         props = await populateProps(
           Proposal.find(query)
-            .sort(getMongoSortForProposalList(effectiveSort, dir))
+            .sort(getMongoSortForProposalList(effectiveSort, dir, { org: !!org }))
             .skip(skipNum)
             .limit(limitNum)
         );

@@ -11,7 +11,8 @@
     "start": "node src/app",
     "audit-org-members": "node src/scripts/audit-org-members.js",
     "reconcile-org-memberships": "node src/scripts/reconcile-org-memberships.js",
-    "grant-cycle-emails": "node src/scripts/run-grant-cycle-emails.js"
+    "grant-cycle-emails": "node src/scripts/run-grant-cycle-emails.js",
+    "seed-meeting-test-proposals": "node src/scripts/seed-meeting-test-proposals.js"
   },
   "author": "Logan Born",
   "license": "MIT",

@@ -10,6 +10,7 @@ import { sendEmailWithTemplate } from '../email/email.js';
 import { createNewPassword, registerUser, resetPasswordConfirm } from '../../views/user.js';
 
 import { User, UserSetting, Token, Invite, Organization, ReferralCode } from '../../models/index.js';
+import { DEFAULT_TABLE_PAGE_SIZE } from '../../utils/table-page-size.js';
 import { migrateOrganizationUsersToMemberships } from '../../utils/organization-membership.js';
 import {
   organizationHasMember,
@@ -113,6 +114,7 @@ export const login = async (req, res) => {
       //create settings
       let defaultSettings = {
         scheme: "light",
+        tablePageSize: DEFAULT_TABLE_PAGE_SIZE,
         userID: user._id,
       };
 
@@ -258,6 +260,7 @@ export const register = async (req, res) => {
     // Create default user settings
     let userSettings = await UserSetting.create({
       scheme: 'light',
+      tablePageSize: DEFAULT_TABLE_PAGE_SIZE,
       userID: createdUser._id,
     });
 
@@ -393,6 +396,7 @@ export const refreshAccessToken = async (req, res) => {
 
       let defaultSettings = {
         scheme: "light",
+        tablePageSize: DEFAULT_TABLE_PAGE_SIZE,
         userID: user._id,
       };
       // If user logged in successfully we return user, token, and settings as response
