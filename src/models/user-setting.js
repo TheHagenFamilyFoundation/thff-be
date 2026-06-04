@@ -6,6 +6,10 @@ const userSettingSchema = Schema({
     type: String,
     default: "light",
   },
+  tablePageSize: {
+    type: Number,
+    default: 10,
+  },
   userID: {
     type: Schema.Types.ObjectId,
     ref: 'User'

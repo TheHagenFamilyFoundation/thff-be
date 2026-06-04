@@ -2,6 +2,7 @@ import { validationResult } from "express-validator";
 import Logger from '../../utils/logger.js';
 import { OrganizationInfo } from '../../models/index.js';
 import { Organization } from '../../models/index.js';
+import { coerceOrgInfoZipForStorage } from '../../utils/org-info-zip.js';
 
 export const getOrganizationInfo = async (req, res) => {
   Logger.info('Inside getOrganizationInfo');
@@ -39,9 +40,14 @@ export const updateOrganizationInfo = async (req, res) => {
       return res.status(404).json({ message: 'Organization info not found' });
     }
 
+    const payload = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(payload, 'zip')) {
+      payload.zip = coerceOrgInfoZipForStorage(payload.zip);
+    }
+
     const updatedInfo = await OrganizationInfo.updateOne(
       { organizationInfoID: req.query.organizationInfoID },
-      req.body
+      payload
     );
 
     Logger.info('updatedInfo', updatedInfo);

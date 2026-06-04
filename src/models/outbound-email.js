@@ -49,6 +49,13 @@ const outboundEmailSchema = Schema({
   proposalTitle: {
     type: String,
   },
+  proposal: {
+    type: Schema.Types.ObjectId,
+    ref: 'Proposal',
+  },
+  allocation: {
+    type: Schema.Types.ObjectId,
+  },
   /** Full rendered HTML as sent (for preview in app) */
   htmlBody: {
     type: String,
@@ -66,6 +73,8 @@ const outboundEmailSchema = Schema({
 
 outboundEmailSchema.index({ sentBy: 1, createdAt: -1 });
 outboundEmailSchema.index({ meeting: 1, type: 1, createdAt: -1 });
+outboundEmailSchema.index({ meeting: 1, type: 1, proposal: 1, createdAt: -1 });
+outboundEmailSchema.index({ meeting: 1, type: 1, allocation: 1, createdAt: -1 });
 outboundEmailSchema.index({ referralCode: 1, createdAt: -1 });
 
 const OutboundEmail = mongoose.model('OutboundEmail', outboundEmailSchema);

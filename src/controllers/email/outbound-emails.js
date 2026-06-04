@@ -235,7 +235,9 @@ async function loadFundedOrgContacts(meetingId) {
     return null;
   }
 
-  const fundedAllocations = meeting.allocations.filter((a) => (a.amountGranted || 0) > 0);
+  const fundedAllocations = meeting.allocations.filter(
+    (a) => a.activeInMeeting !== false && (a.amountGranted || 0) > 0
+  );
   const orgIds = [
     ...new Set(
       fundedAllocations
@@ -290,6 +292,119 @@ async function loadFundedOrgContacts(meetingId) {
   });
 
   return { meeting, rows };
+}
+
+/** One row per funded allocation (proposal), not aggregated by organization. */
+async function loadFundedProposalRows(meetingId) {
+  const meeting = await Meeting.findById(meetingId)
+    .select('_id meetingID year status totalBudget totalAllocated allocations')
+    .populate({
+      path: 'allocations.organization',
+      select: 'name organizationID info',
+      populate: {
+        path: 'info',
+        select: 'contactPerson contactPersonTitle contactPersonPhoneNumber email phone address city state zip website',
+      },
+    })
+    .populate('allocations.proposal', 'organization projectTitle');
+
+  if (!meeting) {
+    return null;
+  }
+
+  const fundedAllocations = meeting.allocations.filter(
+    (a) => a.activeInMeeting !== false && (a.amountGranted || 0) > 0,
+  );
+
+  const orgIds = [
+    ...new Set(
+      fundedAllocations
+        .map((a) => {
+          if (a.organization?._id) return a.organization._id.toString();
+          if (a.organization) return a.organization.toString();
+          if (a.proposal?.organization) return a.proposal.organization.toString();
+          return null;
+        })
+        .filter(Boolean),
+    ),
+  ];
+
+  const byOrgId = new Map();
+  for (const a of fundedAllocations) {
+    if (a.organization?._id) {
+      byOrgId.set(a.organization._id.toString(), a.organization);
+    }
+  }
+
+  const missingOrgIds = orgIds.filter((orgId) => !byOrgId.has(orgId));
+  if (missingOrgIds.length > 0) {
+    const organizations = await Organization.find({ _id: { $in: missingOrgIds } })
+      .select('name organizationID info')
+      .populate(
+        'info',
+        'contactPerson contactPersonTitle contactPersonPhoneNumber email phone address city state zip website',
+      )
+      .lean();
+
+    organizations.forEach((org) => {
+      byOrgId.set(org._id.toString(), org);
+    });
+  }
+
+  const rows = fundedAllocations.map((a) => {
+    const allocOrgId =
+      a.organization?._id?.toString() || a.organization?.toString() || a.proposal?.organization?.toString();
+    const org = allocOrgId ? byOrgId.get(allocOrgId) : null;
+    const info = org?.info || {};
+    return {
+      allocationId: a._id,
+      proposalId: a.proposal?._id || a.proposal || null,
+      proposalTitle: a.proposal?.projectTitle || '',
+      organizationId: org?._id || null,
+      organizationName: org?.name || 'Unknown Organization',
+      amountGranted: a.amountGranted || 0,
+      email: info.email || null,
+      contactPerson: info.contactPerson || null,
+    };
+  });
+
+  return { meeting, rows };
+}
+
+function grantEmailMatchesProposalRow(email, row) {
+  if (email.allocation && row.allocationId && String(email.allocation) === String(row.allocationId)) {
+    return true;
+  }
+  if (email.proposal && row.proposalId && String(email.proposal) === String(row.proposalId)) {
+    return true;
+  }
+  if (
+    email.proposalTitle &&
+    row.proposalTitle &&
+    email.proposalTitle === row.proposalTitle &&
+    email.organization &&
+    row.organizationId &&
+    String(email.organization) === String(row.organizationId)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Strip a trailing "(YYYY)" when the proposal title already includes the meeting year. */
+function grantSubjectLabel(row, meetingYear) {
+  const raw = (row.proposalTitle || row.organizationName || 'Grant recipient').trim();
+  if (!raw || meetingYear == null) {
+    return raw || 'Grant recipient';
+  }
+  const yearStr = String(meetingYear);
+  const withoutYear = raw.replace(new RegExp(`\\s*\\(${yearStr}\\)\\s*$`), '').trim();
+  return withoutYear || raw;
+}
+
+function defaultGrantSubject(row, meetingYear) {
+  const label = grantSubjectLabel(row, meetingYear);
+  return `Grant award — ${label} (${meetingYear})`;
 }
 
 async function persistOutbound(doc) {
@@ -620,6 +735,83 @@ export const getMeetingGrantOutboundEmailById = async (req, res) => {
   }
 };
 
+/** Funded proposals for this meeting with grant-email send history (one row per allocation). */
+export const listGrantEmailProposals = async (req, res) => {
+  try {
+    const { decoded } = req;
+    if (decoded.accessLevel < ACCESS_DIRECTOR) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id } = req.params;
+    const meeting = await Meeting.findById(id).select('_id status year').lean();
+    if (!meeting) {
+      return res.status(404).json({ code: 'MTG005', message: 'Meeting not found' });
+    }
+
+    if (meeting.status !== 'completed') {
+      return res.status(400).json({ message: 'Meeting must be completed before viewing grant emails' });
+    }
+
+    const loaded = await loadFundedProposalRows(id);
+    if (!loaded) {
+      return res.status(404).json({ message: 'Meeting not found' });
+    }
+
+    const { meeting: m, rows } = loaded;
+    const sentEmails = await OutboundEmail.find({ meeting: id, type: 'grant_notification' })
+      .select('_id proposal allocation organization organizationName proposalTitle createdAt to sentBy')
+      .populate('sentBy', 'firstName lastName email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const defaultMsg = defaultGrantMessagePlain();
+    const proposals = rows.map((row) => {
+      const matches = sentEmails.filter((e) => grantEmailMatchesProposalRow(e, row));
+      const last = matches[0] || null;
+      const hasEmail = !!(row.email && String(row.email).trim());
+      const subject = defaultGrantSubject(row, m.year);
+      const html = hasEmail
+        ? renderEmailWithTemplate(
+            grantNotificationEmail,
+            buildGrantNotificationTemplateData(row, m.year, defaultMsg),
+          )
+        : '';
+
+      return {
+        allocationId: row.allocationId ? String(row.allocationId) : null,
+        proposalId: row.proposalId ? String(row.proposalId) : null,
+        proposalTitle: row.proposalTitle || '',
+        organizationId: row.organizationId ? String(row.organizationId) : null,
+        organizationName: row.organizationName,
+        amountGranted: row.amountGranted,
+        email: hasEmail ? normalizeEmail(row.email) : null,
+        canSend: hasEmail,
+        skipReason: hasEmail ? null : 'No organization email on file',
+        sendCount: matches.length,
+        lastSentAt: last?.createdAt || null,
+        lastSentEmailId: last?._id ? String(last._id) : null,
+        lastSentTo: last?.to || null,
+        subject,
+        messagePlain: defaultMsg,
+        html,
+      };
+    });
+
+    const ready = proposals.filter((p) => p.canSend).length;
+    const skipped = proposals.filter((p) => !p.canSend).length;
+
+    return res.status(200).json({
+      meeting: { _id: m._id, year: m.year },
+      proposals,
+      counts: { ready, skipped },
+    });
+  } catch (e) {
+    Logger.error(`listGrantEmailProposals: ${e.message}`);
+    return res.status(500).json({ message: e.message || 'Error loading grant email proposals' });
+  }
+};
+
 /** Same recipient list as send, without sending — for UI preview before POST send-grant-notifications. */
 export const previewGrantMeetingNotifications = async (req, res) => {
   try {
@@ -647,6 +839,7 @@ export const previewGrantMeetingNotifications = async (req, res) => {
     const previewRows = rows.map((row) => {
       const hasEmail = !!(row.email && String(row.email).trim());
       return {
+        organizationId: row.organizationId ? String(row.organizationId) : null,
         organizationName: row.organizationName,
         email: hasEmail ? normalizeEmail(row.email) : null,
         amountGranted: row.amountGranted,
@@ -698,11 +891,7 @@ export const renderGrantNotificationPreview = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { organizationId, messagePlain: messagePlainRaw } = req.body || {};
-
-    if (!organizationId || !mongoose.isValidObjectId(String(organizationId))) {
-      return res.status(400).json({ message: 'Invalid organizationId' });
-    }
+    const { organizationId, allocationId, messagePlain: messagePlainRaw } = req.body || {};
 
     const mp = typeof messagePlainRaw === 'string' ? messagePlainRaw : defaultGrantMessagePlain();
     if (mp.length > MAX_GRANT_MESSAGE_PLAIN) {
@@ -714,15 +903,23 @@ export const renderGrantNotificationPreview = async (req, res) => {
       return res.status(400).json({ message: 'Meeting must be completed' });
     }
 
-    const loaded = await loadFundedOrgContacts(id);
+    const loaded = await loadFundedProposalRows(id);
     if (!loaded) {
       return res.status(404).json({ message: 'Meeting not found' });
     }
 
     const { meeting: m, rows } = loaded;
-    const row = rows.find((r) => r.organizationId && String(r.organizationId) === String(organizationId));
+    let row = null;
+    if (allocationId && mongoose.isValidObjectId(String(allocationId))) {
+      row = rows.find((r) => r.allocationId && String(r.allocationId) === String(allocationId));
+    } else if (organizationId && mongoose.isValidObjectId(String(organizationId))) {
+      row = rows.find((r) => r.organizationId && String(r.organizationId) === String(organizationId));
+    } else {
+      return res.status(400).json({ message: 'Invalid allocationId or organizationId' });
+    }
+
     if (!row || !row.email || !String(row.email).trim()) {
-      return res.status(404).json({ message: 'Organization not in send list for this meeting' });
+      return res.status(404).json({ message: 'Proposal not in send list for this meeting' });
     }
 
     const data = buildGrantNotificationTemplateData(row, m.year, mp);
@@ -751,7 +948,7 @@ export const sendGrantMeetingNotifications = async (req, res) => {
       return res.status(400).json({ message: 'Meeting must be completed before sending grant notifications' });
     }
 
-    const loaded = await loadFundedOrgContacts(id);
+    const loaded = await loadFundedProposalRows(id);
     if (!loaded) {
       return res.status(404).json({ message: 'Meeting not found' });
     }
@@ -760,16 +957,39 @@ export const sendGrantMeetingNotifications = async (req, res) => {
     const results = [];
     const errors = [];
 
-    /** Optional map org Mongo id → { subject?, htmlBody } from JSON body (president-edited previews). */
-    let customizationByOrgId = null;
     const rawBody = req.body;
+    /** When set, only these allocation ids are sent (one email per funded proposal row). */
+    let targetAllocationIdSet = null;
+    /** Legacy: filter by organization id (sends all proposals for those orgs). */
+    let targetOrgIdSet = null;
+    if (rawBody && typeof rawBody === 'object' && Array.isArray(rawBody.allocationIds)) {
+      targetAllocationIdSet = new Set(
+        rawBody.allocationIds
+          .filter((aid) => aid && mongoose.isValidObjectId(String(aid)))
+          .map((aid) => String(aid)),
+      );
+      if (targetAllocationIdSet.size === 0) {
+        return res.status(400).json({ message: 'Select at least one proposal to send' });
+      }
+    } else if (rawBody && typeof rawBody === 'object' && Array.isArray(rawBody.organizationIds)) {
+      targetOrgIdSet = new Set(
+        rawBody.organizationIds
+          .filter((oid) => oid && mongoose.isValidObjectId(String(oid)))
+          .map((oid) => String(oid)),
+      );
+      if (targetOrgIdSet.size === 0) {
+        return res.status(400).json({ message: 'Select at least one organization to send' });
+      }
+    }
+
+    /** Optional map allocation id → { subject?, htmlBody?, messagePlain? } */
+    let customizationByAllocationId = null;
+    /** Legacy map org id → customization */
+    let customizationByOrgId = null;
     if (rawBody && typeof rawBody === 'object' && Array.isArray(rawBody.customizations)) {
+      customizationByAllocationId = new Map();
       customizationByOrgId = new Map();
       for (const c of rawBody.customizations) {
-        const oid = c?.organizationId;
-        if (!oid || !mongoose.isValidObjectId(String(oid))) {
-          continue;
-        }
         const htmlBodyLegacy = typeof c.htmlBody === 'string' ? c.htmlBody.trim() : '';
         if (htmlBodyLegacy.length > MAX_GRANT_CUSTOM_HTML) {
           return res.status(400).json({ message: 'Email body exceeds maximum length' });
@@ -779,24 +999,46 @@ export const sendGrantMeetingNotifications = async (req, res) => {
           return res.status(400).json({ message: 'Message too long' });
         }
         const subj = typeof c.subject === 'string' ? c.subject.trim() : '';
-        customizationByOrgId.set(String(oid), {
+        const payload = {
           subject: subj || undefined,
           htmlBody: htmlBodyLegacy || undefined,
           messagePlain,
-        });
+        };
+        const aid = c?.allocationId;
+        if (aid && mongoose.isValidObjectId(String(aid))) {
+          customizationByAllocationId.set(String(aid), payload);
+        }
+        const oid = c?.organizationId;
+        if (oid && mongoose.isValidObjectId(String(oid))) {
+          customizationByOrgId.set(String(oid), payload);
+        }
       }
     }
 
     for (const row of rows) {
       if (!row.email) {
-        errors.push({ organizationName: row.organizationName, error: 'No organization email on file' });
+        errors.push({
+          organizationName: row.organizationName,
+          proposalTitle: row.proposalTitle || undefined,
+          error: 'No organization email on file',
+        });
         continue;
       }
 
-      const defaultSubject = `Grant award — ${row.organizationName} (${m.year})`;
-
+      const allocKey = row.allocationId ? String(row.allocationId) : null;
       const orgKey = row.organizationId ? String(row.organizationId) : null;
-      const custom = orgKey && customizationByOrgId ? customizationByOrgId.get(orgKey) : null;
+      if (targetAllocationIdSet && (!allocKey || !targetAllocationIdSet.has(allocKey))) {
+        continue;
+      }
+      if (targetOrgIdSet && (!orgKey || !targetOrgIdSet.has(orgKey))) {
+        continue;
+      }
+
+      const defaultSubject = defaultGrantSubject(row, m.year);
+      const custom =
+        (allocKey && customizationByAllocationId?.get(allocKey)) ||
+        (orgKey && customizationByOrgId?.get(orgKey)) ||
+        null;
 
       let subject = defaultSubject;
       let htmlBody;
@@ -829,6 +1071,8 @@ export const sendGrantMeetingNotifications = async (req, res) => {
           meeting: m._id,
           organization: row.organizationId,
           organizationName: row.organizationName,
+          proposal: row.proposalId || undefined,
+          allocation: row.allocationId || undefined,
           amountGranted: row.amountGranted,
           proposalTitle: row.proposalTitle || undefined,
           htmlBody,
@@ -837,7 +1081,11 @@ export const sendGrantMeetingNotifications = async (req, res) => {
         results.push(saved);
       } catch (sendErr) {
         Logger.error(`sendGrantMeetingNotifications row: ${sendErr.message}`);
-        errors.push({ organizationName: row.organizationName, error: sendErr.message });
+        errors.push({
+          organizationName: row.organizationName,
+          proposalTitle: row.proposalTitle || undefined,
+          error: sendErr.message,
+        });
       }
     }
 
