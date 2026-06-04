@@ -32,7 +32,12 @@ const Config = {
   //Mailgun
   mailgunDomain: process.env.MAILGUN_DOMAIN,
   mailgunKey: process.env.MAILGUN_KEY,
-  interalEmailAddress: process.env.INTERNAL_EMAIL_ADDRESS
+  interalEmailAddress: process.env.INTERNAL_EMAIL_ADDRESS,
+
+  /** Grant-cycle reminder cron (`npm run grant-cycle-emails`). Off until explicitly enabled. */
+  grantCycleEmailsEnabled:
+    process.env.GRANT_CYCLE_EMAILS_ENABLED === '1'
+    || process.env.GRANT_CYCLE_EMAILS_ENABLED === 'true',
 
 }
 

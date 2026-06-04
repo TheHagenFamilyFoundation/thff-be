@@ -3,7 +3,8 @@
  *
  *   node --env-file=.env.development src/scripts/run-grant-cycle-emails.js
  *
- * Schedule daily in production (e.g. cron 12:05 UTC) via `npm run grant-cycle-emails`.
+ * Disabled by default. Set GRANT_CYCLE_EMAILS_ENABLED=true when ready to schedule
+ * daily in production (e.g. cron 12:05 UTC) via `npm run grant-cycle-emails`.
  */
 
 import mongoose from 'mongoose';

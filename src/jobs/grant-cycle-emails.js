@@ -1,5 +1,6 @@
 /**
  * Scheduled grant-cycle reminders (run daily via cron + `npm run grant-cycle-emails`).
+ * Gated by GRANT_CYCLE_EMAILS_ENABLED — off by default until tested in staging.
  *
  * - 24h after creation: email creator if proposal is still `draft` (incomplete composer).
  * - On UTC calendar day 14 days before May 1 (grant year): orgs with any proposal in that year (submitted or composer) — time to ensure proposals are ready.
@@ -306,6 +307,13 @@ export async function sendGrantCycleThreeDaysBeforeMay1() {
 }
 
 export async function runAllGrantCycleEmailTasks() {
+  if (!Config.grantCycleEmailsEnabled) {
+    Logger.info(
+      'runAllGrantCycleEmailTasks: skipped — set GRANT_CYCLE_EMAILS_ENABLED=true to run grant-cycle reminders',
+    );
+    return { disabled: true };
+  }
+
   const draft24h = await sendProposalDraft24hReminders();
   const twoWeek = await sendGrantCycleTwoWeeksBeforeMay1();
   const threeDay = await sendGrantCycleThreeDaysBeforeMay1();
