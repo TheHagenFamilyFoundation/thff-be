@@ -31,7 +31,7 @@
     "jsonwebtoken": "^9.0.2",
     "mailgun.js": "^11.1.0",
     "mongoose": "^8.0.1",
-    "uuid": "^9.0.1",
+    "uuid": "^14.0.0",
     "winston": "^3.11.0"
   },
   "overrides": {
