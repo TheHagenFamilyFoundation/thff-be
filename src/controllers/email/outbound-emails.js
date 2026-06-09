@@ -21,6 +21,10 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email || '').trim());
+}
+
 /** FE_URL may omit the scheme; Mailgun needs absolute hrefs for clickable links. */
 function absoluteFrontendBase() {
   let fe = String(Config.feURL || '').trim().replace(/\/$/, '');
@@ -570,6 +574,9 @@ export const sendSolicitationEmail = async (req, res) => {
     const emailTo = normalizeEmail(to);
     if (!referralCodeId || !emailTo) {
       return res.status(400).json({ message: 'referralCodeId and to are required' });
+    }
+    if (!isValidEmail(emailTo)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
 
     if (messagePlain != null && String(messagePlain).length > MAX_SOLICITATION_PLAIN) {
