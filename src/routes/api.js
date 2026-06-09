@@ -14,6 +14,8 @@ import ProposalRouter from './api/proposal.js'
 import VoteRouter from './api/vote.js'
 
 import SettingsRouter from './api/settings.js'
+
+import ReferralCodePublicRouter from './api/referral-code-public.js'
 import ReferralCodeRouter from './api/referral-code.js'
 
 import SubmissionYearPublicRouter from './api/submission-year-public.js'
@@ -31,6 +33,9 @@ router.use('/auth', AuthRouter)
 
   // Public submission year GET endpoints (no auth required)
   .use('/submission-year', SubmissionYearPublicRouter)
+
+  // Public referral validation (sign-in / sign-up invite flows)
+  .use('/referral-code', ReferralCodePublicRouter)
 
   .use(AuthnMiddleware.authenticateToken)
 
