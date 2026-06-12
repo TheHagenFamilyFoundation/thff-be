@@ -30,7 +30,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mailgun.js": "^13.2.0",
-    "mongoose": "^8.0.1",
+    "mongoose": "^9.7.0",
     "uuid": "^14.0.0",
     "winston": "^3.11.0"
   },
