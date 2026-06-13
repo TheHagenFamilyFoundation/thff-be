@@ -297,7 +297,7 @@ async function sendProposalSubmissionEmail(decoded, proposal) {
     projectTitle: proposal.projectTitle,
   };
   const to = user.email;
-  const subject = 'Thank You For Submitting A Proposal';
+  const subject = 'Thank You For Creating A Proposal';
   await sendEmailWithTemplate(to, subject, submittedProposal, data);
   Logger.info(`Proposal submission email sent successfully to ${to}`);
 }

@@ -1,7 +1,7 @@
 export const submittedProposal = `
-<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Proposal Submitted</h2>
+<h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #1e293b;">Proposal Created</h2>
 <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #475569;">
-    Thank you for submitting your grant proposal. We've received it successfully.
+    Thank you for creating your grant proposal. Your application is now in our system.
 </p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 24px 0; border-radius: 8px; overflow: hidden;">
     <tr>
@@ -12,7 +12,7 @@ export const submittedProposal = `
     </tr>
 </table>
 <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #475569;">
-    Proposals are submitted automatically when you create them. You can still return and edit your proposal anytime until the portal closes.
+    When you create a proposal, it is entered into the grant cycle automatically. You can still return and edit your proposal anytime until the portal closes.
 </p>
 <p style="margin: 0 0 8px 0; font-size: 15px; line-height: 1.6; color: #475569;">
     Per our grant review timeline, the Board will announce all awards in June/July.
