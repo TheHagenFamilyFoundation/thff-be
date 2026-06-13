@@ -31,6 +31,9 @@ router.put('/archive/:id',
 router.put('/sponsor/:id',
   validatePatchProposals,
   ProposalController.sponsorProposal)
+router.put('/:id/referral-code',
+  validatePatchProposals,
+  ProposalController.applyProposalReferralCode)
 router.put('/:id',
   validatePatchProposals,
   ProposalController.updateProposal)

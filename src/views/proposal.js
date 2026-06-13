@@ -11,6 +11,9 @@ export const submittedProposal = `
         </td>
     </tr>
 </table>
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+    Proposals are submitted automatically when you create them. You can still return and edit your proposal anytime until the portal closes.
+</p>
 <p style="margin: 0 0 8px 0; font-size: 15px; line-height: 1.6; color: #475569;">
     Per our grant review timeline, the Board will announce all awards in June/July.
 </p>

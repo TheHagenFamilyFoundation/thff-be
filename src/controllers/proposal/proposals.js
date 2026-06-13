@@ -249,13 +249,32 @@ async function canUserGetProposal(decoded, proposal) {
 
 async function applyReferralCodeIfPresent(proposal, effectiveReferralCode) {
   if (!effectiveReferralCode) {
-    return;
+    return { applied: false };
   }
-  const refCode = await ReferralCode.findOne({ code: effectiveReferralCode, active: true });
+  const refCode = await findActiveReferralCode(effectiveReferralCode);
+  if (!refCode) {
+    return { applied: false, invalid: true };
+  }
+  proposal.sponsor = refCode.director._id ?? refCode.director;
+  Logger.info(`Proposal auto-sponsored by director ${refCode.director} via referral code ${effectiveReferralCode}`);
+  return { applied: true, refCode };
+}
+
+async function findActiveReferralCode(code) {
+  const trimmed = String(code || '').trim();
+  if (!trimmed) {
+    return null;
+  }
+  let refCode = await ReferralCode.findOne({ code: trimmed, active: true })
+    .populate('director', 'email firstName lastName');
   if (refCode) {
-    proposal.sponsor = refCode.director;
-    Logger.info(`Proposal auto-sponsored by director ${refCode.director} via referral code ${effectiveReferralCode}`);
+    return refCode;
   }
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return ReferralCode.findOne({
+    code: new RegExp(`^${escaped}$`, 'i'),
+    active: true,
+  }).populate('director', 'email firstName lastName');
 }
 
 async function resolveUserReferralFallback(decoded, referralCode) {
@@ -380,6 +399,13 @@ export const updateProposal = async (req, res) => {
   const updatePayload = req.body;
   const { decoded } = req;
 
+  const referralCodeInput =
+    typeof updatePayload.referralCode === 'string' ? updatePayload.referralCode.trim() : '';
+  const clearSponsor = updatePayload.clearSponsor === true;
+  const updateFields = { ...updatePayload };
+  delete updateFields.referralCode;
+  delete updateFields.clearSponsor;
+
   try {
     const before = await Proposal.findOne({ _id: id });
     if (!before) {
@@ -391,23 +417,27 @@ export const updateProposal = async (req, res) => {
       return res.status(authz.status).json({ message: authz.message });
     }
 
+    if (clearSponsor && referralCodeInput) {
+      return res.status(400).json({ message: 'Cannot add and remove a sponsor in the same request' });
+    }
+
     const wasDraftLike = before.status === 'draft' || before.status === 'ready_to_submit';
 
-    const updatedFields = Object.keys(updatePayload);
+    const updatedFieldKeys = Object.keys(updateFields);
     let updatedProposal = null;
 
-    if (updatedFields.length === 1) {
+    if (updatedFieldKeys.length === 1) {
       const proposal = await Proposal.findOne({ _id: id });
-      const key = updatedFields[0];
-      if (key === 'status' && updatePayload[key] === 'draft') {
+      const key = updatedFieldKeys[0];
+      if (key === 'status' && updateFields[key] === 'draft') {
         // Composer status is derived server-side; ignore client autosave `draft`
       } else {
-        proposal[key] = updatePayload[key];
+        proposal[key] = updateFields[key];
       }
       await proposal.save();
       updatedProposal = proposal;
-    } else {
-      const updateClean = { ...updatePayload };
+    } else if (updatedFieldKeys.length > 1) {
+      const updateClean = { ...updateFields };
       if (updateClean.status === 'draft') {
         delete updateClean.status;
       }
@@ -415,6 +445,8 @@ export const updateProposal = async (req, res) => {
         { _id: id },
         { $set: updateClean },
       );
+      updatedProposal = await Proposal.findOne({ _id: id });
+    } else {
       updatedProposal = await Proposal.findOne({ _id: id });
     }
 
@@ -426,24 +458,64 @@ export const updateProposal = async (req, res) => {
     }
 
     if (wasDraftLike && final?.status === 'submitted') {
-      const effectiveReferralCode = await resolveUserReferralFallback(decoded, updatePayload.referralCode);
+      const effectiveReferralCode = await resolveUserReferralFallback(decoded, referralCodeInput || updatePayload.referralCode);
       let docForEmail = final;
       if (effectiveReferralCode && !final.sponsor) {
-        await applyReferralCodeIfPresent(final, effectiveReferralCode);
-        await final.save();
-        docForEmail = await Proposal.findOne({ _id: id });
-        updatedProposal = docForEmail;
+        const result = await applyReferralCodeIfPresent(final, effectiveReferralCode);
+        if (result.invalid) {
+          return res.status(404).json({ message: 'Invalid or expired referral code' });
+        }
+        if (result.applied) {
+          await final.save();
+          docForEmail = await Proposal.findOne({ _id: id });
+          updatedProposal = docForEmail;
+        }
       }
       try {
         await sendProposalSubmissionEmail(decoded, docForEmail);
       } catch (emailError) {
         Logger.error(`Failed to send proposal submission email after draft submit:`, emailError);
       }
+    } else if (referralCodeInput && final?.status === 'submitted') {
+      if (final.sponsor) {
+        return res.status(409).json({ message: 'This proposal already has a sponsor' });
+      }
+      const refCode = await findActiveReferralCode(referralCodeInput);
+      if (!refCode) {
+        return res.status(404).json({ message: 'Invalid or expired referral code' });
+      }
+      final.sponsor = refCode.director._id ?? refCode.director;
+      await final.save();
+      await User.updateOne({ _id: decoded.userID }, { referralCode: refCode.code });
+      final = await Proposal.findOne({ _id: id })
+        .populate('organization')
+        .populate('sponsor', 'email firstName lastName');
+      updatedProposal = final;
+      Logger.info(`Proposal ${id} sponsored via referral code ${refCode.code}`);
+    } else if (clearSponsor) {
+      if (!final?.sponsor) {
+        return res.status(400).json({ message: 'This proposal does not have a sponsor' });
+      }
+      final.sponsor = undefined;
+      await final.save();
+      await User.updateOne({ _id: decoded.userID }, { $unset: { referralCode: 1 } });
+      final = await Proposal.findOne({ _id: id })
+        .populate('organization')
+        .populate('sponsor', 'email firstName lastName');
+      updatedProposal = final;
+      Logger.info(`Proposal ${id} sponsor removed by user ${decoded.userID}`);
     }
+
+    const responseProposal = updatedProposal ?? final;
+    const populatedProposal = responseProposal
+      ? await Proposal.findOne({ _id: responseProposal._id ?? id })
+        .populate('organization')
+        .populate('sponsor', 'email firstName lastName')
+      : null;
 
     return res.status(200).json({
       message: "Proposal Updated",
-      proposal: updatedProposal ?? final,
+      proposal: populatedProposal ?? responseProposal,
     });
 
   }
@@ -846,4 +918,72 @@ export const sponsorProposal = async (req, res) => {
     Logger.error(`Error Sponsoring Proposal: ${err}`);
     return res.status(400).send({ code: "PROP007", message: err.message });
   }
-}
+};
+
+/** Applicant applies a director referral code to an existing proposal without a sponsor. */
+export const applyProposalReferralCode = async (req, res) => {
+  Logger.info('Inside applyProposalReferralCode');
+  try {
+    const { id } = req.params;
+    const { code } = req.body;
+    const { decoded } = req;
+
+    const trimmed = String(code || '').trim();
+    if (!trimmed) {
+      return res.status(400).json({ message: 'Referral code is required' });
+    }
+
+    if (!mongoose.isValidObjectId(String(id))) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    const proposal = await Proposal.findOne({ _id: id });
+    if (!proposal) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    const authz = await canUserUpdateProposal(decoded, proposal);
+    if (!authz.ok) {
+      return res.status(authz.status).json({ message: authz.message });
+    }
+
+    if (proposal.sponsor) {
+      return res.status(409).json({ message: 'This proposal already has a sponsor' });
+    }
+
+    const refCode = await findActiveReferralCode(trimmed);
+
+    if (!refCode) {
+      return res.status(404).json({ message: 'Invalid or expired referral code' });
+    }
+
+    proposal.sponsor = refCode.director._id ?? refCode.director;
+    await proposal.save();
+
+    await User.updateOne({ _id: decoded.userID }, { referralCode: refCode.code });
+
+    const populated = await Proposal.findOne({ _id: id })
+      .populate('organization')
+      .populate('sponsor', 'email firstName lastName');
+
+    const director = refCode.director;
+    const sponsorName = `${director?.firstName || ''} ${director?.lastName || ''}`.trim()
+      || director?.email
+      || 'Unknown';
+
+    Logger.info(`Proposal ${id} sponsored by director ${refCode.director._id ?? refCode.director} via referral code ${trimmed}`);
+
+    return res.status(200).json({
+      message: 'Sponsor applied',
+      proposal: populated,
+      code: refCode.code,
+      sponsor: {
+        name: sponsorName,
+        email: director?.email,
+      },
+    });
+  } catch (err) {
+    Logger.error(`Error applying referral code to proposal: ${err.message}`);
+    return res.status(500).json({ message: 'Error applying referral code' });
+  }
+};
