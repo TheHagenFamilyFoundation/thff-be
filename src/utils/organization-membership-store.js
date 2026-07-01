@@ -24,7 +24,7 @@ export async function ensureMembershipsBackfilledForOrganization(organizationId)
 
   const embedIds = [];
   for (const m of org?.users || []) {
-    const uid = resolveMembershipUserObjectId(m?.user);
+    const uid = resolveMembershipUserObjectId(m?.user ?? m);
     if (!uid) {
       continue;
     }
@@ -35,7 +35,7 @@ export async function ensureMembershipsBackfilledForOrganization(organizationId)
     : [];
   const embedValidSet = new Set(embedValid.map((u) => String(u._id)));
   for (const m of org?.users || []) {
-    const uid = resolveMembershipUserObjectId(m?.user);
+    const uid = resolveMembershipUserObjectId(m?.user ?? m);
     if (!uid || !embedValidSet.has(String(uid))) {
       continue;
     }
