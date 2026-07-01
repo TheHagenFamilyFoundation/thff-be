@@ -8,6 +8,8 @@ const router = new Router();
 router.get('/',
   validateGetOrganizationInfos,
   OrganizationInfosController.getOrganizationInfo)
+router.post('/',
+  OrganizationInfosController.createOrganizationInfo)
 router.patch('/',
   //TODO: validate the patch
   // validateGetOrganizationInfos,
