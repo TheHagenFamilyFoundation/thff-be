@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 import Logger from "./logger.js";
 
@@ -19,5 +19,5 @@ export const generateCode = () => {
 }
 
 export const generateUUID = () => {
-  return uuidv4();
+  return randomUUID();
 }
