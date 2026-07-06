@@ -35,6 +35,15 @@ export const upload501c3Doc = async (req, res) => {
 
     console.log('inside the upload org', org);
 
+    if (!req.files || !req.files.doc501c3) {
+      Logger.error(
+        `No file received for org ${orgID}. content-type=${req.headers['content-type']} content-length=${req.headers['content-length']}`
+      );
+      return res
+        .status(400)
+        .send({ code: "ORG501C3005", message: 'No file received. Please re-select the document and try again.' });
+    }
+
     let organizationID = org.id;
 
     Logger.info("orgID", orgID);
@@ -91,7 +100,10 @@ export const upload501c3Doc = async (req, res) => {
     });
   }
   catch (e) {
-    Logger.error(`Error Uploading 501c3 for org ${orgID}`);
+    Logger.error(`Error Uploading 501c3 for org ${orgID}: ${e && e.message ? e.message : e}`);
+    if (e && e.stack) {
+      Logger.error(e.stack);
+    }
     return res
       .status(400)
       .send({ code: "ORG501C3002", message: 'Error Uploading 501c3' });
@@ -282,7 +294,7 @@ function uploads3(req, orgId) {
 
       if (err) {
         console.log('Error uploading file:', err);
-        return reject();
+        return reject(err);
       } else {
 
         Logger.info(`File ${fileName} uploaded successfully`);
