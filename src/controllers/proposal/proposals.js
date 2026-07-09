@@ -180,7 +180,7 @@ function proposalOrgMongoId(proposal) {
 
 /**
  * Who may call PUT /proposal/:id
- * - Composer (`draft` / `ready_to_submit`): the creator (`createdBy`), or if `createdBy` is missing, any member of the proposal’s organization (legacy rows).
+ * - Composer (`draft` / `ready_to_submit`): the creator (`createdBy`); if `createdBy` is missing, any member of the proposal’s organization (legacy rows); or any foundation director (`accessLevel` > 1) helping an organization finish/submit its proposal.
  * - Submitted: members of the proposal’s organization (collaborative edits on the proposal page) or any foundation director (`accessLevel` > 1).
  */
 async function canUserUpdateProposal(decoded, before) {
@@ -205,6 +205,12 @@ async function canUserUpdateProposal(decoded, before) {
       return { ok: true };
     }
     if (!creator && inProposalOrg) {
+      return { ok: true };
+    }
+    // Director and up (accessLevel > 1: director, president, admin) can edit and submit composer
+    // drafts on behalf of an organization (e.g. helping an applicant finish their proposal). This
+    // mirrors the access these roles already have to GET any proposal and edit submitted ones below.
+    if (isDirector) {
       return { ok: true };
     }
     return {
