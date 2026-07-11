@@ -12,6 +12,7 @@ router.get('/', (req, res) => {
 })
   //health and status
   .get('/health', HealthController.health)
-  .get('/status', HealthController.status);
+  .get('/status', HealthController.status)
+  .get('/realtime', HealthController.realtime);
 
 export default router;
