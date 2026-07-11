@@ -22,6 +22,9 @@ const Config = {
   //mongodb
   databaseURI: process.env.DATABASE_URI,
 
+  /** Redis connection URL. When set, enables the Socket.IO Redis adapter for multi-instance fan-out. */
+  redisURL: process.env.REDIS_URL,
+
   //AWS
   accessKey: process.env.AWS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY,
