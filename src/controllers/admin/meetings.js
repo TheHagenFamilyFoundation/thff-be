@@ -12,6 +12,7 @@ import {
   logRestored,
   logSetAside,
 } from "../../utils/meeting-events.js";
+import { emitMeetingUpdate } from "../../socket/index.js";
 
 const ACCESS_LEVEL_PRESIDENT = 3;
 
@@ -253,6 +254,7 @@ export const updateMeeting = async (req, res) => {
     await meeting.save();
 
     const populated = await populateMeeting(id);
+    emitMeetingUpdate(populated);
 
     Logger.info(`Meeting updated: ${id}`);
     return res.status(200).json(populated);
@@ -327,6 +329,7 @@ export const updateAllocations = async (req, res) => {
     await meeting.save();
 
     const populated = await populateMeeting(id);
+    emitMeetingUpdate(populated);
 
     Logger.info(`Meeting allocations updated: ${id}`);
     return res.status(200).json(populated);
@@ -365,6 +368,7 @@ export const completeMeeting = async (req, res) => {
     await meeting.save();
 
     const populated = await populateMeeting(id);
+    emitMeetingUpdate(populated);
 
     Logger.info(
       `Meeting completed: ${id}${unfundedSetAside ? ` (${unfundedSetAside} unfunded set aside)` : ''}`
@@ -396,6 +400,8 @@ export const archiveMeeting = async (req, res) => {
 
     meeting.archived = archived;
     await meeting.save();
+
+    emitMeetingUpdate(await populateMeeting(id));
 
     Logger.info(`Meeting ${id} archived: ${archived}`);
     return res.status(200).json(meeting);
@@ -446,6 +452,7 @@ export const removeAllocation = async (req, res) => {
     await meeting.save();
 
     const updated = await populateMeeting(id);
+    emitMeetingUpdate(updated);
 
     Logger.info(`Allocation ${allocationId} set aside on meeting ${id}`);
     return res.status(200).json(updated);
@@ -502,6 +509,7 @@ export const setAllocationActive = async (req, res) => {
     await meeting.save();
 
     const updated = await populateMeeting(id);
+    emitMeetingUpdate(updated);
     Logger.info(`Allocation ${allocationId} activeInMeeting=${active} on meeting ${id}`);
     return res.status(200).json(updated);
   } catch (err) {
@@ -572,6 +580,9 @@ export const syncEligibleProposalsToMeeting = async (req, res) => {
     }
 
     const populated = await populateMeeting(id);
+    if (changed) {
+      emitMeetingUpdate(populated);
+    }
     Logger.info(`Meeting ${id} proposal sync: ${changed ? 'updated' : 'no changes'}`);
     return res.status(200).json(populated);
   } catch (err) {
