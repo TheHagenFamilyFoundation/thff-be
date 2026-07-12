@@ -73,9 +73,11 @@ export function initSocket(server) {
   io = new Server(server, {
     // Mirror the permissive HTTP CORS (see app.js). Tighten alongside it if locked down.
     cors: { origin: true, credentials: true },
-    // WebSocket-only: avoids the multi-request polling handshake, so no ALB
-    // sticky sessions are required when running multiple instances.
-    transports: ['websocket'],
+    // HTTP long-polling first (works on App Runner, which does not support
+    // WebSockets), then auto-upgrade to WebSocket if the platform allows it
+    // (e.g. after migrating to ECS). Long-polling requires a single instance
+    // or sticky sessions since the session is pinned to one process.
+    transports: ['polling', 'websocket'],
   });
 
   io.use((socket, next) => {
