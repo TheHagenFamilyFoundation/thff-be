@@ -1,6 +1,6 @@
 {
   "name": "thff-be",
-  "version": "5.6.2",
+  "version": "5.6.3",
   "description": "hagen family foundation backend",
   "main": "app.js",
   "type": "module",
@@ -17,6 +17,7 @@
   "author": "Logan Born",
   "license": "MIT",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "aws-sdk": "^2.1547.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
@@ -31,6 +32,8 @@
     "jsonwebtoken": "^9.0.2",
     "mailgun.js": "^13.2.0",
     "mongoose": "^8.0.1",
+    "redis": "^6.1.0",
+    "socket.io": "^4.8.3",
     "uuid": "^14.0.0",
     "winston": "^3.11.0"
   },
