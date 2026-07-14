@@ -1,6 +1,6 @@
 {
   "name": "thff-be",
-  "version": "5.6.3",
+  "version": "5.6.5",
   "description": "hagen family foundation backend",
   "main": "app.js",
   "type": "module",
