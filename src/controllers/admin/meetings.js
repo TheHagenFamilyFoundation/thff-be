@@ -360,17 +360,8 @@ export const completeMeeting = async (req, res) => {
       return res.status(400).json({ code: "MTG013", message: "Meeting is already completed" });
     }
 
-    // A meeting can be started while over budget (it's a planning aid), but it cannot be
-    // completed until the funded allocations fit within the budget.
-    const budget = Number(meeting.totalBudget) || 0;
-    const allocatedBeforeComplete = sumGrantedActiveAllocations(meeting);
-    if (allocatedBeforeComplete > budget) {
-      return res.status(400).json({
-        code: "MTG051",
-        message: `Allocations exceed the budget by ${allocatedBeforeComplete - budget}. Set aside proposals or lower amounts before completing.`,
-      });
-    }
-
+    // A meeting can be completed whether it's under or over budget — the client confirms
+    // the over-budget case with the president before sending the request.
     const unfundedSetAside = setAsideUnfundedActiveAllocations(meeting);
     meeting.totalAllocated = sumGrantedActiveAllocations(meeting);
     meeting.status = 'completed';
