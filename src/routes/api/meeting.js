@@ -24,6 +24,7 @@ router.post('/:id/sync-eligible-proposals', MeetingController.syncEligiblePropos
 router.post('/', validateCreateMeeting, MeetingController.createMeeting);
 router.put('/:id', validateUpdateMeeting, MeetingController.updateMeeting);
 router.put('/:id/allocations', validateUpdateAllocations, MeetingController.updateAllocations);
+router.put('/:id/allocations/active', MeetingController.bulkSetAllocationsActive);
 router.put('/:id/complete', MeetingController.completeMeeting);
 router.put('/:id/archive', MeetingController.archiveMeeting);
 router.delete('/:id/allocation/:allocationId', MeetingController.removeAllocation);
