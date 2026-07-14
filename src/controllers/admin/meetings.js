@@ -360,6 +360,17 @@ export const completeMeeting = async (req, res) => {
       return res.status(400).json({ code: "MTG013", message: "Meeting is already completed" });
     }
 
+    // A meeting can be started while over budget (it's a planning aid), but it cannot be
+    // completed until the funded allocations fit within the budget.
+    const budget = Number(meeting.totalBudget) || 0;
+    const allocatedBeforeComplete = sumGrantedActiveAllocations(meeting);
+    if (allocatedBeforeComplete > budget) {
+      return res.status(400).json({
+        code: "MTG051",
+        message: `Allocations exceed the budget by ${allocatedBeforeComplete - budget}. Set aside proposals or lower amounts before completing.`,
+      });
+    }
+
     const unfundedSetAside = setAsideUnfundedActiveAllocations(meeting);
     meeting.totalAllocated = sumGrantedActiveAllocations(meeting);
     meeting.status = 'completed';
@@ -515,6 +526,92 @@ export const setAllocationActive = async (req, res) => {
   } catch (err) {
     Logger.error(`Error setAllocationActive: ${err.message}`);
     return res.status(500).json({ code: "MTG042", message: err.message });
+  }
+};
+
+/**
+ * Bulk set aside / restore many allocations in a single atomic save.
+ * Body: { ids: string[], active: boolean }
+ *
+ * Replaces calling the single-allocation endpoint N times: doing that fired one request
+ * (and one document save) per proposal, so concurrent saves on the same meeting collided
+ * with version conflicts (500s) and flooded the network. This loads the meeting once,
+ * applies every change, saves once, and broadcasts a single update.
+ */
+export const bulkSetAllocationsActive = async (req, res) => {
+  Logger.verbose('Inside bulkSetAllocationsActive');
+
+  try {
+    const { decoded } = req;
+    if (!isPresidentOrAdmin(decoded)) {
+      return res.status(403).json({ code: "MTG046", message: "Only the president or admin can update allocations" });
+    }
+
+    const { id } = req.params;
+    const { ids, active } = req.body || {};
+
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ code: "MTG047", message: "Request body must include active: true or false" });
+    }
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ code: "MTG048", message: "Request body must include a non-empty ids array" });
+    }
+
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
+    }
+
+    if (meeting.status !== 'setup' && meeting.status !== 'in_progress' && meeting.status !== 'completed') {
+      return res.status(400).json({ code: "MTG049", message: "Active list can only be changed during setup, while the meeting is in progress, or when editing a completed meeting" });
+    }
+
+    const labelMap = await proposalLabelById(meeting);
+    let changed = 0;
+    let missing = 0;
+    for (const allocationId of ids) {
+      const alloc = meeting.allocations.id(allocationId);
+      if (!alloc) {
+        missing += 1;
+        continue;
+      }
+      const wasActive = allocationIsActive(alloc);
+      if (wasActive === active) {
+        continue;
+      }
+      const ctx = allocationAuditContext(labelMap, alloc);
+      const priorGrant = Number(alloc.amountGranted) || 0;
+      alloc.activeInMeeting = active;
+      if (!active) {
+        logSetAside(meeting, decoded.userID, { ...ctx, fromAmount: priorGrant });
+        alloc.amountGranted = 0;
+      } else {
+        logRestored(meeting, decoded.userID, ctx);
+      }
+      changed += 1;
+    }
+
+    if (missing === ids.length) {
+      return res.status(404).json({ code: "MTG021", message: "No matching allocations found" });
+    }
+
+    if (changed > 0) {
+      meeting.markModified('allocations');
+      meeting.totalAllocated = sumGrantedActiveAllocations(meeting);
+      await meeting.save();
+    }
+
+    const updated = await populateMeeting(id);
+    emitMeetingUpdate(updated);
+
+    Logger.info(
+      `Bulk set active=${active} on ${changed} allocation(s) for meeting ${id}` +
+      (missing ? ` (${missing} not found)` : '')
+    );
+    return res.status(200).json(updated);
+  } catch (err) {
+    Logger.error(`Error bulkSetAllocationsActive: ${err.message}`);
+    return res.status(500).json({ code: "MTG050", message: err.message });
   }
 };
 
