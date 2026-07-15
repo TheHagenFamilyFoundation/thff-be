@@ -687,7 +687,8 @@ export const countProposals = async (req, res) => {
 }
 
 // GET /proposal/my-proposals?year=2026
-// Returns all proposals for the current user's organizations for the given year
+// Returns proposals for the given year that either belong to one of the current
+// user's organizations or that the user personally sponsors.
 export const getMyProposals = async (req, res) => {
   Logger.info('Inside getMyProposals');
 
@@ -708,31 +709,25 @@ export const getMyProposals = async (req, res) => {
 
     await dedupePopulatedUserOrganizations(user, { persist: true });
 
-    Logger.info(`getMyProposals - user ${user.email} has ${user.organizations.length} org(s)`);
-
     // Get org IDs
     const orgIds = user.organizations.map(org => org._id);
 
-    if (orgIds.length === 0) {
-      return res.status(200).json([]);
-    }
+    Logger.info(`getMyProposals - user ${user.email} has ${orgIds.length} org(s)`);
 
-    // Query proposals directly
+    // A user sees proposals for the organizations they belong to, plus any proposal
+    // they personally sponsor (e.g. a director/president backing another org's request).
     const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
     const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
-    const submittedQuery = {
-      organization: { $in: orgIds },
-      createdAt: { $gte: startDate, $lte: endDate },
-      status: { $nin: COMPOSER_PROPOSAL_STATUSES },
-    };
-    const draftQuery = {
-      organization: { $in: orgIds },
-      createdAt: { $gte: startDate, $lte: endDate },
-      status: { $in: COMPOSER_PROPOSAL_STATUSES },
-    };
+    const ownershipConditions = [{ sponsor: user._id }];
+    if (orgIds.length > 0) {
+      ownershipConditions.push({ organization: { $in: orgIds } });
+    }
 
-    const proposals = await Proposal.find({ $or: [submittedQuery, draftQuery] })
+    const proposals = await Proposal.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+      $or: ownershipConditions,
+    })
       .populate('organization', 'name organizationID')
       .populate('sponsor', 'email firstName lastName')
       .sort({ updatedAt: -1 });
