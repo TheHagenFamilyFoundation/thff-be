@@ -1,4 +1,7 @@
 import { validationResult } from "express-validator";
+import { GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Upload } from '@aws-sdk/lib-storage';
 import Logger from '../../utils/logger.js';
 import { s3 } from '../../config/index.js';
 import Organization from "../../models/organization.js";
@@ -83,7 +86,7 @@ export const upload501c3Doc = async (req, res) => {
 
     const body = { //rename
       url: fileUploaded.files.Location,
-      fileName: fileUploaded.files.key,
+      fileName: fileUploaded.files.Key,
       organization: organizationID
     };
 
@@ -127,14 +130,13 @@ export const get501c3Doc = async (req, res) => {
 
     const { fileName } = docOrg501c3;
 
-    const params = {
+    const command = new GetObjectCommand({
       Bucket: Config.bucket,
       Key: fileName,
-      Expires: 3600,
       ResponseContentDisposition: 'inline',
-    };
+    });
 
-    const url = s3.getSignedUrl("getObject", params);
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
     return res.status(200).json({
       message: "Yay",
@@ -172,25 +174,26 @@ export const view501c3Doc = async (req, res) => {
       else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
     }
 
-    const params = {
+    const command = new GetObjectCommand({
       Bucket: Config.bucket,
       Key: fileName,
-    };
+    });
+
+    const { Body: s3Stream } = await s3.send(command);
 
     // Set headers so the browser opens inline instead of downloading
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', 'inline');
 
     // Stream the S3 object directly to the response
-    const s3Stream = s3.getObject(params).createReadStream();
-    s3Stream.pipe(res);
-
     s3Stream.on('error', (err) => {
       Logger.error(`Error streaming 501c3 ${id}: ${err.message}`);
       if (!res.headersSent) {
         res.status(500).send({ code: "ORG501C3003", message: 'Error streaming document' });
       }
     });
+
+    s3Stream.pipe(res);
   }
   catch (e) {
     Logger.error(`Error viewing 501c3 ${id}: ${e.message}`);
@@ -241,68 +244,48 @@ export const delete501c3Doc = async (req, res) => {
 }
 
 
-function deletes3(fileName) {
-  return new Promise((resolve, reject) => {
-    const params = {
-      Bucket: Config.bucket,
-      Key: fileName,
-    };
-
-    //delete the s3 object
-    s3.deleteObject(params, (err2) => {
-      if (err2) {
-        this.logger.error(err2, err2.stack);
-        // return res.status(500);
-        reject();
-      }
-    });
-
-    resolve();
+async function deletes3(fileName) {
+  const command = new DeleteObjectCommand({
+    Bucket: Config.bucket,
+    Key: fileName,
   });
+
+  try {
+    await s3.send(command);
+  } catch (err) {
+    Logger.error(`Error deleting s3 object ${fileName}: ${err && err.message ? err.message : err}`);
+    throw err;
+  }
 }
 
-function uploads3(req, orgId) {
-  return new Promise((resolve, reject) => {
+async function uploads3(req, orgId) {
+  const fileName = req.files.doc501c3.name;
 
-    console.log('req.files', req.files);
+  // Determine content type from file extension
+  let contentType = 'application/pdf';
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (ext === 'doc') { contentType = 'application/msword'; }
+  else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
 
-    const fileName = req.files.doc501c3.name;
-    console.log('fileName', fileName);
+  const key = `${Config.appEnv}${orgId}/${generateUUID()}_${fileName}`;
 
-    console.log('s3', s3);
-
-    // Determine content type from file extension
-    let contentType = 'application/pdf';
-    const ext = fileName.split('.').pop().toLowerCase();
-    if (ext === 'doc') { contentType = 'application/msword'; }
-    else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
-
-    // Set the parameters for the file you want to upload
-    const params = {
+  const upload = new Upload({
+    client: s3,
+    params: {
       Bucket: Config.bucket,
-      Key: `${Config.appEnv}${orgId}/${generateUUID()}_${fileName}`,
+      Key: key,
       Body: req.files.doc501c3.data,
       ContentType: contentType,
-    };
-
-    // Upload the file to S3
-    s3.upload(params, (err, filesUploaded) => {
-
-      console.log("after upload");
-      console.log("after upload- err ", err);
-      console.log("after upload", filesUploaded);
-
-      if (err) {
-        console.log('Error uploading file:', err);
-        return reject(err);
-      } else {
-
-        Logger.info(`File ${fileName} uploaded successfully`);
-        console.log('File uploaded successfully. File location:', filesUploaded.Location);
-        return resolve({
-          files: filesUploaded
-        });
-      }
-    });
+    },
   });
+
+  const result = await upload.done();
+  Logger.info(`File ${fileName} uploaded successfully to ${result.Location}`);
+
+  return {
+    files: {
+      Location: result.Location,
+      Key: result.Key || key,
+    },
+  };
 }
