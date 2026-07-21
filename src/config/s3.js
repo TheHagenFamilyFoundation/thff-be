@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import { S3Client } from '@aws-sdk/client-s3';
 
 import Config from './config.js';
 import Logger from '../utils/logger.js';
@@ -14,19 +14,19 @@ function assertSafeAwsRegion(region) {
 
 const safeRegion = assertSafeAwsRegion(Config.region);
 
-// Only set static credentials when both are present. Passing empty strings can
-// shadow the default provider chain (env vars / EC2 instance role), which is how
-// deployed environments (e.g. Elastic Beanstalk) are expected to authenticate.
-const awsConfig = { region: safeRegion };
+// Only set static credentials when both are present. Omitting them lets the SDK
+// fall back to the default provider chain (env vars / EC2 instance role), which
+// is how deployed environments (e.g. Elastic Beanstalk) are expected to auth.
+const clientConfig = { region: safeRegion };
 if (Config.accessKey && Config.secretAccessKey) {
-  awsConfig.accessKeyId = Config.accessKey;
-  awsConfig.secretAccessKey = Config.secretAccessKey;
+  clientConfig.credentials = {
+    accessKeyId: Config.accessKey,
+    secretAccessKey: Config.secretAccessKey,
+  };
 } else {
   Logger.warn('AWS static credentials not set; relying on default provider chain (instance role / env).');
 }
 
-AWS.config.update(awsConfig);
-
-const s3 = new AWS.S3();
+const s3 = new S3Client(clientConfig);
 
 export default s3;
