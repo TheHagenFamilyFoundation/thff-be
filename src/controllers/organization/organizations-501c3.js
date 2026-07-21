@@ -267,7 +267,13 @@ async function uploads3(req, orgId) {
   if (ext === 'doc') { contentType = 'application/msword'; }
   else if (ext === 'docx') { contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
 
-  const key = `${Config.appEnv}${orgId}/${generateUUID()}_${fileName}`;
+  // Namespace the key by environment. Fall back to nodeEnv (never the string
+  // "undefined") when APP_ENV is not configured in the runtime environment.
+  const envPrefix = Config.appEnv || Config.nodeEnv || '';
+  if (!Config.appEnv) {
+    Logger.warn('APP_ENV not set; falling back to NODE_ENV for the S3 key prefix.');
+  }
+  const key = `${envPrefix}${orgId}/${generateUUID()}_${fileName}`;
 
   const upload = new Upload({
     client: s3,
