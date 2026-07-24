@@ -39,12 +39,42 @@ async function mongoOrganizationIdsForUser(user) {
   return [...ids];
 }
 
+/** Escape user input before using it in a RegExp so special chars don't break the query. */
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
- * Shared filter for director/org proposal lists (year window + archived + org + title).
- * @param {{ year: string|number, org?: string, filter?: string, showArchived?: string, viewerUserId?: string }} args
+ * Resolve a free-text search term to the organization and sponsor (User) ids whose name/email
+ * match it, so a proposal list `filter` can also match by organization name, sponsor name/email.
+ * Title and proposalID are matched directly on the Proposal and don't need this lookup.
+ * @param {string} filter
+ * @returns {Promise<{ orgIds: import('mongoose').Types.ObjectId[], sponsorIds: import('mongoose').Types.ObjectId[] }>}
+ */
+async function resolveProposalFilterRefs(filter) {
+  const term = String(filter || '').trim();
+  if (!term) {
+    return { orgIds: [], sponsorIds: [] };
+  }
+  const rx = new RegExp(escapeRegex(term), 'i');
+  const [orgs, sponsors] = await Promise.all([
+    Organization.find({ name: rx }).select('_id').lean(),
+    User.find({ $or: [{ firstName: rx }, { lastName: rx }, { email: rx }] }).select('_id').lean(),
+  ]);
+  return {
+    orgIds: orgs.map((o) => o._id),
+    sponsorIds: sponsors.map((u) => u._id),
+  };
+}
+
+/**
+ * Shared filter for director/org proposal lists (year window + archived + org + text search).
+ * The `filter` term matches project title, proposal ID, and — via pre-resolved id arrays —
+ * organization name and sponsor name/email.
+ * @param {{ year: string|number, org?: string, filter?: string, showArchived?: string, viewerUserId?: string, filterOrgIds?: any[], filterSponsorIds?: any[] }} args
  * When `org` is set: everyone sees `submitted`; the signed-in viewer also sees their own composer drafts (`createdBy`).
  */
-function buildProposalListQuery({ year, org, filter, showArchived, viewerUserId }) {
+function buildProposalListQuery({ year, org, filter, showArchived, viewerUserId, filterOrgIds = [], filterSponsorIds = [] }) {
   const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
   const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
@@ -80,8 +110,19 @@ function buildProposalListQuery({ year, org, filter, showArchived, viewerUserId 
     andParts.push({ status: { $nin: COMPOSER_PROPOSAL_STATUSES } });
   }
 
-  if (filter && String(filter).length !== 0) {
-    andParts.push({ projectTitle: { $regex: String(filter).toLowerCase(), $options: 'i' } });
+  if (filter && String(filter).trim().length !== 0) {
+    const rx = { $regex: escapeRegex(String(filter).trim()), $options: 'i' };
+    const searchOr = [
+      { projectTitle: rx },
+      { proposalID: rx },
+    ];
+    if (filterOrgIds.length > 0) {
+      searchOr.push({ organization: { $in: filterOrgIds } });
+    }
+    if (filterSponsorIds.length > 0) {
+      searchOr.push({ sponsor: { $in: filterSponsorIds } });
+    }
+    andParts.push({ $or: searchOr });
   }
 
   if (andParts.length === 1) {
@@ -613,12 +654,15 @@ export const getProposals = async (req, res) => {
     } = req.query;
 
     try {
+      const { orgIds, sponsorIds } = await resolveProposalFilterRefs(filter);
       const query = buildProposalListQuery({
         year,
         org,
         filter,
         showArchived,
         viewerUserId: req.decoded?.userID,
+        filterOrgIds: orgIds,
+        filterSponsorIds: sponsorIds,
       });
 
       const wantTotal =
@@ -670,12 +714,15 @@ export const getProposals = async (req, res) => {
 export const countProposals = async (req, res) => {
   try {
     const { year, org, filter, showArchived } = req.query;
+    const { orgIds, sponsorIds } = await resolveProposalFilterRefs(filter);
     const query = buildProposalListQuery({
       year,
       org,
       filter,
       showArchived,
       viewerUserId: req.decoded?.userID,
+      filterOrgIds: orgIds,
+      filterSponsorIds: sponsorIds,
     });
     const count = await Proposal.countDocuments(query);
     return res.status(200).json(count);
