@@ -21,6 +21,7 @@ router.get('/:id/outbound-emails/:emailId', OutboundEmailController.getMeetingGr
 router.get('/:id/outbound-emails', OutboundEmailController.listMeetingOutboundEmails);
 router.post('/:id/send-grant-notifications', OutboundEmailController.sendGrantMeetingNotifications);
 router.post('/:id/sync-eligible-proposals', MeetingController.syncEligibleProposalsToMeeting);
+router.post('/:id/allocation', MeetingController.addProposalToMeeting);
 router.post('/', validateCreateMeeting, MeetingController.createMeeting);
 router.put('/:id', validateUpdateMeeting, MeetingController.updateMeeting);
 router.put('/:id/allocations', validateUpdateAllocations, MeetingController.updateAllocations);
