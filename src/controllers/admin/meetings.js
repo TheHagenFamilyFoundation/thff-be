@@ -611,6 +611,7 @@ export const bulkSetAllocationsActive = async (req, res) => {
  * Ensure the meeting has an allocation row for every submitted, non-archived proposal
  * in the meeting year (same rules as createMeeting). Archived / composer proposals stay out.
  * Idempotent — only appends missing rows.
+ * For completed meetings, newly appended rows are set aside (activeInMeeting: false).
  */
 export const syncEligibleProposalsToMeeting = async (req, res) => {
   Logger.verbose('Inside syncEligibleProposalsToMeeting');
@@ -644,6 +645,10 @@ export const syncEligibleProposalsToMeeting = async (req, res) => {
       meeting.allocations.map(a => (a.proposal && a.proposal.toString()) || '').filter(Boolean)
     );
 
+    // Completed meetings: newly pulled-in proposals land in set aside only so
+    // the in-consideration / funded list from deliberation is left alone.
+    const addAsSetAside = meeting.status === 'completed';
+
     let changed = false;
     for (const p of eligible) {
       const pid = p._id.toString();
@@ -655,7 +660,7 @@ export const syncEligibleProposalsToMeeting = async (req, res) => {
         organization: p.organization,
         amountRequested: p.amountRequested || 0,
         amountGranted: 0,
-        activeInMeeting: true
+        activeInMeeting: !addAsSetAside
       });
       existingIds.add(pid);
       changed = true;
@@ -677,83 +682,6 @@ export const syncEligibleProposalsToMeeting = async (req, res) => {
   } catch (err) {
     Logger.error(`Error syncing eligible proposals: ${err.message}`);
     return res.status(500).json({ code: "MTG038", message: err.message });
-  }
-};
-
-/**
- * Add a single proposal to a meeting as an allocation, regardless of the proposal's year.
- * Unlike sync-eligible-proposals (which only pulls proposals whose createdAt falls in the
- * meeting year), this lets a president/admin hand-pick any proposal — e.g. one submitted
- * after the portal closed, or dated to a different cycle.
- *
- * Body: { proposalId: string }
- * Idempotent — if the proposal already has an allocation on the meeting, returns unchanged.
- */
-export const addProposalToMeeting = async (req, res) => {
-  Logger.verbose('Inside addProposalToMeeting');
-
-  try {
-    const { decoded } = req;
-    if (!isPresidentOrAdmin(decoded)) {
-      return res.status(403).json({ code: "MTG051", message: "Only the president or admin can add proposals" });
-    }
-
-    const { id } = req.params;
-    const { proposalId } = req.body || {};
-
-    if (!proposalId || !mongoose.isValidObjectId(String(proposalId))) {
-      return res.status(400).json({ code: "MTG052", message: "A valid proposalId is required" });
-    }
-
-    const meeting = await Meeting.findById(id);
-    if (!meeting) {
-      return res.status(404).json({ code: "MTG005", message: "Meeting not found" });
-    }
-
-    if (meeting.status !== 'setup' && meeting.status !== 'in_progress' && meeting.status !== 'completed') {
-      return res.status(400).json({ code: "MTG053", message: "Proposals can only be added during setup, while the meeting is in progress, or when editing a completed meeting" });
-    }
-
-    const proposal = await Proposal.findById(proposalId).select('_id organization amountRequested');
-    if (!proposal) {
-      return res.status(404).json({ code: "MTG054", message: "Proposal not found" });
-    }
-    if (!proposal.organization) {
-      return res.status(400).json({ code: "MTG055", message: "Proposal has no organization and cannot be added" });
-    }
-
-    const alreadyOnMeeting = meeting.allocations.some(
-      (a) => a.proposal && String(a.proposal) === String(proposal._id)
-    );
-
-    if (alreadyOnMeeting) {
-      const populated = await populateMeeting(id);
-      Logger.info(`addProposalToMeeting: proposal ${proposalId} already on meeting ${id} (no change)`);
-      return res.status(200).json(populated);
-    }
-
-    meeting.allocations.push({
-      proposal: proposal._id,
-      organization: proposal.organization,
-      amountRequested: proposal.amountRequested || 0,
-      amountGranted: 0,
-      activeInMeeting: true
-    });
-
-    if (meeting.status === 'completed') {
-      meeting.totalAllocated = sumGrantedActiveAllocations(meeting);
-    }
-
-    await meeting.save();
-
-    const populated = await populateMeeting(id);
-    emitMeetingUpdate(populated);
-
-    Logger.info(`addProposalToMeeting: proposal ${proposalId} added to meeting ${id}`);
-    return res.status(200).json(populated);
-  } catch (err) {
-    Logger.error(`Error adding proposal to meeting: ${err.message}`);
-    return res.status(500).json({ code: "MTG056", message: err.message });
   }
 };
 
