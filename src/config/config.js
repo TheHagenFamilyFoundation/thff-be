@@ -42,7 +42,7 @@ const Config = {
     || 'The Hagen Family Foundation <admin@hagenfamilyfoundation.org>',
   mailReplyTo:
     process.env.MAIL_REPLY_TO
-    || 'The Hagen Family Foundation <support@hagenfamilyfoundation.org>',
+    || 'The Hagen Family Foundation <grants@hagenfamilyfoundation.org>',
 
   /** Grant-cycle reminder cron (`npm run grant-cycle-emails`). Off until explicitly enabled. */
   grantCycleEmailsEnabled:
