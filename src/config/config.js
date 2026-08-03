@@ -36,6 +36,13 @@ const Config = {
   mailgunDomain: process.env.MAILGUN_DOMAIN,
   mailgunKey: process.env.MAILGUN_KEY,
   interalEmailAddress: process.env.INTERNAL_EMAIL_ADDRESS,
+  /** Outbound From / Reply-To. Must use a domain that accepts mail (hagenfamilyfoundation.org). */
+  mailFrom:
+    process.env.MAIL_FROM
+    || 'The Hagen Family Foundation <admin@hagenfamilyfoundation.org>',
+  mailReplyTo:
+    process.env.MAIL_REPLY_TO
+    || 'The Hagen Family Foundation <support@hagenfamilyfoundation.org>',
 
   /** Grant-cycle reminder cron (`npm run grant-cycle-emails`). Off until explicitly enabled. */
   grantCycleEmailsEnabled:

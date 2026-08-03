@@ -31,12 +31,14 @@ export function sendHtmlEmail(to, subject, html) {
 
   const recipients = Array.isArray(to) ? to : [to];
 
+  // From/Reply-To must use hagenfamilyfoundation.org — hagenfoundation.org has no MX (replies bounce).
   return mg.messages
     .create(Config.mailgunDomain, {
-      from: 'The Hagen Family Foundation <admin@hagenfoundation.org>',
+      from: Config.mailFrom,
       to: recipients,
       subject,
       html,
+      'h:Reply-To': Config.mailReplyTo,
     })
     .then((body) => {
       Logger.info('Email sent successfully:', {
