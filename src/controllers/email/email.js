@@ -31,7 +31,6 @@ export function sendHtmlEmail(to, subject, html) {
 
   const recipients = Array.isArray(to) ? to : [to];
 
-  // From/Reply-To must use hagenfamilyfoundation.org — hagenfoundation.org has no MX (replies bounce).
   return mg.messages
     .create(Config.mailgunDomain, {
       from: Config.mailFrom,
