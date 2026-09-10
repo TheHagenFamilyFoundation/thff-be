@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from "helmet";
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import compression from 'compression';
 //config
 import { Config } from './config/index.js';
 
@@ -15,11 +16,10 @@ import { initSocket, closeSocket } from './socket/index.js';
 const app = express();
 const port = Config.appPort;
 
-// app.use(bearerToken());
+app.use(helmet());
 app.use(cors());
-app.use(bodyParser.json());
-
-app.use(helmet())
+app.use(compression());
+app.use(bodyParser.json({ limit: '1mb' }));
 
 routes(app);
 

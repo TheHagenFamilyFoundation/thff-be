@@ -13,6 +13,7 @@ const userSchema = Schema({
   },
   confirmCode: {
     type: String,
+    select: false,
   },
   firstName: {
     type: String,
@@ -26,6 +27,7 @@ const userSchema = Schema({
   }],
   resetCode: {
     type: String,
+    select: false,
   },
   resetPassword: {
     type: Boolean,
@@ -35,6 +37,7 @@ const userSchema = Schema({
   },
   encryptedPassword: {
     type: String,
+    select: false,
   },
   accessLevel: {
     type: Number,
@@ -48,7 +51,15 @@ const userSchema = Schema({
     type: String,
   },
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform(_doc, ret) {
+      delete ret.encryptedPassword;
+      delete ret.confirmCode;
+      delete ret.resetCode;
+      return ret;
+    },
+  },
 }
 );
 
