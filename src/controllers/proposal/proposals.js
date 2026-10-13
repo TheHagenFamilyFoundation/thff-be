@@ -160,51 +160,95 @@ function getMongoSortForProposalList(sort, dir, { org } = {}) {
   return secondary;
 }
 
-function composerSortRank(status) {
-  return COMPOSER_PROPOSAL_STATUSES.includes(status) ? 0 : 1;
+function usesLookupProposalSort(sort) {
+  return sort === 'organization' || sort === 'sponsor' || sort === 'votes';
 }
 
-function compareProposalsForList(a, b, sort, dir, { org } = {}) {
-  if (org) {
-    const rankDiff = composerSortRank(a.status) - composerSortRank(b.status);
-    if (rankDiff !== 0) {
-      return rankDiff;
-    }
+/**
+ * Page of proposals with DB-side sort (incl. org name / sponsor / vote count via aggregation).
+ * Preserves previous in-memory ordering semantics without loading the full match set.
+ */
+async function findProposalListPage(query, sort, dir, skipNum, limitNum, { org } = {}) {
+  const populateProps = (q) =>
+    q.populate('organization').populate('votes').populate('sponsor');
+
+  if (!usesLookupProposalSort(sort)) {
+    return populateProps(
+      Proposal.find(query)
+        .sort(getMongoSortForProposalList(sort, dir, { org: !!org }))
+        .skip(skipNum)
+        .limit(limitNum)
+    );
   }
 
   const d = dir === 'asc' ? 1 : -1;
-  switch (sort) {
-    case 'organization': {
-      const an = a.organization?.name ?? '';
-      const bn = b.organization?.name ?? '';
-      return d * an.localeCompare(bn);
-    }
-    case 'sponsor': {
-      const aSponsor = a.sponsor != null ? 1 : 0;
-      const bSponsor = b.sponsor != null ? 1 : 0;
-      return d * (aSponsor - bSponsor);
-    }
-    case 'votes':
-      return d * ((a?.votes?.length ?? 0) - (b?.votes?.length ?? 0));
-    case 'projectTitle': {
-      const an = a.projectTitle ?? '';
-      const bn = b.projectTitle ?? '';
-      return d * an.localeCompare(bn);
-    }
-    case 'amountRequested':
-      return d * ((a.amountRequested ?? 0) - (b.amountRequested ?? 0));
-    case 'totalProjectCost':
-      return d * ((a.totalProjectCost ?? 0) - (b.totalProjectCost ?? 0));
-    case 'score':
-      return d * ((a.score ?? 0) - (b.score ?? 0));
-    case 'createdOn':
-    default:
-      return d * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }
-}
+  /** @type {object[]} */
+  const pipeline = [{ $match: query }];
 
-function usesInMemoryProposalSort(sort) {
-  return sort === 'organization' || sort === 'sponsor' || sort === 'votes';
+  if (sort === 'organization') {
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organization',
+          foreignField: '_id',
+          as: '_orgDocs',
+        },
+      },
+      {
+        $addFields: {
+          _sortOrgName: {
+            $toLower: {
+              $ifNull: [{ $arrayElemAt: ['$_orgDocs.name', 0] }, ''],
+            },
+          },
+        },
+      }
+    );
+  }
+
+  pipeline.push({
+    $addFields: {
+      _sortVoteCount: { $size: { $ifNull: ['$votes', []] } },
+      _sortHasSponsor: {
+        $cond: [{ $ifNull: ['$sponsor', false] }, 1, 0],
+      },
+      _composerRank: {
+        $cond: [{ $in: ['$status', COMPOSER_PROPOSAL_STATUSES] }, 0, 1],
+      },
+    },
+  });
+
+  /** @type {Record<string, 1|-1>} */
+  const sortSpec = {};
+  if (org) {
+    sortSpec._composerRank = 1;
+  }
+  if (sort === 'organization') {
+    sortSpec._sortOrgName = d;
+  } else if (sort === 'sponsor') {
+    sortSpec._sortHasSponsor = d;
+  } else if (sort === 'votes') {
+    sortSpec._sortVoteCount = d;
+  }
+  sortSpec._id = 1;
+
+  pipeline.push(
+    { $sort: sortSpec },
+    { $skip: skipNum },
+    { $limit: limitNum },
+    { $project: { _id: 1 } }
+  );
+
+  const rows = await Proposal.aggregate(pipeline);
+  const ids = rows.map((r) => r._id);
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const docs = await populateProps(Proposal.find({ _id: { $in: ids } }));
+  const byId = new Map(docs.map((p) => [String(p._id), p]));
+  return ids.map((id) => byId.get(String(id))).filter(Boolean);
 }
 
 /** Organization Mongo `_id` whether `organization` is populated or an ObjectId ref. */
@@ -678,25 +722,14 @@ export const getProposals = async (req, res) => {
 
       const effectiveSort = sort || 'createdOn';
 
-      const populateProps = (q) =>
-        q.populate('organization').populate('votes').populate('sponsor');
-
-      let props;
-
-      if (usesInMemoryProposalSort(effectiveSort)) {
-        let proposals = await populateProps(Proposal.find(query));
-        proposals.sort((a, b) =>
-          compareProposalsForList(a, b, effectiveSort, dir, { org: !!org })
-        );
-        props = proposals.slice(skipNum, skipNum + limitNum);
-      } else {
-        props = await populateProps(
-          Proposal.find(query)
-            .sort(getMongoSortForProposalList(effectiveSort, dir, { org: !!org }))
-            .skip(skipNum)
-            .limit(limitNum)
-        );
-      }
+      const props = await findProposalListPage(
+        query,
+        effectiveSort,
+        dir,
+        skipNum,
+        limitNum,
+        { org }
+      );
 
       if (wantTotal) {
         return res.status(200).json({ items: props, total });

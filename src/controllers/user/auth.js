@@ -33,7 +33,7 @@ export const login = async (req, res) => {
       email: email.toLowerCase()
     }
 
-    const user = await User.findOne(query);
+    const user = await User.findOne(query).select('+encryptedPassword');
 
     if (!user) {
       Logger.error('User Not Found');
@@ -137,7 +137,7 @@ export const login = async (req, res) => {
 
     //return with user model, token and user settings
     const payload = {
-      user,
+      user: user.toJSON(),
       token,
       userSettings,
     }
@@ -281,7 +281,7 @@ export const register = async (req, res) => {
 
     // Return same payload shape as login
     const payload = {
-      user: createdUser,
+      user: createdUser.toJSON(),
       token,
       userSettings,
     };
@@ -418,7 +418,7 @@ export const refreshAccessToken = async (req, res) => {
 
     //return with user model, token and user settings
     const payload = {
-      user,
+      user: user.toJSON(),
       token,
       userSettings,
     }
