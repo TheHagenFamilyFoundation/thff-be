@@ -85,6 +85,10 @@ const proposalSchema = Schema({
 proposalSchema.index({ createdAt: 1, organization: 1 });
 /** Look up in-progress drafts per organization. */
 proposalSchema.index({ organization: 1, status: 1 });
+/** Director list sort/filter by sponsor presence / id. */
+proposalSchema.index({ sponsor: 1, createdAt: -1 });
+/** Common list window: createdAt + archived + status. */
+proposalSchema.index({ archived: 1, status: 1, createdAt: -1 });
 
 const Proposal = mongoose.model('Proposal', proposalSchema);
 export default Proposal;

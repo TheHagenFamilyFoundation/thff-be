@@ -17,6 +17,12 @@ import {
  */
 export async function ensureMembershipsBackfilledForOrganization(organizationId) {
   const orgId = new mongoose.Types.ObjectId(String(organizationId));
+  // Fast path for reads: once memberships exist, skip write-on-read backfill.
+  // Gaps are healed on member add/remove and via reconcile-org-memberships.
+  const existingCount = await OrganizationMembership.countDocuments({ organization: orgId });
+  if (existingCount > 0) {
+    return;
+  }
   const org = await Organization.findById(orgId).select('users').lean();
 
   /** @type {Map<string, Date>} */
@@ -189,7 +195,8 @@ export function formatMembershipRowsForApi(memberships) {
 
 /**
  * Full org JSON for API responses (single GET + add/remove member payloads).
- * Caller should run `migrateOrganizationUsersToMemberships` on the org doc first when loading legacy embeds.
+ * Backfill is a no-op when membership rows already exist (see ensureMembershipsBackfilled).
+ * Legacy embed migration belongs on write paths / reconcile, not every GET.
  *
  * @param {string|import('mongoose').Types.ObjectId} organizationId
  * @param {{ viewerUserId?: string|import('mongoose').Types.ObjectId }} [options]
