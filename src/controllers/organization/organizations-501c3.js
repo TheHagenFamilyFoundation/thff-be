@@ -1,4 +1,5 @@
 import { validationResult } from "express-validator";
+import fs from 'fs';
 import { GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -259,7 +260,8 @@ async function deletes3(fileName) {
 }
 
 async function uploads3(req, orgId) {
-  const fileName = req.files.doc501c3.name;
+  const file = req.files.doc501c3;
+  const fileName = file.name;
 
   // Determine content type from file extension
   let contentType = 'application/pdf';
@@ -275,12 +277,17 @@ async function uploads3(req, orgId) {
   }
   const key = `${envPrefix}${orgId}/${generateUUID()}_${fileName}`;
 
+  // Prefer streaming from temp file (useTempFiles: true) over in-memory buffer.
+  const body = file.tempFilePath
+    ? fs.createReadStream(file.tempFilePath)
+    : file.data;
+
   const upload = new Upload({
     client: s3,
     params: {
       Bucket: Config.bucket,
       Key: key,
-      Body: req.files.doc501c3.data,
+      Body: body,
       ContentType: contentType,
     },
   });
