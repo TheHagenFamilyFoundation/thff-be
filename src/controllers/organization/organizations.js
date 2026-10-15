@@ -74,12 +74,8 @@ export const getOrganization = async (req, res) => {
   const { id } = req.params;
   console.log('Organization id?', id)
   try {
-    let organization = await Organization.findOne({ _id: id });
-    if (!organization) {
-      return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
-    }
-    await migrateOrganizationUsersToMemberships(organization);
-
+    // Read-only path: no legacy embed migrate / write-on-read. Payload loader
+    // short-circuits membership backfill when rows already exist.
     const loaded = await loadOrganizationApiPayload(id, { viewerUserId: req.decoded?.userID });
     if (!loaded) {
       return res.status(404).json({ code: 'ORG005', message: 'Organization not found' });
