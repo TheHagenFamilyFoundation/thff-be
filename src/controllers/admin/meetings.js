@@ -46,11 +46,12 @@ function setAsideUnfundedActiveAllocations(meeting) {
 }
 
 const MEETING_POPULATE = [
-  { path: 'submissionYear' },
+  { path: 'submissionYear', select: 'year active subID' },
   { path: 'startedBy', select: 'firstName lastName email' },
   { path: 'completedBy', select: 'firstName lastName email' },
   {
     path: 'allocations.proposal',
+    select: 'proposalID projectTitle createdAt sponsor',
     populate: {
       path: 'sponsor',
       select: 'firstName lastName email',
@@ -180,7 +181,7 @@ export const getMeetings = async (req, res) => {
     }
 
     const meetings = await Meeting.find(query)
-      .populate('submissionYear')
+      .populate('submissionYear', 'year active subID')
       .populate('startedBy', 'firstName lastName email')
       .populate('completedBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
