@@ -168,9 +168,16 @@ function usesLookupProposalSort(sort) {
  * Page of proposals with DB-side sort (incl. org name / sponsor / vote count via aggregation).
  * Preserves previous in-memory ordering semantics without loading the full match set.
  */
+/** List columns only — keep votes as ObjectId[] so .length / vote-count sort still work. */
+const PROPOSAL_LIST_FIELDS =
+  'proposalID projectTitle organization votes sponsor amountRequested totalProjectCost status archived score createdAt updatedAt';
+
 async function findProposalListPage(query, sort, dir, skipNum, limitNum, { org } = {}) {
   const populateProps = (q) =>
-    q.populate('organization').populate('votes').populate('sponsor');
+    q
+      .select(PROPOSAL_LIST_FIELDS)
+      .populate('organization', 'name organizationID')
+      .populate('sponsor', 'firstName lastName email');
 
   if (!usesLookupProposalSort(sort)) {
     return populateProps(
