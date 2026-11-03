@@ -642,8 +642,9 @@ export const getProposal = async (req, res) => {
   try {
 
     const proposal = await Proposal.findOne({ _id: id })
-      .populate('organization')
-      .populate('sponsor');
+      .populate('organization', 'name organizationID')
+      .populate('sponsor', 'firstName lastName email')
+      .populate('votes', 'userID vote');
 
     if (!proposal) {
       Logger.warn(`getProposal: not found id=${id}`);
@@ -681,11 +682,11 @@ export const getProposals = async (req, res) => {
   if (req.query.proposalID || req.query.id) {
 
     const query = req.query.id ? { _id: req.query.id } : { proposalID: req.query.proposalID }
-    //single get proposal
+    // single get — same field selects as getProposal (list UI + voting)
     const proposal = await Proposal.findOne(query)
-      .populate('organization')
-      .populate('votes')
-      .populate('sponsor')
+      .populate('organization', 'name organizationID')
+      .populate('votes', 'userID vote')
+      .populate('sponsor', 'firstName lastName email');
 
     console.log('returning proposal', proposal);
     return res.status(200).json(proposal);
