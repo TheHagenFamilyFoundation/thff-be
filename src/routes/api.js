@@ -19,10 +19,13 @@ import ReferralCodePublicRouter from './api/referral-code-public.js'
 import ReferralCodeRouter from './api/referral-code.js'
 
 import SubmissionYearPublicRouter from './api/submission-year-public.js'
+import FeatureAnnouncementPublicRouter from './api/feature-announcement-public.js'
+import FeatureAnnouncementRouter from './api/feature-announcement.js'
 import SubmissionYearRouter from './api/submission-year.js'
 
 import MeetingRouter from './api/meeting.js'
 import OutboundEmailRouter from './api/outbound-email.js'
+import JobsRouter from './api/jobs.js'
 
 import AuthnMiddleware from '../middlewares/authn.js'
 
@@ -34,8 +37,14 @@ router.use('/auth', AuthRouter)
   // Public submission year GET endpoints (no auth required)
   .use('/submission-year', SubmissionYearPublicRouter)
 
+  // Public home-page notices (no auth required)
+  .use('/feature-announcement', FeatureAnnouncementPublicRouter)
+
   // Public referral validation (sign-in / sign-up invite flows)
   .use('/referral-code', ReferralCodePublicRouter)
+
+  // EventBridge starts the daily grant-cycle email job with a shared secret.
+  .use('/jobs', JobsRouter)
 
   .use(AuthnMiddleware.authenticateToken)
 
@@ -65,6 +74,9 @@ router.use('/auth', AuthRouter)
 
   // Protected submission year POST/PUT endpoints (auth required)
   .use('/submission-year', SubmissionYearRouter)
+
+  // Directors can add, edit, or remove home-page notices
+  .use('/feature-announcement', FeatureAnnouncementRouter)
 
   //meetings
   .use('/meeting', MeetingRouter)
