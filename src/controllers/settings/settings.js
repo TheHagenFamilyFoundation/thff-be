@@ -61,6 +61,16 @@ export const saveSettings = async (req, res) => {
     update.tablePageSize = Number(tablePageSize);
   }
 
+  const booleanSettings = ['emailGrantDeadlineReminders', 'emailPortalOpenNotices'];
+  for (const key of booleanSettings) {
+    if (req.body[key] !== undefined) {
+      if (typeof req.body[key] !== 'boolean') {
+        return res.status(400).json({ message: `${key} must be true or false` });
+      }
+      update[key] = req.body[key];
+    }
+  }
+
   if (Object.keys(update).length === 0) {
     return res.status(400).json({ message: 'At least one setting field is required' });
   }

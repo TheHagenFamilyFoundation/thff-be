@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Calls the grant-cycle email job every day at 13:00 UTC
+  (8:00 AM Eastern Standard Time, 9:00 AM during daylight saving).
+  The API still sends nothing until GRANT_CYCLE_EMAILS_ENABLED is true.
+
+Parameters:
+  ApiEndpoint:
+    Type: String
+    Default: https://api.hagenfamilyfoundation.org/jobs/grant-cycle-emails
+  JobSecret:
+    Type: String
+    NoEcho: true
+    Description: Same value as GRANT_CYCLE_JOB_SECRET on the API.
+
+Resources:
+  Connection:
+    Type: AWS::Events::Connection
+    Properties:
+      Name: thff-grant-cycle-emails
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: x-grant-cycle-secret
+          ApiKeyValue: !Ref JobSecret
+
+  Destination:
+    Type: AWS::Events::ApiDestination
+    Properties:
+      Name: thff-grant-cycle-emails
+      ConnectionArn: !GetAtt Connection.Arn
+      HttpMethod: POST
+      InvocationEndpoint: !Ref ApiEndpoint
+      InvocationRateLimitPerSecond: 1
+
+  InvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: invoke-grant-cycle-destination
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: events:InvokeApiDestination
+                Resource: !GetAtt Destination.Arn
+
+  DailyRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: thff-grant-cycle-emails-daily
+      Description: Daily 13:00 UTC run of the grant-cycle notification job.
+      ScheduleExpression: cron(0 13 * * ? *)
+      State: ENABLED
+      Targets:
+        - Id: grant-cycle-emails
+          Arn: !GetAtt Destination.Arn
+          RoleArn: !GetAtt InvokeRole.Arn

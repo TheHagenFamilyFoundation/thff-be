@@ -10,6 +10,9 @@ import Proposal from './proposal.js';
 import ReferralCode from './referral-code.js';
 import ProposalItem from './proposal-item.js';
 import SubmissionYear from './submission-year.js';
+import FeatureAnnouncement from './feature-announcement.js';
+import GrantCycleNoticeSchedule from './grant-cycle-notice-schedule.js';
+import JobLock from './job-lock.js';
 import Token from './token.js';
 import UserSetting from './user-setting.js';
 import User from './user.js';
@@ -35,6 +38,9 @@ export {
   ProposalItem,
   ReferralCode,
   SubmissionYear,
+  FeatureAnnouncement,
+  GrantCycleNoticeSchedule,
+  JobLock,
   Token,
   UserSetting,
   User,

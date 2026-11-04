@@ -44,10 +44,12 @@ const Config = {
     process.env.MAIL_REPLY_TO
     || 'The Hagen Family Foundation <grants@hagenfamilyfoundation.org>',
 
-  /** Grant-cycle reminder cron (`npm run grant-cycle-emails`). Off until explicitly enabled. */
+  /** Grant-cycle reminder job. Off until explicitly enabled. */
   grantCycleEmailsEnabled:
     process.env.GRANT_CYCLE_EMAILS_ENABLED === '1'
     || process.env.GRANT_CYCLE_EMAILS_ENABLED === 'true',
+  /** Shared secret for the EventBridge call that starts the daily job. */
+  grantCycleJobSecret: process.env.GRANT_CYCLE_JOB_SECRET || '',
 
 }
 

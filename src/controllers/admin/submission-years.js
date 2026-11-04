@@ -114,7 +114,8 @@ export const createSubmissionYear = async (req, res) => {
     let newSubmissionYear = {
       subID: generateCode(),
       year,
-      active: true
+      active: true,
+      openedAt: new Date(),
     }
 
     let createdSubmissionYear = await SubmissionYear.create(newSubmissionYear);
@@ -149,7 +150,19 @@ export const toggleSubmissionYear = async (req, res) => {
 
   let { _id, active } = req.body;
 
-  const submissionYear = await SubmissionYear.findByIdAndUpdate(_id, { active }, { new: true })
+  const existing = await SubmissionYear.findById(_id);
+  if (!existing) {
+    return res.status(404).send({ code: "SUBY007", message: "Submission Year not found" });
+  }
+
+  const update = { active };
+  // Stamp the first time a year is turned on. Later toggles keep the original open date
+  // so the one-week-after-open email does not fire again for a portal that was already open.
+  if (active === true && existing.active !== true && !existing.openedAt) {
+    update.openedAt = new Date();
+  }
+
+  const submissionYear = await SubmissionYear.findByIdAndUpdate(_id, update, { new: true })
   Logger.info("submissionYear toggled", submissionYear);
 
   return res.status(200).json(submissionYear);
