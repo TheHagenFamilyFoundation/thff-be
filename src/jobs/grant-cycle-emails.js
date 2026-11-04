@@ -1,28 +1,48 @@
 /**
- * Scheduled grant-cycle reminders (run daily via cron + `npm run grant-cycle-emails`).
- * Gated by GRANT_CYCLE_EMAILS_ENABLED — off by default until tested in staging.
+ * Scheduled grant-cycle mail (EventBridge each morning, or `npm run grant-cycle-emails`).
+ * Gated by GRANT_CYCLE_EMAILS_ENABLED — off until explicitly enabled.
  *
- * - 24h after creation: email creator if proposal is still `draft` (incomplete composer).
- * - On UTC calendar day 14 days before May 1 (grant year): orgs with any proposal in that year (submitted or composer) — time to ensure proposals are ready.
- * - On UTC calendar day 3 days before May 1: same org set — final nudge before the soft target.
+ * - January: if the current calendar year has no submission year yet, create it
+ *   active with openedAt on January 1. A year a director already closed is left closed.
+ *   The portal is not opened on any other month, and it is not opened automatically
+ *   just because the clock rolls past January 1 unless this job is enabled.
+ * - 7 days after openedAt (catch-up through day 21): email every organization that
+ *   the portal is open.
+ * - 14 days before May 1, and 7 days before May 1 (each with a 3-day catch-up):
+ *   email organizations that have a draft, ready-to-submit, or submitted proposal
+ *   created in that grant year.
+ * - 24h after creation: email the creator if a proposal is still `draft`.
+ *
+ * User profile settings `emailGrantDeadlineReminders` and `emailPortalOpenNotices`
+ * default to on. A matching user who turns one off is skipped.
+ *
+ * Preview: pass { dryRun: true } or { trialTo }. Those modes do not write sent-at
+ * stamps and do not create a submission year. `--force` is only honored for preview.
  */
 
 import Config from '../config/config.js';
 import Logger from '../utils/logger.js';
+import { generateCode } from '../utils/util.js';
 import { sendEmailWithTemplate } from '../controllers/email/email.js';
 import {
   proposalDraftStillIncomplete24h,
   grantCycleSoftDeadlineTwoWeeks,
-  grantCycleSoftDeadlineThreeDays,
+  grantCycleSoftDeadlineWeekOf,
+  grantCyclePortalOpen,
 } from '../views/grant-cycle-reminder-templates.js';
 import {
   Organization,
   Proposal,
   SubmissionYear,
+  User,
+  UserSetting,
 } from '../models/index.js';
-import { COMPOSER_PROPOSAL_STATUSES } from '../utils/proposal-composer-status.js';
+import { triggerDayFor } from './grant-cycle-schedule.js';
 
 const MS_DAY = 86400000;
+const TRIGGER_CATCHUP_DAYS = 3;
+const PORTAL_OPEN_EMAIL_MIN_DAYS = 7;
+const PORTAL_OPEN_EMAIL_MAX_DAYS = 21;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -39,21 +59,27 @@ function absoluteFrontendBase() {
   return fe;
 }
 
-function sameUtcCalendarDay(a, b) {
-  return (
-    a.getUTCFullYear() === b.getUTCFullYear()
-    && a.getUTCMonth() === b.getUTCMonth()
-    && a.getUTCDate() === b.getUTCDate()
-  );
+export function utcDateOnly(value) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
 }
 
-function addUtcDays(base, deltaDays) {
-  const d = new Date(base.getTime());
+export function addUtcDays(base, deltaDays) {
+  const d = utcDateOnly(base);
   d.setUTCDate(d.getUTCDate() + deltaDays);
   return d;
 }
 
-function mayFirstUtc(grantYear) {
+export function daysBetweenUtc(earlier, later) {
+  return Math.round((utcDateOnly(later).getTime() - utcDateOnly(earlier).getTime()) / MS_DAY);
+}
+
+/** True on the trigger day and for a few days after, so a missed cron still sends once. */
+export function isWithinTriggerWindow(now, triggerDay, catchupDays = TRIGGER_CATCHUP_DAYS) {
+  const delta = daysBetweenUtc(triggerDay, now);
+  return delta >= 0 && delta <= catchupDays;
+}
+
+export function mayFirstUtc(grantYear) {
   return new Date(Date.UTC(grantYear, 4, 1, 12, 0, 0, 0));
 }
 
@@ -68,42 +94,95 @@ function softDeadlineLabel(grantYear) {
   return `May 1, ${grantYear}`;
 }
 
-/** Organizations with at least one non-archived proposal in the grant calendar year (submitted or composer). */
-async function distinctOrganizationIdsWithProposalsInGrantYear(grantYear) {
-  const { start, end } = yearWindow(grantYear);
-  const submittedOrgIds = await Proposal.distinct('organization', {
-    createdAt: { $gte: start, $lte: end },
-    status: 'submitted',
-    archived: { $ne: true },
-  });
-  const composerOrgIds = await Proposal.distinct('organization', {
-    createdAt: { $gte: start, $lte: end },
-    status: { $in: COMPOSER_PROPOSAL_STATUSES },
-    archived: { $ne: true },
-  });
-  return new Set([...submittedOrgIds.map(String), ...composerOrgIds.map(String)]);
+function isPreview(options) {
+  return !!(options?.dryRun || options?.trialTo);
 }
 
-async function orgPrimaryContactRows(orgIds) {
+function isForced(options, key) {
+  return !!(options?.force?.has('all') || options?.force?.has(key));
+}
+
+/**
+ * Live sends require an active submission year. Preview runs fall back to the
+ * latest year so a closed portal can still be counted and sampled.
+ */
+async function resolveSubmissionYear(options) {
+  const active = await SubmissionYear.findOne({ active: true }).lean();
+  if (active) {
+    return active;
+  }
+  if (!isPreview(options)) {
+    return null;
+  }
+  const latest = await SubmissionYear.findOne({}).sort({ year: -1 }).lean();
+  if (latest) {
+    return { ...latest, previewFallback: true };
+  }
+  const year = (options.now || new Date()).getUTCFullYear();
+  return {
+    year,
+    openedAt: new Date(Date.UTC(year, 0, 1, 12, 0, 0, 0)),
+    previewFallback: true,
+  };
+}
+
+/** Organizations with a draft, ready-to-submit, or submitted proposal in the grant year. */
+async function deadlineReminderOrganizationIds(grantYear) {
+  const { start, end } = yearWindow(grantYear);
+  const orgIds = await Proposal.distinct('organization', {
+    createdAt: { $gte: start, $lte: end },
+    status: { $in: ['draft', 'ready_to_submit', 'submitted'] },
+    archived: { $ne: true },
+    organization: { $ne: null },
+  });
+  return [...new Set(orgIds.map(String))];
+}
+
+function firstNameFromContact(contactPerson) {
+  if (!contactPerson) {
+    return '';
+  }
+  return String(contactPerson).split(',')[0].trim();
+}
+
+/**
+ * Org contact email plus each member user. Rows are later merged by email.
+ */
+async function recipientRowsForOrganizations(orgIds) {
   const uniq = [...new Set((orgIds || []).map((id) => String(id)))];
   if (uniq.length === 0) {
     return [];
   }
   const orgs = await Organization.find({ _id: { $in: uniq } })
-    .select('name info')
+    .select('name info users')
     .populate('info', 'contactPerson email')
+    .populate('users.user', 'firstName email')
     .lean();
 
-  return orgs.map((org) => {
+  const rows = [];
+  for (const org of orgs) {
+    const organizationName = org.name || 'Unknown Organization';
     const info = org.info || {};
-    const first = info.contactPerson ? String(info.contactPerson).split(',')[0].trim() : '';
-    return {
-      organizationId: String(org._id),
-      organizationName: org.name || 'Unknown Organization',
-      email: info.email || null,
-      recipientFirstName: first || '',
-    };
-  });
+    if (info.email) {
+      rows.push({
+        email: info.email,
+        recipientFirstName: firstNameFromContact(info.contactPerson),
+        organizationName,
+      });
+    }
+    for (const membership of org.users || []) {
+      const user = membership?.user;
+      if (!user?.email) {
+        continue;
+      }
+      rows.push({
+        email: user.email,
+        recipientFirstName: user.firstName || '',
+        organizationName,
+      });
+    }
+  }
+  return rows;
 }
 
 /**
@@ -142,8 +221,88 @@ function mergeRowsByEmail(rows) {
   });
 }
 
-export async function sendProposalDraft24hReminders() {
-  const activeYear = await SubmissionYear.findOne({ active: true }).select('year').lean();
+/** Drop addresses whose user turned this notification off. Missing settings stay opted in. */
+async function dropOptedOut(rows, settingField) {
+  const emails = [...new Set(rows.map((row) => normalizeEmail(row.email)).filter(Boolean))];
+  if (emails.length === 0) {
+    return { kept: [], optedOut: 0 };
+  }
+
+  const users = await User.aggregate([
+    {
+      $project: {
+        emailLower: { $toLower: { $ifNull: ['$email', ''] } },
+      },
+    },
+    { $match: { emailLower: { $in: emails } } },
+  ]);
+
+  if (users.length === 0) {
+    return { kept: rows, optedOut: 0 };
+  }
+
+  const settings = await UserSetting.find({
+    userID: { $in: users.map((user) => user._id) },
+    [settingField]: false,
+  }).select('userID').lean();
+
+  const optedOutIds = new Set(settings.map((setting) => String(setting.userID)));
+  const optedOutEmails = new Set(
+    users
+      .filter((user) => optedOutIds.has(String(user._id)))
+      .map((user) => user.emailLower),
+  );
+
+  const kept = rows.filter((row) => !optedOutEmails.has(normalizeEmail(row.email)));
+  return { kept, optedOut: rows.length - kept.length };
+}
+
+async function deliverRows(rows, { subject, template, buildData, dryRun, trialTo }) {
+  if (dryRun) {
+    return { sent: 0, failed: 0, recipients: rows.length, dryRun: true };
+  }
+
+  if (trialTo) {
+    const sample = rows[0] || {
+      recipientFirstName: '',
+      organizationName: 'your organization',
+    };
+    try {
+      await sendEmailWithTemplate(trialTo, `[Trial] ${subject}`, template, buildData(sample));
+      return { sent: 1, failed: 0, recipients: rows.length, trial: true };
+    } catch (e) {
+      Logger.error(`grant-cycle trial send failed: ${e.message}`);
+      return { sent: 0, failed: 1, recipients: rows.length, trial: true, error: e.message };
+    }
+  }
+
+  let sent = 0;
+  let failed = 0;
+  for (const row of rows) {
+    try {
+      await sendEmailWithTemplate(row.email, subject, template, buildData(row));
+      sent += 1;
+    } catch (e) {
+      failed += 1;
+      Logger.error(`grant-cycle email failed for ${row.email}: ${e.message}`);
+    }
+  }
+  return { sent, failed, recipients: rows.length };
+}
+
+async function userWantsDeadlineReminders(userId) {
+  if (!userId) {
+    return true;
+  }
+  const setting = await UserSetting.findOne({ userID: userId })
+    .select('emailGrantDeadlineReminders')
+    .lean();
+  return setting?.emailGrantDeadlineReminders !== false;
+}
+
+export async function sendProposalDraft24hReminders(options = {}) {
+  const preview = isPreview(options);
+  const activeYear = await resolveSubmissionYear(options);
   const softYear = activeYear?.year ?? new Date().getUTCFullYear();
 
   const cutoff = new Date(Date.now() - MS_DAY);
@@ -159,163 +318,355 @@ export async function sendProposalDraft24hReminders() {
 
   let sent = 0;
   let failed = 0;
+  let optedOut = 0;
+  let skippedNoEmail = 0;
 
-  for (const p of proposals) {
-    const user = p.createdBy;
+  const pending = [];
+  for (const proposal of proposals) {
+    const user = proposal.createdBy;
     const to = user?.email ? String(user.email).trim() : '';
     if (!to || !normalizeEmail(to)) {
-      Logger.warn(`sendProposalDraft24hReminders: skip proposal ${p._id} — no creator email`);
-      await Proposal.updateOne({ _id: p._id }, { $set: { draftReminderSentAt: new Date() } });
+      skippedNoEmail += 1;
+      if (!preview) {
+        await Proposal.updateOne({ _id: proposal._id }, { $set: { draftReminderSentAt: new Date() } });
+      }
       continue;
     }
-    const orgName = p.organization?.name || 'your organization';
+    if (!(await userWantsDeadlineReminders(user._id))) {
+      optedOut += 1;
+      if (!preview) {
+        await Proposal.updateOne({ _id: proposal._id }, { $set: { draftReminderSentAt: new Date() } });
+      }
+      continue;
+    }
+    pending.push({ proposal, user, to });
+  }
+
+  if (options.dryRun) {
+    return {
+      sent: 0,
+      failed: 0,
+      scanned: proposals.length,
+      wouldSend: pending.length,
+      optedOut,
+      skippedNoEmail,
+      dryRun: true,
+    };
+  }
+
+  if (options.trialTo) {
+    const sample = pending[0];
+    const data = sample
+      ? {
+        recipientFirstName: sample.user.firstName || '',
+        organizationName: sample.proposal.organization?.name || 'your organization',
+        projectTitle: sample.proposal.projectTitle?.trim() || '(untitled draft)',
+        softDeadlineDateLabel: softDeadlineLabel(softYear),
+        portalUrl: `${absoluteFrontendBase()}/pages/welcome`,
+      }
+      : {
+        recipientFirstName: '',
+        organizationName: 'your organization',
+        projectTitle: '(untitled draft)',
+        softDeadlineDateLabel: softDeadlineLabel(softYear),
+        portalUrl: `${absoluteFrontendBase()}/pages/welcome`,
+      };
+    try {
+      await sendEmailWithTemplate(
+        options.trialTo,
+        '[Trial] You still have a proposal draft — The Hagen Family Foundation',
+        proposalDraftStillIncomplete24h,
+        data,
+      );
+      sent = 1;
+    } catch (e) {
+      failed = 1;
+      Logger.error(`sendProposalDraft24hReminders trial: ${e.message}`);
+    }
+    return { sent, failed, scanned: proposals.length, wouldSend: pending.length, optedOut, trial: true };
+  }
+
+  for (const item of pending) {
     const data = {
-      recipientFirstName: user.firstName || '',
-      organizationName: orgName,
-      projectTitle: p.projectTitle?.trim() || '(untitled draft)',
+      recipientFirstName: item.user.firstName || '',
+      organizationName: item.proposal.organization?.name || 'your organization',
+      projectTitle: item.proposal.projectTitle?.trim() || '(untitled draft)',
       softDeadlineDateLabel: softDeadlineLabel(softYear),
       portalUrl: `${absoluteFrontendBase()}/pages/welcome`,
     };
     try {
       await sendEmailWithTemplate(
-        to,
+        item.to,
         'You still have a proposal draft — The Hagen Family Foundation',
         proposalDraftStillIncomplete24h,
         data,
       );
-      await Proposal.updateOne({ _id: p._id }, { $set: { draftReminderSentAt: new Date() } });
+      await Proposal.updateOne({ _id: item.proposal._id }, { $set: { draftReminderSentAt: new Date() } });
       sent += 1;
     } catch (e) {
       failed += 1;
-      Logger.error(`sendProposalDraft24hReminders: failed for proposal ${p._id}: ${e.message}`);
+      Logger.error(`sendProposalDraft24hReminders: failed for proposal ${item.proposal._id}: ${e.message}`);
     }
   }
 
-  return { sent, failed, scanned: proposals.length };
+  return { sent, failed, scanned: proposals.length, optedOut, skippedNoEmail };
 }
 
-export async function sendGrantCycleTwoWeeksBeforeMay1() {
-  const activeYear = await SubmissionYear.findOne({ active: true }).lean();
+async function loadDeadlineRecipients(grantYear) {
+  const orgIds = await deadlineReminderOrganizationIds(grantYear);
+  const orgRows = await recipientRowsForOrganizations(orgIds);
+  const merged = mergeRowsByEmail(orgRows);
+  const filtered = await dropOptedOut(merged, 'emailGrantDeadlineReminders');
+  return {
+    organizations: orgIds.length,
+    ...filtered,
+  };
+}
+
+async function sendSoftDeadlineReminder(options, {
+  label,
+  forceKey,
+  sentAtField,
+  dayOffset,
+  subjectFor,
+  template,
+}) {
+  const preview = isPreview(options);
+  const now = options.now || new Date();
+  const activeYear = await resolveSubmissionYear(options);
   if (!activeYear?.year) {
-    Logger.info('sendGrantCycleTwoWeeksBeforeMay1: no active submission year');
+    Logger.info(`${label}: no active submission year`);
     return { skipped: true, reason: 'no_active_year' };
   }
-  if (activeYear.grantCycleEmailTwoWeeksBeforeSoftDeadlineSentAt) {
+  if (!preview && activeYear[sentAtField]) {
     return { skipped: true, reason: 'already_sent' };
   }
 
-  const y = activeYear.year;
-  const may1 = mayFirstUtc(y);
-  const triggerDay = addUtcDays(may1, -14);
-  const now = new Date();
-  if (!sameUtcCalendarDay(now, triggerDay)) {
-    return { skipped: true, reason: 'not_trigger_day', triggerDay: triggerDay.toISOString() };
+  const grantYear = activeYear.year;
+  const scheduledDay = await triggerDayFor(grantYear, forceKey, activeYear.openedAt);
+  const triggerDay = scheduledDay || addUtcDays(mayFirstUtc(grantYear), dayOffset);
+  const forced = isForced(options, forceKey);
+  if (!forced && !isWithinTriggerWindow(now, triggerDay)) {
+    return {
+      skipped: true,
+      reason: 'not_trigger_day',
+      triggerDay: triggerDay.toISOString(),
+      grantYear,
+    };
   }
 
-  const orgIdSet = await distinctOrganizationIdsWithProposalsInGrantYear(y);
-  const orgRows = await orgPrimaryContactRows([...orgIdSet]);
-  const merged = mergeRowsByEmail(orgRows.filter((r) => r.email));
-
+  const { organizations, kept, optedOut } = await loadDeadlineRecipients(grantYear);
   const portalUrl = `${absoluteFrontendBase()}/pages/welcome`;
-  const softLabel = softDeadlineLabel(y);
-  let sent = 0;
-  let failed = 0;
+  const softLabel = softDeadlineLabel(grantYear);
+  const subject = subjectFor(softLabel);
+  const result = await deliverRows(kept, {
+    subject,
+    template,
+    dryRun: options.dryRun,
+    trialTo: options.trialTo,
+    buildData: (row) => ({
+      recipientFirstName: row.recipientFirstName,
+      organizationName: row.organizationName,
+      grantYear: String(grantYear),
+      softDeadlineDateLabel: softLabel,
+      portalUrl,
+    }),
+  });
 
-  for (const row of merged) {
-    try {
-      await sendEmailWithTemplate(
-        row.email,
-        `Grant cycle reminder — soft deadline ${softLabel}`,
-        grantCycleSoftDeadlineTwoWeeks,
-        {
-          recipientFirstName: row.recipientFirstName,
-          organizationName: row.organizationName,
-          grantYear: String(y),
-          softDeadlineDateLabel: softLabel,
-          portalUrl,
-        },
-      );
-      sent += 1;
-    } catch (e) {
-      failed += 1;
-      Logger.error(`sendGrantCycleTwoWeeksBeforeMay1: ${row.email} ${e.message}`);
-    }
+  if (!preview && activeYear._id) {
+    await SubmissionYear.updateOne(
+      { _id: activeYear._id },
+      { $set: { [sentAtField]: new Date() } },
+    );
   }
 
-  await SubmissionYear.updateOne(
-    { _id: activeYear._id },
-    { $set: { grantCycleEmailTwoWeeksBeforeSoftDeadlineSentAt: new Date() } },
-  );
-
-  return { sent, failed, recipients: merged.length, grantYear: y };
+  return {
+    ...result,
+    optedOut,
+    organizations,
+    grantYear,
+    triggerDay: triggerDay.toISOString(),
+    forced,
+    previewFallback: !!activeYear.previewFallback,
+  };
 }
 
-export async function sendGrantCycleThreeDaysBeforeMay1() {
-  const activeYear = await SubmissionYear.findOne({ active: true }).lean();
+export async function sendGrantCycleTwoWeeksBeforeMay1(options = {}) {
+  return sendSoftDeadlineReminder(options, {
+    label: 'sendGrantCycleTwoWeeksBeforeMay1',
+    forceKey: 'two-weeks',
+    sentAtField: 'grantCycleEmailTwoWeeksBeforeSoftDeadlineSentAt',
+    dayOffset: -14,
+    subjectFor: (softLabel) => `Grant cycle reminder — soft deadline ${softLabel}`,
+    template: grantCycleSoftDeadlineTwoWeeks,
+  });
+}
+
+export async function sendGrantCycleWeekOfMay1(options = {}) {
+  return sendSoftDeadlineReminder(options, {
+    label: 'sendGrantCycleWeekOfMay1',
+    forceKey: 'week-of',
+    sentAtField: 'grantCycleEmailOneWeekBeforeSoftDeadlineSentAt',
+    dayOffset: -7,
+    subjectFor: (softLabel) => `This week: grant soft deadline ${softLabel}`,
+    template: grantCycleSoftDeadlineWeekOf,
+  });
+}
+
+/**
+ * Create the current calendar year's submission year on a January run when it
+ * does not exist yet. Does not reopen a year a director has turned off.
+ */
+export async function ensureJanuaryPortalOpen(options = {}) {
+  const now = options.now || new Date();
+  const year = now.getUTCFullYear();
+  if (now.getUTCMonth() !== 0) {
+    return { skipped: true, reason: 'not_january', year };
+  }
+
+  const existing = await SubmissionYear.findOne({ year }).lean();
+  if (existing) {
+    return {
+      skipped: true,
+      reason: existing.active ? 'already_exists' : 'closed_by_director',
+      year,
+      active: existing.active,
+    };
+  }
+
+  if (isPreview(options)) {
+    return { skipped: true, reason: 'would_create', year, preview: true };
+  }
+
+  const openedAt = new Date(Date.UTC(year, 0, 1, 12, 0, 0, 0));
+  const created = await SubmissionYear.create({
+    subID: generateCode(),
+    year,
+    active: true,
+    openedAt,
+  });
+  Logger.info(`ensureJanuaryPortalOpen: created submission year ${year}`);
+  return { created: true, year, id: String(created._id), openedAt: openedAt.toISOString() };
+}
+
+export async function sendGrantCyclePortalOpenNotice(options = {}) {
+  const preview = isPreview(options);
+  const now = options.now || new Date();
+  const activeYear = await resolveSubmissionYear(options);
   if (!activeYear?.year) {
-    Logger.info('sendGrantCycleThreeDaysBeforeMay1: no active submission year');
+    Logger.info('sendGrantCyclePortalOpenNotice: no active submission year');
     return { skipped: true, reason: 'no_active_year' };
   }
-  if (activeYear.grantCycleEmailThreeDaysBeforeSoftDeadlineSentAt) {
-    return { skipped: true, reason: 'already_sent' };
+  if (!preview && activeYear.grantCycleEmailPortalOpenSentAt) {
+    return { skipped: true, reason: 'already_sent', grantYear: activeYear.year };
   }
 
-  const y = activeYear.year;
-  const may1 = mayFirstUtc(y);
-  const triggerDay = addUtcDays(may1, -3);
-  const now = new Date();
-  if (!sameUtcCalendarDay(now, triggerDay)) {
-    return { skipped: true, reason: 'not_trigger_day', triggerDay: triggerDay.toISOString() };
+  const forced = isForced(options, 'portal-open');
+  if (!activeYear.openedAt && !forced) {
+    return { skipped: true, reason: 'no_opened_at', grantYear: activeYear.year };
   }
 
-  const orgIdSet = await distinctOrganizationIdsWithProposalsInGrantYear(y);
-  const orgRows = await orgPrimaryContactRows([...orgIdSet]);
-  const merged = mergeRowsByEmail(orgRows.filter((r) => r.email));
-
-  const portalUrl = `${absoluteFrontendBase()}/pages/welcome`;
-  const softLabel = softDeadlineLabel(y);
-  let sent = 0;
-  let failed = 0;
-
-  for (const row of merged) {
-    try {
-      await sendEmailWithTemplate(
-        row.email,
-        `Wrap up your proposal — soft deadline ${softLabel}`,
-        grantCycleSoftDeadlineThreeDays,
-        {
-          recipientFirstName: row.recipientFirstName,
-          organizationName: row.organizationName,
-          grantYear: String(y),
-          softDeadlineDateLabel: softLabel,
-          portalUrl,
-        },
-      );
-      sent += 1;
-    } catch (e) {
-      failed += 1;
-      Logger.error(`sendGrantCycleThreeDaysBeforeMay1: ${row.email} ${e.message}`);
+  const scheduledOpen = await triggerDayFor(activeYear.year, 'portal-open', activeYear.openedAt);
+  const daysSinceOpen = activeYear.openedAt
+    ? daysBetweenUtc(new Date(activeYear.openedAt), now)
+    : null;
+  const defaultOpenDay = activeYear.openedAt
+    ? addUtcDays(new Date(activeYear.openedAt), PORTAL_OPEN_EMAIL_MIN_DAYS)
+    : null;
+  const customOpenDay = scheduledOpen
+    && defaultOpenDay
+    && utcDateOnly(scheduledOpen).getTime() !== utcDateOnly(defaultOpenDay).getTime();
+  if (customOpenDay) {
+    if (!forced && !isWithinTriggerWindow(now, scheduledOpen)) {
+      return {
+        skipped: true,
+        reason: 'not_trigger_day',
+        triggerDay: scheduledOpen.toISOString(),
+        grantYear: activeYear.year,
+      };
     }
+  } else if (
+    !forced
+    && (daysSinceOpen < PORTAL_OPEN_EMAIL_MIN_DAYS || daysSinceOpen > PORTAL_OPEN_EMAIL_MAX_DAYS)
+  ) {
+    return {
+      skipped: true,
+      reason: 'not_trigger_window',
+      daysSinceOpen,
+      grantYear: activeYear.year,
+      openedAt: new Date(activeYear.openedAt).toISOString(),
+    };
   }
 
-  await SubmissionYear.updateOne(
-    { _id: activeYear._id },
-    { $set: { grantCycleEmailThreeDaysBeforeSoftDeadlineSentAt: new Date() } },
-  );
+  const orgIds = (await Organization.distinct('_id')).map(String);
+  const merged = mergeRowsByEmail(await recipientRowsForOrganizations(orgIds));
+  const { kept, optedOut } = await dropOptedOut(merged, 'emailPortalOpenNotices');
+  const grantYear = activeYear.year;
+  const softLabel = softDeadlineLabel(grantYear);
+  const portalUrl = `${absoluteFrontendBase()}/pages/welcome`;
+  const result = await deliverRows(kept, {
+    subject: `The ${grantYear} grant portal is open`,
+    template: grantCyclePortalOpen,
+    dryRun: options.dryRun,
+    trialTo: options.trialTo,
+    buildData: (row) => ({
+      recipientFirstName: row.recipientFirstName,
+      organizationName: row.organizationName,
+      grantYear: String(grantYear),
+      softDeadlineDateLabel: softLabel,
+      portalUrl,
+    }),
+  });
 
-  return { sent, failed, recipients: merged.length, grantYear: y };
+  if (!preview && activeYear._id) {
+    await SubmissionYear.updateOne(
+      { _id: activeYear._id },
+      { $set: { grantCycleEmailPortalOpenSentAt: new Date() } },
+    );
+  }
+
+  return {
+    ...result,
+    optedOut,
+    organizations: orgIds.length,
+    grantYear,
+    daysSinceOpen,
+    forced,
+    previewFallback: !!activeYear.previewFallback,
+  };
 }
 
-export async function runAllGrantCycleEmailTasks() {
-  if (!Config.grantCycleEmailsEnabled) {
+export async function runAllGrantCycleEmailTasks(options = {}) {
+  const preview = isPreview(options);
+  if (!Config.grantCycleEmailsEnabled && !preview) {
     Logger.info(
       'runAllGrantCycleEmailTasks: skipped — set GRANT_CYCLE_EMAILS_ENABLED=true to run grant-cycle reminders',
     );
     return { disabled: true };
   }
 
-  const draft24h = await sendProposalDraft24hReminders();
-  const twoWeek = await sendGrantCycleTwoWeeksBeforeMay1();
-  const threeDay = await sendGrantCycleThreeDaysBeforeMay1();
-  return { draft24h, twoWeek, threeDay };
+  const selected = (key) => (
+    !options.force
+    || options.force.size === 0
+    || options.force.has('all')
+    || options.force.has(key)
+  );
+  const notSelected = { skipped: true, reason: 'not_selected' };
+
+  const januaryOpen = (!options.force || options.force.size === 0 || options.force.has('all'))
+    ? await ensureJanuaryPortalOpen(options)
+    : notSelected;
+  const draft24h = selected('draft-24h')
+    ? await sendProposalDraft24hReminders(options)
+    : notSelected;
+  const twoWeek = selected('two-weeks')
+    ? await sendGrantCycleTwoWeeksBeforeMay1(options)
+    : notSelected;
+  const weekOf = selected('week-of')
+    ? await sendGrantCycleWeekOfMay1(options)
+    : notSelected;
+  const portalOpen = selected('portal-open')
+    ? await sendGrantCyclePortalOpenNotice(options)
+    : notSelected;
+  return { januaryOpen, draft24h, twoWeek, weekOf, portalOpen };
 }
