@@ -4,6 +4,8 @@ import {
   updateFeatureAnnouncement,
   deleteFeatureAnnouncement,
   manageSiteNotices,
+  countNoticeRecipients,
+  searchNoticeRecipients,
   sendSiteNotice,
   getGrantCycleNoticeSchedule,
   updateGrantCycleNoticeSchedule,
@@ -12,6 +14,8 @@ import {
 const router = new Router();
 
 router.get('/manage', manageSiteNotices);
+router.get('/recipient-count', countNoticeRecipients);
+router.get('/recipients', searchNoticeRecipients);
 router.get('/schedule', getGrantCycleNoticeSchedule);
 router.put('/schedule', updateGrantCycleNoticeSchedule);
 router.post('/send', sendSiteNotice);
