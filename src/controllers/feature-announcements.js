@@ -3,6 +3,7 @@ import FeatureAnnouncement from '../models/feature-announcement.js';
 import {
   GrantCycleNoticeSchedule,
   Meeting,
+  Organization,
   OrganizationMembership,
   OutboundEmail,
   User,
@@ -167,41 +168,39 @@ function isObjectId(value) {
   return /^[a-f0-9]{24}$/i.test(String(value || ''));
 }
 
-async function accountRecipients() {
-  const users = await User.find({ email: { $exists: true, $ne: '' } })
-    .select('email firstName lastName accessLevel organizations')
-    .populate('organizations', 'name')
-    .lean();
-  const byId = new Map();
-  for (const user of users) {
-    const email = String(user.email || '').trim().toLowerCase();
-    const id = String(user._id);
-    if (!isDeliverableEmail(email) || byId.has(id)) {
-      continue;
-    }
-    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-    const organizations = [...new Set(
-      (user.organizations || [])
-        .map((org) => (org && typeof org === 'object' ? org.name : ''))
-        .map((orgName) => String(orgName || '').trim())
-        .filter(Boolean),
-    )].sort((a, b) => a.localeCompare(b));
-    byId.set(id, {
-      id,
-      email,
-      name,
-      role: roleLabel(user.accessLevel),
-      organizations,
-    });
+function toNoticeUser(user) {
+  const email = String(user.email || '').trim().toLowerCase();
+  if (!isDeliverableEmail(email)) {
+    return null;
   }
-  return [...byId.values()].sort((a, b) => {
-    const aLabel = (a.name || a.email).toLowerCase();
-    const bLabel = (b.name || b.email).toLowerCase();
-    return aLabel.localeCompare(bLabel);
-  });
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  const organizations = [...new Set(
+    (user.organizations || [])
+      .map((org) => (org && typeof org === 'object' ? org.name : ''))
+      .map((orgName) => String(orgName || '').trim())
+      .filter(Boolean),
+  )].sort((a, b) => a.localeCompare(b));
+  return {
+    id: String(user._id),
+    email,
+    name,
+    role: roleLabel(user.accessLevel),
+    organizations,
+  };
 }
 
-async function selectedUsers(ids) {
+async function countDeliverableUsers() {
+  const users = await User.find({ email: { $exists: true, $ne: '' } }).select('email').lean();
+  let total = 0;
+  for (const user of users) {
+    if (isDeliverableEmail(String(user.email || '').trim().toLowerCase())) {
+      total += 1;
+    }
+  }
+  return total;
+}
+
+async function usersByIds(ids) {
   const wanted = [...new Set(
     (Array.isArray(ids) ? ids : [])
       .map((id) => String(id || '').trim())
@@ -210,8 +209,45 @@ async function selectedUsers(ids) {
   if (!wanted.length) {
     return [];
   }
-  const allowed = new Map((await accountRecipients()).map((user) => [user.id, user]));
-  return wanted.map((id) => allowed.get(id)).filter(Boolean);
+  const users = await User.find({ _id: { $in: wanted } })
+    .select('email firstName lastName accessLevel organizations')
+    .populate('organizations', 'name')
+    .lean();
+  const byId = new Map(
+    users.map(toNoticeUser).filter(Boolean).map((user) => [user.id, user]),
+  );
+  return wanted.map((id) => byId.get(id)).filter(Boolean);
+}
+
+async function allDeliverableUsers() {
+  const users = await User.find({ email: { $exists: true, $ne: '' } })
+    .select('email')
+    .lean();
+  return users
+    .map((user) => {
+      const email = String(user.email || '').trim().toLowerCase();
+      if (!isDeliverableEmail(email)) {
+        return null;
+      }
+      return { id: String(user._id), email };
+    })
+    .filter(Boolean);
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function levelsMatching(query) {
+  if (query.length < 3) {
+    return [];
+  }
+  return [
+    ['admin', 4],
+    ['president', 3],
+    ['director', 2],
+    ['user', 1],
+  ].filter(([label]) => label.startsWith(query)).map(([, level]) => level);
 }
 
 function audienceLabel(recipients) {
@@ -292,12 +328,8 @@ export const manageSiteNotices = async (req, res) => {
     return;
   }
   try {
-    const [notices, users] = await Promise.all([
-      FeatureAnnouncement.find().sort({ startsOn: -1 }).limit(20).lean(),
-      accountRecipients(),
-    ]);
+    const notices = await FeatureAnnouncement.find().sort({ startsOn: -1 }).limit(20).lean();
     return res.status(200).json({
-      users,
       notices: notices.map((doc) => ({
         ...toPublic(doc),
         startsOn: doc.startsOn,
@@ -308,6 +340,75 @@ export const manageSiteNotices = async (req, res) => {
   } catch (err) {
     Logger.error(`manageSiteNotices: ${err.message}`);
     return res.status(500).json({ message: 'Could not load notices' });
+  }
+};
+
+/** Count only. The page uses this to confirm an all-emails send without listing addresses. */
+export const countNoticeRecipients = async (req, res) => {
+  if (!requirePresident(req, res)) {
+    return;
+  }
+  try {
+    const total = await countDeliverableUsers();
+    return res.status(200).json({ total });
+  } catch (err) {
+    Logger.error(`countNoticeRecipients: ${err.message}`);
+    return res.status(500).json({ message: 'Could not count emails' });
+  }
+};
+
+/** A short search result the president can add. An empty query returns nothing. */
+export const searchNoticeRecipients = async (req, res) => {
+  if (!requirePresident(req, res)) {
+    return;
+  }
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) {
+    return res.status(200).json({ users: [] });
+  }
+  try {
+    const regex = new RegExp(escapeRegex(q), 'i');
+    const orgs = await Organization.find({ name: regex }).select('_id').limit(30).lean();
+    const or = [
+      { email: regex },
+      { firstName: regex },
+      { lastName: regex },
+      {
+        $expr: {
+          $regexMatch: {
+            input: {
+              $trim: {
+                input: {
+                  $concat: [
+                    { $ifNull: ['$firstName', ''] },
+                    ' ',
+                    { $ifNull: ['$lastName', ''] },
+                  ],
+                },
+              },
+            },
+            regex: escapeRegex(q),
+            options: 'i',
+          },
+        },
+      },
+    ];
+    if (orgs.length) {
+      or.push({ organizations: { $in: orgs.map((org) => org._id) } });
+    }
+    const levels = levelsMatching(q.toLowerCase());
+    if (levels.length) {
+      or.push({ accessLevel: { $in: levels } });
+    }
+    const users = await User.find({ email: { $exists: true, $ne: '' }, $or: or })
+      .select('email firstName lastName accessLevel organizations')
+      .populate('organizations', 'name')
+      .limit(15)
+      .lean();
+    return res.status(200).json({ users: users.map(toNoticeUser).filter(Boolean) });
+  } catch (err) {
+    Logger.error(`searchNoticeRecipients: ${err.message}`);
+    return res.status(500).json({ message: 'Could not search users' });
   }
 };
 
@@ -335,9 +436,12 @@ export const sendSiteNotice = async (req, res) => {
       return res.status(400).json({ message: 'Email is not configured' });
     }
 
-    const chosen = await selectedUsers(req.body?.recipients);
+    const allEmails = req.body?.allEmails === true;
+    const chosen = allEmails
+      ? await allDeliverableUsers()
+      : await usersByIds(req.body?.recipients);
     if (!chosen.length) {
-      return res.status(400).json({ message: 'Choose at least one user' });
+      return res.status(400).json({ message: allEmails ? 'No emails to send to' : 'Choose at least one user' });
     }
     const addresses = chosen.map((user) => user.email);
     if (email && !addresses.length) {
