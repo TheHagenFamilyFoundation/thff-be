@@ -11,7 +11,8 @@
  * - 14 days before May 1, and 7 days before May 1 (each with a 3-day catch-up):
  *   email organizations that have a draft, ready-to-submit, or submitted proposal
  *   created in that grant year.
- * - 24h after creation: email the creator if a proposal is still `draft`.
+ * - 24h after creation: email the creator if a proposal is still `draft`
+ *   in the open grant year. No open year means this reminder waits.
  *
  * User profile settings `emailGrantDeadlineReminders` and `emailPortalOpenNotices`
  * default to on. A matching user who turns one off is skipped.
@@ -303,14 +304,22 @@ async function userWantsDeadlineReminders(userId) {
 export async function sendProposalDraft24hReminders(options = {}) {
   const preview = isPreview(options);
   const activeYear = await resolveSubmissionYear(options);
-  const softYear = activeYear?.year ?? new Date().getUTCFullYear();
-
+  if (!activeYear?.year || (!preview && !activeYear._id)) {
+    return { skipped: true, reason: 'no_active_year' };
+  }
+  const softYear = activeYear.year;
+  const { start, end } = yearWindow(softYear);
   const cutoff = new Date(Date.now() - MS_DAY);
+  const createdBefore = new Date(Math.min(cutoff.getTime(), end.getTime()));
+  if (createdBefore < start) {
+    return { skipped: true, reason: 'no_drafts_in_year', grantYear: softYear, scanned: 0, wouldSend: 0 };
+  }
+
   const proposals = await Proposal.find({
     status: 'draft',
     draftReminderSentAt: { $exists: false },
     createdBy: { $exists: true, $ne: null },
-    createdAt: { $lte: cutoff },
+    createdAt: { $gte: start, $lte: createdBefore },
   })
     .populate('createdBy', 'firstName email')
     .populate('organization', 'name')
