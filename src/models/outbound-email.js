@@ -76,6 +76,8 @@ outboundEmailSchema.index({ meeting: 1, type: 1, createdAt: -1 });
 outboundEmailSchema.index({ meeting: 1, type: 1, proposal: 1, createdAt: -1 });
 outboundEmailSchema.index({ meeting: 1, type: 1, allocation: 1, createdAt: -1 });
 outboundEmailSchema.index({ referralCode: 1, createdAt: -1 });
+outboundEmailSchema.index({ type: 1, organization: 1, createdAt: -1 });
+outboundEmailSchema.index({ type: 1, to: 1, createdAt: -1 });
 
 const OutboundEmail = mongoose.model('OutboundEmail', outboundEmailSchema);
 export default OutboundEmail;

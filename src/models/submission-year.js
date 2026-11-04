@@ -12,12 +12,24 @@ const submissionYearSchema = Schema({
     type: Boolean,
     default: true
   },
-  /** Idempotency: bulk “2 weeks before May 1” reminder to orgs with proposals in this year. */
+  /** When this year was first turned on. Portal-open mail goes out a week later. */
+  openedAt: {
+    type: Date,
+  },
+  /** Idempotency: bulk “2 weeks before May 1” reminder. */
   grantCycleEmailTwoWeeksBeforeSoftDeadlineSentAt: {
     type: Date,
   },
-  /** Idempotency: bulk “3 days before May 1 soft deadline” reminder for orgs with open work. */
+  /** Retired. Earlier builds sent a 3-day reminder; week-of mail uses the field below. */
   grantCycleEmailThreeDaysBeforeSoftDeadlineSentAt: {
+    type: Date,
+  },
+  /** Idempotency: bulk “one week before May 1” reminder. */
+  grantCycleEmailOneWeekBeforeSoftDeadlineSentAt: {
+    type: Date,
+  },
+  /** Idempotency: “portal is open” mail, sent a week after openedAt. */
+  grantCycleEmailPortalOpenSentAt: {
     type: Date,
   },
 }, {
